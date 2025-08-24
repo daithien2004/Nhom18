@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-const UserSchema = new Schema({
+const userSchema = new Schema({
   // Thông tin đăng nhập
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }, // hash lưu bằng bcrypt
@@ -33,9 +33,9 @@ const UserSchema = new Schema({
 });
 
 // middleware update thời gian
-UserSchema.pre('save', function (next) {
+userSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-export default model('User', UserSchema);
+export default model('User', userSchema);
