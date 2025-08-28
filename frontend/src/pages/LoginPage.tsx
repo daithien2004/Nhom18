@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { FormLoginSchema, type formLogin } from "../schemas/FormLoginSchema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginApi } from "../services/authService";
-import axios from "axios";
+import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { FormLoginSchema, type formLogin } from '../schemas/FormLoginSchema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginApi } from '../services/authService';
+import axios from 'axios';
 
 const LoginPage = () => {
   const {
@@ -12,22 +12,22 @@ const LoginPage = () => {
     formState: { errors, isDirty, isValid },
   } = useForm<formLogin>({
     resolver: zodResolver(FormLoginSchema),
-    defaultValues: { email: "tuanthanh07082004@gmail.com", password: "123456" },
-    mode: "onChange",
+    defaultValues: { email: 'tuanthanh07082004@gmail.com', password: '123456' },
+    mode: 'onChange',
   });
 
   const onSubmit = async (data: formLogin) => {
     try {
       const res = await loginApi(data.email, data.password);
-      localStorage.setItem("access_token", res.access_token);
-      alert("Đăng nhập thành công!");
+      localStorage.setItem('access_token', res.access_token);
+      alert('Đăng nhập thành công!');
       return res.user;
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          alert("Email hoặc mật khẩu không đúng.");
+          alert('Email hoặc mật khẩu không đúng.');
         } else {
-          alert("Có lỗi xảy ra, vui lòng thử lại.");
+          alert('Có lỗi xảy ra, vui lòng thử lại.');
         }
       } else {
         alert(`Lỗi không xác định xảy ra: ${error}`);
@@ -52,7 +52,7 @@ const LoginPage = () => {
           <label>Email </label>
           <input
             placeholder="Email"
-            {...register("email")}
+            {...register('email')}
             className="rounded-md mb-3 shadow-sm p-3 px-4 outline-0"
           ></input>
           {errors.email && (
@@ -62,7 +62,7 @@ const LoginPage = () => {
           <label>Password</label>
           <input
             placeholder="Password"
-            {...register("password")}
+            {...register('password')}
             className="border-0 p-3 px-4 rounded-md mb-3 shadow-sm outline-0"
           ></input>
           {errors.password && (
@@ -94,7 +94,7 @@ const LoginPage = () => {
             Sign In
           </button>
           <label>
-            Don't have an account? Register{" "}
+            Don't have an account? Register{' '}
             <Link to="/register" className="text-blue-700 hover:text-red-500">
               here
             </Link>
