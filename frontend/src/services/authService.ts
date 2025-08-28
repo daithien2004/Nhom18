@@ -1,5 +1,4 @@
 import instance from '../api/axiosInstant';
-import axios from 'axios';
 import type { LoginResponse, RegisterData, ApiResponse } from '../types/auth';
 
 // Hàm trả về thẳng dữ liệu server, không có .data
@@ -17,7 +16,7 @@ export const loginApi = async (
 export const requestOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
-  const URL_API = 'auth/register/request-otp';
+  const URL_API = '/auth/register/request-otp';
   const response = await instance.post(URL_API, data);
 
   return response.data;
@@ -26,7 +25,7 @@ export const requestOtp = async (
 export const verifyOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
-  const URL_API = 'auth/register/verify';
+  const URL_API = '/auth/register/verify';
   return (await instance.post(URL_API, data)).data;
 };
 

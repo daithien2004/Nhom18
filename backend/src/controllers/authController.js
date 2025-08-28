@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { User, Otp } from '../models/index.js';
 import { sendOtpEmail } from '../services/emailService.js';
+import { handleLogin } from '../services/userService.js';
 
 export const requestOtp = async (req, res) => {
   try {
@@ -104,5 +105,18 @@ export const sendPassword = async (req, res) => {
     return res.json({ message: 'Mật khẩu mới đã được gửi về email' });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+export const userLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const data = await handleLogin(email, password);
+    if (!data) {
+      return res.status(401).json({ error: 'Email hoặc password không đúng' });
+    }
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: 'Lỗi server' });
   }
 };
