@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
 import OtpInput from '../components/OtpInput';
-import { requestOtp, verifyOtp } from '../api/authAPI';
+import { requestOtp, verifyOtp } from '../services/authService';
 import type { RegisterData } from '../types/auth';
 
 const Register: React.FC = () => {

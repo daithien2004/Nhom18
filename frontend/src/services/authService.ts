@@ -1,21 +1,40 @@
-import axios from "axios";
-import type { ApiResponse } from "../types/auth";
+import instance from '../api/axiosInstant';
+import axios from 'axios';
+import type { LoginResponse, RegisterData, ApiResponse } from '../types/auth';
 
-const API_URL = "http://localhost:3000/auth";
+// Hàm trả về thẳng dữ liệu server, không có .data
+export const loginApi = async (
+  email: string,
+  password: string
+): Promise<LoginResponse> => {
+  const URL_API = '/auth/login';
+  const data = { email, password };
+
+  const res = await instance.post<LoginResponse>(URL_API, data);
+  return res.data;
+};
+
+export const requestOtp = async (
+  data: RegisterData
+): Promise<ApiResponse<null>> => {
+  const URL_API = 'auth/register/request-otp';
+  const response = await instance.post(URL_API, data);
+
+  return response.data;
+};
+
+export const verifyOtp = async (
+  data: RegisterData
+): Promise<ApiResponse<null>> => {
+  const URL_API = 'auth/register/verify';
+  return (await instance.post(URL_API, data)).data;
+};
 
 // Gửi email để tạo OTP
 export const createOtp = async (email: string): Promise<ApiResponse<null>> => {
-  try {
-    const response = await axios.post(`${API_URL}/create-otp`, { email });
-    return response.data;
-  } catch (error: any) {
-    if (error.response) {
-      console.error("❌ Response error:", error.response.data);
-    } else if (error.request) {
-      console.error("❌ No response received:", error.request);
-    }
-    throw error;
-  }
+  const URL_API = '/auth/create-otp';
+  const response = await instance.post(URL_API, { email });
+  return response.data;
 };
 
 // Gửi OTP để nhận mật khẩu mới
@@ -23,18 +42,11 @@ export const sendPassword = async (
   email: string,
   otp: string
 ): Promise<ApiResponse<null>> => {
-  try {
-    const response = await axios.post(`${API_URL}/send-password`, {
-      email,
-      otp,
-    });
-    return response.data;
-  } catch (error: any) {
-    if (error.response) {
-      console.error("❌ Response error:", error.response.data);
-    } else if (error.request) {
-      console.error("❌ No response received:", error.request);
-    }
-    throw error;
-  }
+  const URL_API = '/auth/send-password';
+
+  const response = await instance.post(URL_API, {
+    email,
+    otp,
+  });
+  return response.data;
 };
