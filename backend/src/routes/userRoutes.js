@@ -1,14 +1,14 @@
-import express from "express";
-import auth from "../middlewares/auth.js";
+import express from 'express';
+import auth from '../middlewares/auth.js';
 
-const userRouter = express.Router();
+const router = express.Router();
 
-userRouter.get("/home", (req, res) => {
-  res.status(200).json("Trang chủ user");
+router.get('/home', (req, res) => {
+  res.status(200).json('Trang chủ user');
 });
 
-userRouter.get("/profile", (req, res) => {
-  res.status(200).json("Trang profile");
+router.get('/profile', (req, res) => {
+  res.status(200).json('Trang profile');
 });
 
-export default userRouter;
+export default router;
