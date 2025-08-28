@@ -21,7 +21,7 @@ export const handleLogin = async (email, password) => {
         expiresIn: process.env.JWT_EXPIRE,
       });
       return {
-        access_token,
+        accessToken: access_token,
         user: {
           id: user.id,
           email: user.email,

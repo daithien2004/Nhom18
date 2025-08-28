@@ -1,8 +1,7 @@
 import instance from '../api/axiosInstant';
-import type { LoginResponse, RegisterData, ApiResponse } from '../types/auth';
+import type { LoginResponse, RegisterData, ApiResponse, UserProfile } from '../types/auth';
 
-// Hàm trả về thẳng dữ liệu server, không có .data
-export const loginApi = async (
+export const login = async (
   email: string,
   password: string
 ): Promise<LoginResponse> => {
@@ -11,6 +10,11 @@ export const loginApi = async (
 
   const res = await instance.post<LoginResponse>(URL_API, data);
   return res.data;
+};
+
+export const getMe = async (): Promise<{ user: UserProfile }> => {
+  const response = await instance.get<{ user: UserProfile }>('/users/me');
+  return response.data;
 };
 
 export const requestOtp = async (
