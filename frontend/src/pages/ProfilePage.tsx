@@ -22,13 +22,9 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-10">
+    <div className="min-h-screen bg-gray-50 ">
       {/* Header */}
       <header className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-3">
-          <img src="./img/logo.png" alt="ZALOUTE Logo" className="w-12 h-12" />
-          <h1 className="text-2xl font-bold text-gray-800">ZALOUTE</h1>
-        </div>
         <button
           onClick={() => navigate('/')}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"

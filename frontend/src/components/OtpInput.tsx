@@ -13,7 +13,7 @@ const OtpInput: React.FC<OtpInputProps> = ({ length = 6, onChange }) => {
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
-    const val = e.target.value;
+    const val = e.target.value; 
     if (/^\d*$/.test(val)) {
       const newOtp = [...otp];
       newOtp[index] = val;
