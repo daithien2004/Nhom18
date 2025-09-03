@@ -1,41 +1,36 @@
 import { Schema, model } from 'mongoose';
 
-const userSchema = new Schema({
-  // Thông tin đăng nhập
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, // hash lưu bằng bcrypt
-  phone: { type: String, unique: true }, // nhiều app login bằng số điện thoại
-  username: { type: String, required: true }, // tên hiển thị
+const userSchema = new Schema(
+  {
+    // Login
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    phone: { type: String, unique: true },
+    username: { type: String, required: true },
 
-  // Profile cá nhân
-  avatar: { type: String, default: '' }, // link ảnh đại diện
-  coverPhoto: { type: String, default: '' }, // ảnh bìa (nếu có)
-  bio: { type: String, default: '' }, // mô tả ngắn
-  gender: { type: String, enum: ['male', 'female', 'other'], default: 'other' },
-  birthday: { type: Date },
+    // Profile
+    avatar: { type: String, default: '' },
+    coverPhoto: { type: String, default: '' },
+    bio: { type: String, default: '' },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other'],
+      default: 'other',
+    },
+    birthday: { type: Date },
 
-  // Xác thực & trạng thái
-  isVerified: { type: Boolean, default: false }, // đã verify OTP/email/phone chưa
-  otp: { type: String }, // mã OTP tạm thời
-  otpExpires: { type: Date },
+    // Verification
+    isVerified: { type: Boolean, default: false },
 
-  // Kết nối bạn bè
-  friends: [{ type: Schema.Types.ObjectId, ref: 'User' }], // danh sách bạn bè
-  friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }], // pending request
+    // Friends
+    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 
-  // Online status
-  isOnline: { type: Boolean, default: false },
-  lastActive: { type: Date, default: Date.now },
-
-  // Thông tin hệ thống
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
-
-// middleware update thời gian
-userSchema.pre('save', function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
+    // Online status
+    isOnline: { type: Boolean, default: false },
+    lastActive: { type: Date, default: Date.now },
+  },
+  { timestamps: true } // tự động có createdAt, updatedAt
+);
 
 export default model('User', userSchema);

@@ -17,39 +17,36 @@ export const getMe = async (): Promise<{ user: UserProfile }> => {
   return response.data;
 };
 
+// Đăng ký - Bước 1: Gửi OTP
 export const requestOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
   const URL_API = '/auth/register/request-otp';
   const response = await instance.post(URL_API, data);
-
   return response.data;
 };
 
+// Đăng ký - Bước 2: Xác thực OTP
 export const verifyOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
-  const URL_API = '/auth/register/verify';
+  const URL_API = '/auth/register/verify-otp';
   return (await instance.post(URL_API, data)).data;
 };
 
-// Gửi email để tạo OTP
-export const createOtp = async (email: string): Promise<ApiResponse<null>> => {
-  const URL_API = '/auth/create-otp';
+// Quên mật khẩu - Bước 1: Gửi OTP
+export const forgotPasswordRequestOtp = async (email: string): Promise<ApiResponse<null>> => {
+  const URL_API = '/auth/forgot-password/request-otp';
   const response = await instance.post(URL_API, { email });
   return response.data;
 };
 
-// Gửi OTP để nhận mật khẩu mới
-export const sendPassword = async (
+// Quên mật khẩu - Bước 2: Reset mật khẩu
+export const forgotPasswordReset = async (
   email: string,
   otp: string
 ): Promise<ApiResponse<null>> => {
-  const URL_API = '/auth/send-password';
-
-  const response = await instance.post(URL_API, {
-    email,
-    otp,
-  });
+  const URL_API = '/auth/forgot-password/reset';
+  const response = await instance.post(URL_API, { email, otp });
   return response.data;
 };

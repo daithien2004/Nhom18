@@ -24,7 +24,7 @@ const MainLayout: React.FC = () => {
         {/* Avatar */}
         <div className="relative">
           <img
-            src="https://scontent.fsgn24-1.fna.fbcdn.net/v/t39.30808-1/514259456_2306420366422587_4056087627011143100_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=109&ccb=1-7&_nc_sid=1d2534&_nc_eui2=AeEfcXmSWO9aKsSaH6L7ep4cQb7PBGQXHpNBvs8EZBcekysS_sNPNjpMuywfvwN8lDT8yHUtK95kaIltbKMHuzsb&_nc_ohc=H4b3ol0j80AQ7kNvwFKNAoG&_nc_oc=AdkiwPxbhRwKkqG5IlAVfehCmrbUHISGcGCNd2s9WOm3aClNnrPvWBMzMjFeea-0N3w&_nc_zt=24&_nc_ht=scontent.fsgn24-1.fna&_nc_gid=qFSIY1uGtI1ODnZYaQhhBA&oh=00_AfXhijs4NDzSomgX6t8Bu52IEW07RrjwVz7JybUfBGyNFg&oe=68BB9BE3"
+            src="https://cdn-icons-png.flaticon.com/512/8792/8792047.png"
             alt="User Avatar"
             className="w-14 h-14 rounded-full cursor-pointer"
             onClick={toggleDropdown}

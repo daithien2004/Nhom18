@@ -1,22 +1,23 @@
-import express from 'express';
+import express from "express";
 import {
-  requestOtp,
-  verifyOtp,
-  createOtp,
-  sendPassword,
-  userLogin,
-} from '../controllers/authController.js';
+  login,
+  registerRequestOtp,
+  registerVerifyOtp,
+  forgotPasswordRequestOtp,
+  forgotPasswordReset,
+} from "../controllers/authController.js";
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.status(200).json('Hello world!');
-});
+// Auth routes
+router.post("/login", login);
 
-router.post('/login', userLogin);
-router.post('/register/request-otp', requestOtp);
-router.post('/register/verify', verifyOtp);
-router.post('/create-otp', createOtp);
-router.post('/send-password', sendPassword);
+// Register flow
+router.post("/register/request-otp", registerRequestOtp);
+router.post("/register/verify-otp", registerVerifyOtp);
+
+// Forgot password flow
+router.post("/forgot-password/request-otp", forgotPasswordRequestOtp);
+router.post("/forgot-password/reset", forgotPasswordReset);
 
 export default router;

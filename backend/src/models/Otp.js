@@ -1,9 +1,9 @@
 import { Schema, model } from 'mongoose';
 
 const otpSchema = new Schema({
-  email: { type: String, require: true },
-  otp: { type: String, require: true },
-  expiresAT: { type: Date, require: true },
+  email: { type: String, required: true },
+  otp: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
 });
 
 export default model('Otp', otpSchema);

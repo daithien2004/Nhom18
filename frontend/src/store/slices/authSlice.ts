@@ -36,9 +36,9 @@ export const fetchProfile = createAsyncThunk(
   }
 );
 
-// Gửi OTP
+// Gửi OTP cho đăng ký
 export const requestOtpThunk = createAsyncThunk(
-  '/auth/register/request-otp',
+  'auth/requestOtp',
   async (data: RegisterData, { rejectWithValue }) => {
     try {
       const res = await requestOtp(data);
@@ -49,9 +49,9 @@ export const requestOtpThunk = createAsyncThunk(
   }
 );
 
-// Xác thực OTP
+// Xác thực OTP cho đăng ký
 export const verifyOtpThunk = createAsyncThunk(
-  '/auth/register/verify',
+  'auth/verifyOtp',
   async (data: RegisterData & { otp: string }, { rejectWithValue }) => {
     try {
       const res = await verifyOtp(data);
@@ -91,9 +91,13 @@ const authSlice = createSlice({
       // 👉 clear token khi logout
       localStorage.removeItem('accessToken');
     },
+    clearError(state) {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Login cases
       .addCase(loginThunk.pending, (s) => {
         s.loading = true;
         s.error = null;
@@ -108,6 +112,7 @@ const authSlice = createSlice({
         s.loading = false;
         s.error = a.payload;
       })
+      // Fetch profile cases
       .addCase(fetchProfile.pending, (s) => {
         s.loading = true;
         s.error = null;
@@ -120,9 +125,35 @@ const authSlice = createSlice({
       .addCase(fetchProfile.rejected, (s, a) => {
         s.loading = false;
         s.error = a.payload;
+      })
+      // Request OTP cases
+      .addCase(requestOtpThunk.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(requestOtpThunk.fulfilled, (s) => {
+        s.loading = false;
+        s.error = null;
+      })
+      .addCase(requestOtpThunk.rejected, (s, a) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
+      // Verify OTP cases
+      .addCase(verifyOtpThunk.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(verifyOtpThunk.fulfilled, (s) => {
+        s.loading = false;
+        s.error = null;
+      })
+      .addCase(verifyOtpThunk.rejected, (s, a) => {
+        s.loading = false;
+        s.error = a.payload;
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,114 +1,52 @@
-import bcrypt from 'bcrypt';
-import { User, Otp } from '../models/index.js';
-import { sendOtpEmail } from '../services/emailService.js';
 import { handleLogin } from '../services/userService.js';
+import { 
+  requestRegistrationOtp, 
+  verifyRegistrationOtp, 
+  requestPasswordResetOtp, 
+  resetPasswordWithOtp 
+} from '../services/authService.js';
 
-export const requestOtp = async (req, res) => {
+export const registerRequestOtp = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: 'Email đã tồn tại' });
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await Otp.create({ email, otp, expiresAt });
-
-    await sendOtpEmail(email, otp);
-
-    res.json({ message: 'OTP đã gửi tới email' });
+    const result = await requestRegistrationOtp(email, password);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
-export const verifyOtp = async (req, res) => {
+export const registerVerifyOtp = async (req, res) => {
   try {
     const { username, email, otp, password, phone } = req.body;
-
-    const otpRecord = await Otp.findOne({ email, otp });
-    if (!otpRecord)
-      return res.status(400).json({ message: 'OTP không hợp lệ' });
-
-    if (otpRecord.expiresAt < new Date()) {
-      return res.status(400).json({ message: 'OTP đã hết hạn' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await User.create({ username, email, password: hashedPassword, phone });
-
-    await Otp.deleteMany({ email });
-
-    res.json({ message: 'Đăng ký thành công' });
+    const result = await verifyRegistrationOtp(username, email, otp, password, phone);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
-export const createOtp = async (req, res) => {
+export const forgotPasswordRequestOtp = async (req, res) => {
   try {
     const { email } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại' });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-    await Otp.deleteMany({ email });
-
-    await Otp.create({ email, otp, expiresAt });
-
-    await sendOtpEmail(email, otp);
-
-    return res.json({ message: 'OTP đã được gửi về email' });
+    const result = await requestPasswordResetOtp(email);
+    res.json(result);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
-export const sendPassword = async (req, res) => {
+export const forgotPasswordReset = async (req, res) => {
   try {
     const { email, otp } = req.body;
-
-    const otpRecord = await Otp.findOne({ email, otp });
-    if (!otpRecord) {
-      return res.status(400).json({ message: 'OTP không hợp lệ' });
-    }
-
-    if (otpRecord.expiresAt < new Date()) {
-      return res.status(400).json({ message: 'OTP đã hết hạn' });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại' });
-    }
-
-    const newPassword = Math.random().toString(36).slice(-8);
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    user.password = hashedPassword;
-    await user.save();
-
-    await sendOtpEmail(email, `Mật khẩu mới của bạn là: ${newPassword}`);
-
-    await Otp.deleteMany({ email });
-
-    return res.json({ message: 'Mật khẩu mới đã được gửi về email' });
+    const result = await resetPasswordWithOtp(email, otp);
+    res.json(result);
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
-export const userLogin = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const data = await handleLogin(email, password);

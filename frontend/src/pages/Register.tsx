@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import FormInput from '../components/FormInput';
 import Button from '../components/Button';
@@ -6,7 +6,7 @@ import OtpInput from '../components/OtpInput';
 import type { RegisterData } from '../types/auth';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { requestOtpThunk, verifyOtpThunk } from '../store/slices/authSlice';
+import { requestOtpThunk, verifyOtpThunk, clearError } from '../store/slices/authSlice';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -22,21 +22,35 @@ const Register: React.FC = () => {
   });
   const [otp, setOtp] = useState<string>('');
 
+  // Clear error when component mounts or step changes
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch, step]);
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleRequestOtp = async () => {
+    // Basic validation
+    if (!formData.username || !formData.email || !formData.password || !formData.phone) {
+      alert('Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
     const resultAction = await dispatch(requestOtpThunk(formData));
     if (requestOtpThunk.fulfilled.match(resultAction)) {
       alert('OTP đã gửi tới email');
       setStep(2);
-    } else {
-      alert(error || 'Gửi OTP thất bại');
     }
   };
 
   const handleVerifyOtp = async () => {
+    if (!otp) {
+      alert('Vui lòng nhập OTP');
+      return;
+    }
+
     const resultAction = await dispatch(verifyOtpThunk({ ...formData, otp }));
     if (verifyOtpThunk.fulfilled.match(resultAction)) {
       alert('Đăng ký thành công');
@@ -44,8 +58,6 @@ const Register: React.FC = () => {
       setFormData({ username: '', email: '', password: '', phone: '' });
       setOtp('');
       navigate('/login');
-    } else {
-      alert(error || 'Xác thực OTP thất bại');
     }
   };
 
@@ -54,7 +66,7 @@ const Register: React.FC = () => {
       <div className="w-full max-w-md p-6 border rounded-2xl shadow-lg bg-white">
         {step === 1 ? (
           <>
-            <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">Đăng Ký</h2>
             <FormInput
               label="Username"
               name="username"
@@ -78,7 +90,7 @@ const Register: React.FC = () => {
             <FormInput
               label="Phone"
               name="phone"
-              type="phone"
+              type="tel"
               value={formData.phone}
               onChange={handleChange}
             />
@@ -87,13 +99,13 @@ const Register: React.FC = () => {
               onClick={handleRequestOtp}
               disabled={loading}
             >
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? 'Đang gửi...' : 'Gửi OTP'}
             </Button>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2 text-center">{error.message || error}</p>}
           </>
         ) : (
           <>
-            <h2 className="text-2xl font-bold text-center mb-6">Verify OTP</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">Xác Thực OTP</h2>
             <div className="flex justify-center mb-6">
               <OtpInput length={6} onChange={setOtp} />
             </div>
@@ -102,9 +114,9 @@ const Register: React.FC = () => {
               onClick={handleVerifyOtp}
               disabled={loading}
             >
-              {loading ? 'Verifying...' : 'Verify & Register'}
+              {loading ? 'Đang xác thực...' : 'Xác Thực & Đăng Ký'}
             </Button>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
+            {error && <p className="text-red-500 mt-2 text-center">{error.message || error}</p>}
           </>
         )}
       </div>
