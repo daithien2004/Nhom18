@@ -1,17 +1,37 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchProfile } from '../store/slices/authSlice';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchProfile, updateProfileThunk } from "../store/slices/authSlice";
+import { FaEdit } from "react-icons/fa";
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user, loading, error } = useAppSelector((state) => state.auth);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<any>({ gender: "Other" });
 
   useEffect(() => {
     // Fetch profile khi component mount
     dispatch(fetchProfile());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData(user); // copy dữ liệu user vào formData khi user load xong
+    }
+  }, [user]);
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   if (loading) {
     return (
@@ -26,7 +46,7 @@ const ProfilePage: React.FC = () => {
       {/* Header */}
       <header className="flex justify-between items-center mb-10">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           Back to Home
@@ -38,6 +58,12 @@ const ProfilePage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800">Profile</h2>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="text-blue-500 hover:text-blue-700 flex items-center gap-2"
+            >
+              <FaEdit /> {isEditing ? "Cancel" : "Edit"}
+            </button>
           </div>
 
           {/* Avatar Section */}
@@ -64,7 +90,17 @@ const ProfilePage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Username
               </label>
-              <p className="p-3 bg-gray-50 rounded-lg">{user?.username}</p>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username || ""}
+                  onChange={handleChange}
+                  className="p-3 border rounded-lg w-full"
+                />
+              ) : (
+                <p className="p-3 bg-gray-50 rounded-lg">{user?.username}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -81,7 +117,7 @@ const ProfilePage: React.FC = () => {
                 Phone
               </label>
               <p className="p-3 bg-gray-50 rounded-lg">
-                {user?.phone || 'Not provided'}
+                {user?.phone || "Not provided"}
               </p>
             </div>
 
@@ -90,9 +126,22 @@ const ProfilePage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Gender
               </label>
-              <p className="p-3 bg-gray-50 rounded-lg capitalize">
-                {user?.gender || 'Not specified'}
-              </p>
+              {isEditing ? (
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="p-3 border rounded-lg w-full"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              ) : (
+                <p className="p-3 bg-gray-50 rounded-lg capitalize">
+                  {user?.gender || "Not specified"}
+                </p>
+              )}
             </div>
 
             {/* Birthday */}
@@ -100,11 +149,21 @@ const ProfilePage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Birthday
               </label>
-              <p className="p-3 bg-gray-50 rounded-lg">
-                {user?.birthday
-                  ? new Date(user.birthday).toLocaleDateString()
-                  : 'Not provided'}
-              </p>
+              {isEditing ? (
+                <input
+                  type="date"
+                  name="birthday"
+                  value={formData.birthday || ""}
+                  onChange={handleChange}
+                  className="p-3 border rounded-lg w-full"
+                />
+              ) : (
+                <p className="p-3 bg-gray-50 rounded-lg">
+                  {user?.birthday
+                    ? new Date(user.birthday).toLocaleDateString()
+                    : "Not provided"}
+                </p>
+              )}
             </div>
 
             {/* Verification Status */}
@@ -116,11 +175,11 @@ const ProfilePage: React.FC = () => {
                 <span
                   className={`px-2 py-1 rounded-full text-xs ${
                     user?.isVerified
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {user?.isVerified ? 'Verified' : 'Not Verified'}
+                  {user?.isVerified ? "Verified" : "Not Verified"}
                 </span>
               </p>
             </div>
@@ -131,9 +190,18 @@ const ProfilePage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Bio
             </label>
-            <p className="p-3 bg-gray-50 rounded-lg min-h-[100px]">
-              {user?.bio || 'No bio provided'}
-            </p>
+            {isEditing ? (
+              <textarea
+                name="bio"
+                value={formData.bio || ""}
+                onChange={handleChange}
+                className="p-3 border rounded-lg w-full min-h-[100px]"
+              />
+            ) : (
+              <p className="p-3 bg-gray-50 rounded-lg min-h-[100px]">
+                {user?.bio || "No bio provided"}
+              </p>
+            )}
           </div>
 
           {/* Account Info */}
@@ -147,7 +215,7 @@ const ProfilePage: React.FC = () => {
                 <span className="ml-2 text-gray-800">
                   {user?.createdAt
                     ? new Date(user.createdAt).toLocaleDateString()
-                    : 'N/A'}
+                    : "N/A"}
                 </span>
               </div>
               <div>
@@ -155,11 +223,33 @@ const ProfilePage: React.FC = () => {
                 <span className="ml-2 text-gray-800">
                   {user?.updatedAt
                     ? new Date(user.updatedAt).toLocaleDateString()
-                    : 'N/A'}
+                    : "N/A"}
                 </span>
               </div>
             </div>
           </div>
+          {isEditing && (
+            <div className="mt-6 flex justify-end gap-4">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: gọi API update profile
+                  console.log("Updated Data:", formData);
+                  dispatch(updateProfileThunk(formData));
+
+                  setIsEditing(false);
+                }}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+              >
+                Save
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,63 +1,81 @@
 // src/store/slices/authSlice.ts
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   login,
   getMe,
   requestOtp,
   verifyOtp,
-} from '../../services/authService';
-import type { RegisterData } from '../../types/auth';
+  updateProfile,
+} from "../../services/authService";
+import type { RegisterData, UserProfile } from "../../types/auth";
 
 // login thunk
 export const loginThunk = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async (dto: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const result = await login(dto.email, dto.password); // { accessToken, user }
       // 👉 lưu accessToken vào localStorage ngay khi login thành công
-      localStorage.setItem('accessToken', result.accessToken);
+      localStorage.setItem("accessToken", result.accessToken);
       return result;
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Login failed');
+      return rejectWithValue(err?.response?.data || "Login failed");
     }
   }
 );
 
 // fetch profile thunk
 export const fetchProfile = createAsyncThunk(
-  'auth/fetchProfile',
+  "auth/fetchProfile",
   async (_, { rejectWithValue }) => {
     try {
       const result = await getMe(); // { user }
       return result;
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Fetch profile failed');
+      return rejectWithValue(err?.response?.data || "Fetch profile failed");
+    }
+  }
+);
+// update profile thunk
+export const updateProfileThunk = createAsyncThunk(
+  "users/update-profile",
+  async (
+    updates: Partial<
+      Pick<UserProfile, "phone" | "gender" | "birthday" | "bio">
+    >,
+    { rejectWithValue }
+  ) => {
+    try {
+      const result = await updateProfile(updates); // { message, user }
+      return result.user; // trả về user mới
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data || "Update profile failed");
     }
   }
 );
 
 // Gửi OTP cho đăng ký
 export const requestOtpThunk = createAsyncThunk(
-  'auth/requestOtp',
+  "auth/requestOtp",
   async (data: RegisterData, { rejectWithValue }) => {
     try {
       const res = await requestOtp(data);
       return res;
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Request OTP failed');
+      return rejectWithValue(err?.response?.data || "Request OTP failed");
     }
   }
 );
 
 // Xác thực OTP cho đăng ký
 export const verifyOtpThunk = createAsyncThunk(
-  'auth/verifyOtp',
+  "auth/verifyOtp",
   async (data: RegisterData & { otp: string }, { rejectWithValue }) => {
     try {
       const res = await verifyOtp(data);
       return res;
     } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Verify OTP failed');
+      return rejectWithValue(err?.response?.data || "Verify OTP failed");
     }
   }
 );
@@ -73,14 +91,14 @@ type AuthState = {
 // 👉 Lấy accessToken từ localStorage khi app load lại
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  accessToken: localStorage.getItem("accessToken"),
+  isAuthenticated: !!localStorage.getItem("accessToken"),
   loading: false,
   error: null,
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     logout(state) {
@@ -89,7 +107,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       // 👉 clear token khi logout
-      localStorage.removeItem('accessToken');
+      localStorage.removeItem("accessToken");
     },
     clearError(state) {
       state.error = null;
@@ -149,6 +167,19 @@ const authSlice = createSlice({
         s.error = null;
       })
       .addCase(verifyOtpThunk.rejected, (s, a) => {
+        s.loading = false;
+        s.error = a.payload;
+      })
+      // update profile 👇
+      .addCase(updateProfileThunk.pending, (s) => {
+        s.loading = true;
+        s.error = null;
+      })
+      .addCase(updateProfileThunk.fulfilled, (s, a) => {
+        s.loading = false;
+        s.user = a.payload; // cập nhật user mới
+      })
+      .addCase(updateProfileThunk.rejected, (s, a) => {
         s.loading = false;
         s.error = a.payload;
       });

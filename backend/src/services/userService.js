@@ -35,3 +35,37 @@ export const handleLogin = async (email, password) => {
     },
   };
 };
+
+/**
+ * Update user profile
+ * @param {string} userId - ID của user (lấy từ JWT)
+ * @param {object} updates - { username, gender, birthday, bio }
+ */
+export const updateProfile = async (userId, updates) => {
+  try {
+    // chỉ cho phép cập nhật 4 trường này
+    const allowedFields = ["username", "gender", "birthday", "bio"];
+    const updateData = {};
+
+    allowedFields.forEach((field) => {
+      if (updates[field] !== undefined) {
+        updateData[field] = updates[field];
+      }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      return { error: "No valid fields to update" };
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true }
+    ).select("-password");
+
+    return updatedUser;
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+};
