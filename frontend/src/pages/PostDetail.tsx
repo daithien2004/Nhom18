@@ -12,6 +12,17 @@ const PostDetailPage = () => {
     (state) => state.post
   );
   const [commentText, setCommentText] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const goPrev = () => {
+    if (!postDetail || postDetail.images.length === 0) return;
+    setCurrentImageIndex((idx) => (idx - 1 + postDetail.images.length) % postDetail.images.length);
+  };
+
+  const goNext = () => {
+    if (!postDetail || postDetail.images.length === 0) return;
+    setCurrentImageIndex((idx) => (idx + 1) % postDetail.images.length);
+  };
 
   useEffect(() => {
     if (postId) dispatch(fetchPostDetail(postId));
@@ -39,14 +50,52 @@ const PostDetailPage = () => {
         ✕
       </button>
 
-      {/* LEFT: Image */}
-      <div className="flex-1 flex items-center justify-center bg-black">
+      {/* LEFT: Image swiper */}
+      <div className="flex-1 flex items-center justify-center bg-black relative select-none">
         {postDetail.images.length > 0 && (
-          <img
-            src={postDetail.images[0]}
-            alt="post"
-            className="max-h-screen max-w-full object-contain"
-          />
+          <>
+            <img
+              src={postDetail.images[currentImageIndex]}
+              alt="post"
+              className="max-h-screen max-w-full object-contain"
+            />
+
+            {postDetail.images.length > 1 && (
+              <>
+                {/* Prev button */}
+                <button
+                  onClick={goPrev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+
+                {/* Next button */}
+                <button
+                  onClick={goNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+
+                {/* Dots */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                  {postDetail.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        i === currentImageIndex ? 'bg-white' : 'bg-white/40'
+                      }`}
+                      aria-label={`Go to image ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
 
