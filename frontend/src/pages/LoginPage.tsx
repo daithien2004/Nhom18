@@ -1,9 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { FormLoginSchema, type formLogin } from '../schemas/FormLoginSchema';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginThunk } from '../store/slices/authSlice';
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { FormLoginSchema, type formLogin } from "../schemas/FormLoginSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { loginThunk } from "../store/slices/authSlice";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,8 +16,8 @@ const LoginPage = () => {
     formState: { errors, isDirty, isValid },
   } = useForm<formLogin>({
     resolver: zodResolver(FormLoginSchema),
-    defaultValues: { email: 'tuanthanh07082004@gmail.com', password: '123456' },
-    mode: 'onChange',
+    defaultValues: { email: "tuanthanh07082004@gmail.com", password: "123456" },
+    mode: "onChange",
   });
 
   const onSubmit = async (data: formLogin) => {
@@ -26,10 +26,10 @@ const LoginPage = () => {
     );
 
     if (loginThunk.fulfilled.match(resultAction)) {
-      alert('Đăng nhập thành công!');
-      navigate('/');
+      alert("Đăng nhập thành công!");
+      navigate("/");
     } else {
-      alert(error || 'Đăng nhập thất bại!');
+      alert(error || "Đăng nhập thất bại!");
     }
   };
 
@@ -52,7 +52,7 @@ const LoginPage = () => {
           <label>Email </label>
           <input
             placeholder="Email"
-            {...register('email')}
+            {...register("email")}
             className="rounded-md mb-3 shadow-sm p-3 px-4 outline-0"
           />
           {errors.email && (
@@ -64,7 +64,7 @@ const LoginPage = () => {
           <input
             type="password"
             placeholder="Password"
-            {...register('password')}
+            {...register("password")}
             className="border-0 p-3 px-4 rounded-md mb-3 shadow-sm outline-0"
           />
           {errors.password && (
@@ -100,16 +100,16 @@ const LoginPage = () => {
           <button
             type="submit"
             className="cursor-pointer bg-blue-500 rounded-2xl text-white py-2 hover:bg-blue-800 disabled:opacity-50"
-            disabled={!isDirty || !isValid || loading}
+            disabled={loading}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
 
           {/* Error */}
           {error && <p className="text-red-500">{error}</p>}
 
           <label>
-            Don't have an account? Register{' '}
+            Don't have an account? Register{" "}
             <Link to="/register" className="text-blue-700 hover:text-red-500">
               here
             </Link>

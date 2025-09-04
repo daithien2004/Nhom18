@@ -1,0 +1,207 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPostDetail, clearPostDetail, toggleLikeDetail } from '../store/slices/postSlice';
+import instance from '../api/axiosInstant';
+
+const PostDetailPage = () => {
+  const { postId } = useParams<{ postId: string }>();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { postDetail, isLoading, isError } = useAppSelector(
+    (state) => state.post
+  );
+  const [commentText, setCommentText] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const goPrev = () => {
+    if (!postDetail || postDetail.images.length === 0) return;
+    setCurrentImageIndex((idx) => (idx - 1 + postDetail.images.length) % postDetail.images.length);
+  };
+
+  const goNext = () => {
+    if (!postDetail || postDetail.images.length === 0) return;
+    setCurrentImageIndex((idx) => (idx + 1) % postDetail.images.length);
+  };
+
+  useEffect(() => {
+    if (postId) dispatch(fetchPostDetail(postId));
+    return () => {
+      dispatch(clearPostDetail());
+    };
+  }, [dispatch, postId]);
+
+  if (isLoading) return <p>Đang tải bài viết...</p>;
+  if (isError) return <p>Lỗi khi tải bài viết.</p>;
+  if (!postDetail) return <p>Không tìm thấy bài viết.</p>;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex z-50">
+      {/* Nút đóng */}
+      <button
+        onClick={() => navigate('/')}
+        className="cursor-pointer absolute top-4 right-4 
+             w-10 h-10 flex items-center justify-center
+             rounded-full bg-white bg-opacity-80 shadow-lg
+             text-gray-800 text-3xl font-bold
+             hover:bg-gray-300
+             transition duration-200 "
+      >
+        ✕
+      </button>
+
+      {/* LEFT: Image swiper */}
+      <div className="flex-1 flex items-center justify-center bg-black relative select-none">
+        {postDetail.images.length > 0 && (
+          <>
+            <img
+              src={postDetail.images[currentImageIndex]}
+              alt="post"
+              className="max-h-screen max-w-full object-contain"
+            />
+
+            {postDetail.images.length > 1 && (
+              <>
+                {/* Prev button */}
+                <button
+                  onClick={goPrev}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+
+                {/* Next button */}
+                <button
+                  onClick={goNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+
+                {/* Dots */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                  {postDetail.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
+                      className={`w-2.5 h-2.5 rounded-full ${
+                        i === currentImageIndex ? 'bg-white' : 'bg-white/40'
+                      }`}
+                      aria-label={`Go to image ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* RIGHT: Content */}
+      <div className="px-4 w-[500px] bg-white flex flex-col justify-between max-h-screen">
+        {/* Header */}
+        <div className="flex items-center px-4 py-3 border-b border-gray-200">
+          <img
+            src={postDetail.author.avatar || '/default-avatar.png'}
+            alt="avatar"
+            className="w-10 h-10 rounded-full"
+          />
+          <div className="ml-3">
+            <p className="font-semibold">{postDetail.author.username}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(postDetail.createdAt).toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-4 py-3 border-b border-gray-200">
+          <p className="text-gray-800">{postDetail.content}</p>
+        </div>
+
+        {/* Stats */}
+        <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex justify-between">
+          <span>👍 {postDetail.likeCount}</span>
+          <span>
+            {postDetail.commentCount} bình luận • {postDetail.shareCount} chia
+            sẻ
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-around text-gray-600 text-sm py-2 border-b border-gray-200">
+          <button onClick={() => postId && dispatch(toggleLikeDetail(postId))} className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
+            <span>👍</span> <span>{postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}</span>
+          </button>
+          <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
+            <span>💬</span> <span>Bình luận</span>
+          </button>
+          <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
+            <span>🔄</span> <span>Chia sẻ</span>
+          </button>
+        </div>
+
+        {/* Comments */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          {postDetail.comments.length === 0 ? (
+            <p className="text-gray-500 text-sm">Chưa có bình luận nào.</p>
+          ) : (
+            postDetail.comments.map((comment: any) => (
+              <div key={comment._id} className="flex space-x-3">
+                <img
+                  src={comment.author.avatar || '/default-avatar.png'}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full"
+                />
+                <div className="bg-gray-100 px-3 py-2 rounded-lg">
+                  <p className="text-sm font-semibold">
+                    {comment.author.username}
+                  </p>
+                  <p className="text-gray-700 text-sm">{comment.content}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Comment Input */}
+        <div className="px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
+          <img
+            src={'/default-avatar.png'}
+            alt="avatar"
+            className="w-8 h-8 rounded-full"
+          />
+          <input
+            type="text"
+            placeholder="Viết bình luận..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter' && postId && commentText.trim()) {
+                try {
+                  await instance.post(`/posts/${postId}/comments`, { content: commentText.trim() });
+                  // Optimistically update list and count
+                  // Note: We directly mutate UI here; alternatively, refetch detail
+                  dispatch(
+                    fetchPostDetail(postId)
+                  );
+                  setCommentText('');
+                } catch (err) {
+                  // no-op
+                }
+              }
+            }}
+            className="flex-1 bg-gray-100 px-3 py-2 rounded-full text-sm outline-none"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PostDetailPage;
