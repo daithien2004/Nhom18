@@ -8,7 +8,6 @@ const postSchema = new Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
     views: { type: Number, default: 0 }, // thống kê lượt xem
-    isPinned: { type: Boolean, default: false }, // đánh dấu "đáng chú ý"
     shares: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }

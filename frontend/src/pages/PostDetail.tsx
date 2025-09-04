@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchPostDetail, clearPostDetail } from "../store/slices/postSlice";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPostDetail, clearPostDetail, toggleLikeDetail } from '../store/slices/postSlice';
+import instance from '../api/axiosInstant';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -10,6 +11,7 @@ const PostDetailPage = () => {
   const { postDetail, isLoading, isError } = useAppSelector(
     (state) => state.post
   );
+  const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
     if (postId) dispatch(fetchPostDetail(postId));
@@ -26,7 +28,7 @@ const PostDetailPage = () => {
     <div className="fixed inset-0 bg-black bg-opacity-90 flex z-50">
       {/* Nút đóng */}
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate('/')}
         className="cursor-pointer absolute top-4 right-4 
              w-10 h-10 flex items-center justify-center
              rounded-full bg-white bg-opacity-80 shadow-lg
@@ -53,7 +55,7 @@ const PostDetailPage = () => {
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b border-gray-200">
           <img
-            src={postDetail.author.avatar || "/default-avatar.png"}
+            src={postDetail.author.avatar || '/default-avatar.png'}
             alt="avatar"
             className="w-10 h-10 rounded-full"
           />
@@ -81,8 +83,8 @@ const PostDetailPage = () => {
 
         {/* Actions */}
         <div className="flex justify-around text-gray-600 text-sm py-2 border-b border-gray-200">
-          <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
-            <span>👍</span> <span>Thích</span>
+          <button onClick={() => postId && dispatch(toggleLikeDetail(postId))} className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
+            <span>👍</span> <span>{postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}</span>
           </button>
           <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
             <span>💬</span> <span>Bình luận</span>
@@ -100,7 +102,7 @@ const PostDetailPage = () => {
             postDetail.comments.map((comment: any) => (
               <div key={comment._id} className="flex space-x-3">
                 <img
-                  src={comment.author.avatar || "/default-avatar.png"}
+                  src={comment.author.avatar || '/default-avatar.png'}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />
@@ -121,13 +123,30 @@ const PostDetailPage = () => {
         {/* Comment Input */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
           <img
-            src={"/default-avatar.png"}
+            src={'/default-avatar.png'}
             alt="avatar"
             className="w-8 h-8 rounded-full"
           />
           <input
             type="text"
             placeholder="Viết bình luận..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter' && postId && commentText.trim()) {
+                try {
+                  await instance.post(`/posts/${postId}/comments`, { content: commentText.trim() });
+                  // Optimistically update list and count
+                  // Note: We directly mutate UI here; alternatively, refetch detail
+                  dispatch(
+                    fetchPostDetail(postId)
+                  );
+                  setCommentText('');
+                } catch (err) {
+                  // no-op
+                }
+              }
+            }}
             className="flex-1 bg-gray-100 px-3 py-2 rounded-full text-sm outline-none"
           />
         </div>

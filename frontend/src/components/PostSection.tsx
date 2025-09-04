@@ -25,6 +25,29 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
     }
   };
 
+  const toggleLike = async (e: React.MouseEvent, postId: string) => {
+    e.stopPropagation();
+    // optimistic update
+    setPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId
+          ? { ...p, likes: p.likes.includes('me') ? p.likes.filter((id) => id !== 'me') : [...p.likes, 'me'] }
+          : p
+      )
+    );
+    try {
+      const res = await instance.post(`/posts/${postId}/like`);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId ? { ...p, likes: new Array(res.data.likeCount).fill('x') } : p
+        )
+      );
+    } catch (err) {
+      // revert if error by refetching
+      fetchPosts();
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
   }, [tab]);
@@ -74,7 +97,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
 
           {/* Action bar */}
           <div className="flex justify-around items-center mt-3 border-t border-gray-200 pt-2 text-gray-600">
-            <button className="flex items-center space-x-1 hover:text-blue-600">
+            <button onClick={(e) => toggleLike(e, post._id)} className="flex items-center space-x-1 hover:text-blue-600">
               👍 {post.likes.length}
             </button>
             <button className="flex items-center space-x-1 hover:text-blue-600">

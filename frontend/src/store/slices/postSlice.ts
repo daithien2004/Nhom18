@@ -15,6 +15,14 @@ export const fetchPostDetail = createAsyncThunk(
   }
 );
 
+export const toggleLikeDetail = createAsyncThunk(
+  "posts/toggleLikeDetail",
+  async (postId: string) => {
+    const res = await instance.post(`/posts/${postId}/like`);
+    return res.data as { likeCount: number; isLiked: boolean };
+  }
+);
+
 // =====================
 // Slice
 // =====================
@@ -56,6 +64,12 @@ const postDetailSlice = createSlice({
       state.isLoading = false;
       state.isError = true;
       state.postDetail = null;
+    });
+    builder.addCase(toggleLikeDetail.fulfilled, (state, action) => {
+      if (state.postDetail) {
+        state.postDetail.likeCount = action.payload.likeCount;
+        state.postDetail.isLikedByCurrentUser = action.payload.isLiked;
+      }
     });
   },
 });

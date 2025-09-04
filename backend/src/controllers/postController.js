@@ -2,6 +2,8 @@ import {
   createPostService,
   getPostsService,
   getPostDetailService,
+  toggleLikePostService,
+  createCommentService,
 } from "../services/postService.js";
 
 export const createPost = async (req, res) => {
@@ -33,6 +35,29 @@ export const getPostDetail = async (req, res, next) => {
     const userId = req.user.id;
     const post = await getPostDetailService(postId, userId);
     res.status(200).json(post);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const toggleLikePost = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+    const result = await toggleLikePostService(postId, userId);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createComment = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.id;
+    const { content } = req.body;
+    const comment = await createCommentService({ postId, userId, content });
+    res.status(201).json(comment);
   } catch (error) {
     next(error);
   }

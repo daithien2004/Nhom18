@@ -9,9 +9,16 @@ export type PostDetail = {
   content: string;
   images: string[];
   likes: string[]; // mảng ObjectId user dạng string
-  comments: string[]; // mảng ObjectId comment dạng string
+  comments: Array<{
+    _id: string;
+    content: string;
+    author: {
+      username: string;
+      avatar: string;
+    };
+    createdAt: string;
+  }>;
   views: number;
-  isPinned: boolean;
   shares: string[]; // mảng ObjectId user dạng string
   createdAt: string;
   updatedAt: string;
