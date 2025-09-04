@@ -71,3 +71,29 @@ export const updateProfile = async (
   );
   return response.data;
 };
+
+export const updateAvatar = async (file: File): Promise<any> => {
+  const URL_API = "/users/update-avatar";
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const res = await instance.post(URL_API, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+};
+
+export const updateCoverPhoto = async (file: File): Promise<any> => {
+  const URL_API = "/users/update-cover";
+  const formData = new FormData();
+  formData.append("coverPhoto", file);
+
+  const res = await instance.post(URL_API, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+};

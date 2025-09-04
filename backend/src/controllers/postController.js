@@ -2,7 +2,7 @@ import {
   createPostService,
   getPostsService,
   getPostByIdService,
-} from '../services/postService.js';
+} from "../services/postService.js";
 
 export const createPost = async (req, res) => {
   try {

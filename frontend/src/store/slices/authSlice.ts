@@ -6,6 +6,8 @@ import {
   requestOtp,
   verifyOtp,
   updateProfile,
+  updateAvatar,
+  updateCoverPhoto,
 } from "../../services/authService";
 import type { RegisterData, UserProfile } from "../../types/auth";
 
@@ -79,6 +81,36 @@ export const verifyOtpThunk = createAsyncThunk(
     }
   }
 );
+
+export const updateAvatarThunk = createAsyncThunk<
+  UserProfile,
+  File,
+  { rejectValue: string }
+>("auth/updateAvatar", async (file, { rejectWithValue }) => {
+  try {
+    const res = await updateAvatar(file);
+    return res.user;
+  } catch (err: any) {
+    return rejectWithValue(
+      err.response?.data?.message || "Upload avatar failed"
+    );
+  }
+});
+
+export const updateCoverPhotoThunk = createAsyncThunk<
+  UserProfile,
+  File,
+  { rejectValue: string }
+>("auth/updateCoverPhoto", async (file, { rejectWithValue }) => {
+  try {
+    const res = await updateCoverPhoto(file);
+    return res.user;
+  } catch (err: any) {
+    return rejectWithValue(
+      err.response?.data?.message || "Upload cover photo failed"
+    );
+  }
+});
 
 type AuthState = {
   user: any;
@@ -182,6 +214,19 @@ const authSlice = createSlice({
       .addCase(updateProfileThunk.rejected, (s, a) => {
         s.loading = false;
         s.error = a.payload;
+      })
+      .addCase(updateAvatarThunk.fulfilled, (state, action) => {
+        state.user = {
+          ...(state.user || {}), // đảm bảo luôn là object
+          ...(action.payload || {}), // merge payload nếu có
+        };
+      })
+
+      .addCase(updateCoverPhotoThunk.fulfilled, (state, action) => {
+        state.user = {
+          ...(state.user || {}), // tránh undefined
+          ...(action.payload || {}), // merge payload nếu có
+        };
       });
   },
 });

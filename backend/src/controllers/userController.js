@@ -1,5 +1,5 @@
 import { User } from "../models/index.js";
-import { updateProfile } from "../services/userService.js";
+import { updateProfile, updateUserImage } from "../services/userService.js";
 
 // Lấy thông tin profile của user hiện tại
 export const getProfile = async (req, res) => {
@@ -51,5 +51,36 @@ export const handleUpdateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error in handleUpdateProfile:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+export const updateAvatar = async (req, res) => {
+  try {
+    const user = await updateUserImage(req.user.id, req.file, "avatar");
+    res.json({
+      success: true,
+      message: "Cập nhật avatar thành công",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const updateCoverPhoto = async (req, res) => {
+  try {
+    const user = await updateUserImage(req.user.id, req.file, "coverPhoto");
+    res.json({
+      success: true,
+      message: "Cập nhật ảnh bìa thành công",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

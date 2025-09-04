@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchProfile, updateProfileThunk } from "../store/slices/authSlice";
+import {
+  fetchProfile,
+  updateProfileThunk,
+  updateAvatarThunk,
+  updateCoverPhotoThunk,
+} from "../store/slices/authSlice";
 import { FaEdit } from "react-icons/fa";
 
 const ProfilePage: React.FC = () => {
@@ -66,21 +71,96 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
 
-          {/* Avatar Section */}
-          <div className="mb-8 text-center">
-            <div className="w-32 h-32 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-              {user?.avatar ? (
+          {/* Cover Photo + Avatar Section */}
+          <div className="relative w-full">
+            {/* Cover Photo */}
+            <div className="h-40 w-full bg-gray-300 overflow-hidden relative">
+              {user?.coverPhoto ? (
                 <img
-                  src={user.avatar}
-                  alt="Avatar"
-                  className="w-32 h-32 rounded-full object-cover"
+                  src={user.coverPhoto}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-4xl text-gray-500">
-                  {user?.username?.charAt(0)?.toUpperCase()}
-                </span>
+                <img
+                  src="https://cdn.xtmobile.vn/vnt_upload/news/06_2024/hinh-nen-may-tinh-de-thuong-cho-nu-8-xtmobile.jpg"
+                  alt="Default Cover"
+                  className="w-full h-full object-cover"
+                />
               )}
+
+              {/* Button đổi ảnh bìa */}
+              <label className="absolute bottom-2 right-2 bg-white px-3 py-1 rounded-md shadow cursor-pointer hover:bg-gray-100 text-sm">
+                Change Cover
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      dispatch(updateCoverPhotoThunk(e.target.files[0]));
+                    }
+                  }}
+                />
+              </label>
             </div>
+
+            {/* Avatar */}
+            <div className="absolute left-6 -bottom-12">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full border-4 border-white shadow-md ring-1 ring-gray-300 overflow-hidden">
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex items-center justify-center w-full h-full text-3xl text-gray-600 bg-gray-200">
+                      {user?.username?.charAt(0)?.toUpperCase()}
+                    </span>
+                  )}
+                </div>
+
+                {/* Camera Icon for Avatar */}
+                <label className="absolute bottom-0 right-0 translate-x-2 translate-y-2 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        dispatch(updateAvatarThunk(e.target.files[0]));
+                      }
+                    }}
+                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 11a3 3 0 100 6 3 3 0 000-6z"
+                    />
+                  </svg>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 ml-6">
+            <h2 className="text-xl font-bold text-gray-800"></h2>
           </div>
 
           {/* Profile Information */}
