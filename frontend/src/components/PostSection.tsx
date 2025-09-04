@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import instance from '../api/axiosInstant';
-import type { Post } from '../types/auth';
-import type { Tab } from '../types/auth';
+import React, { useEffect, useState } from "react";
+import instance from "../api/axiosInstant";
+import type { Post } from "../types/auth";
+import type { Tab } from "../types/auth";
+import { useNavigate } from "react-router-dom";
 
 interface PostSectionProps {
   tab: Tab;
@@ -10,6 +11,7 @@ interface PostSectionProps {
 const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -17,7 +19,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
       const res = await instance.get(`/posts?type=${tab}&limit=8`);
       setPosts(res.data);
     } catch (error) {
-      console.error('Lỗi khi load bài viết:', error);
+      console.error("Lỗi khi load bài viết:", error);
     } finally {
       setLoading(false);
     }
@@ -33,11 +35,15 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
   return (
     <div className="space-y-6">
       {posts.map((post) => (
-        <div key={post._id} className="bg-white shadow-md rounded-2xl p-4">
+        <div
+          key={post._id}
+          className="bg-white shadow-md rounded-2xl p-4 cursor-pointer"
+          onClick={() => navigate(`/posts/${post._id}`)} // <-- điều hướng khi bấm
+        >
           {/* Header */}
           <div className="flex items-center space-x-3">
             <img
-              src={post.author.avatar || '/default-avatar.png'}
+              src={post.author.avatar || "/default-avatar.png"}
               alt="avatar"
               className="w-10 h-10 rounded-full"
             />

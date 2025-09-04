@@ -1,20 +1,20 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   createPost,
   getPosts,
-  getPostById,
-} from '../controllers/postController.js';
-import auth from '../middlewares/auth.js';
+  getPostDetail,
+} from "../controllers/postController.js";
+import auth from "../middlewares/auth.js";
 
 const router = Router();
 
 // Lấy danh sách bài viết (feed)
-router.get('/', getPosts);
+router.get("/", getPosts);
 
 // Lấy chi tiết 1 bài viết
-router.get('/:id', getPostById);
+router.get("/:postId", auth, getPostDetail);
 
 // Tạo bài viết (cần đăng nhập)
-router.post('/', auth, createPost);
+router.post("/", auth, createPost);
 
 export default router;

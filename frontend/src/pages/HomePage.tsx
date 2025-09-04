@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import PostSection from '../components/PostSection';
-import instance from '../api/axiosInstant';
-import type { Tab } from '../types/auth';
+import React, { useState } from "react";
+import PostSection from "../components/PostSection";
+import instance from "../api/axiosInstant";
+import type { Tab } from "../types/auth";
 
 const HomePage: React.FC = () => {
-  const [tab, setTab] = useState<Tab>('recent');
-  const [content, setContent] = useState('');
+  const [tab, setTab] = useState<Tab>("recent");
+  const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -17,14 +17,14 @@ const HomePage: React.FC = () => {
     const uploadedUrls: string[] = [];
     for (const file of Array.from(files)) {
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append("image", file);
       try {
-        const res = await instance.post('/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        const res = await instance.post("/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
         uploadedUrls.push(res.data.url);
       } catch (err) {
-        console.error('Lỗi khi upload ảnh:', err);
+        console.error("Lỗi khi upload ảnh:", err);
       }
     }
     setImages((prev) => [...prev, ...uploadedUrls]);
@@ -35,12 +35,12 @@ const HomePage: React.FC = () => {
     if (!content && images.length === 0) return;
     try {
       setUploading(true);
-      await instance.post('/posts', { content, images });
-      setContent('');
+      await instance.post("/posts", { content, images });
+      setContent("");
       setImages([]);
       // Reload tab hiện tại
     } catch (error) {
-      console.error('Lỗi khi đăng bài:', error);
+      console.error("Lỗi khi đăng bài:", error);
     } finally {
       setUploading(false);
     }
@@ -106,28 +106,28 @@ const HomePage: React.FC = () => {
             disabled={uploading}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {uploading ? 'Đang đăng...' : 'Đăng bài'}
+            {uploading ? "Đang đăng..." : "Đăng bài"}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex space-x-4 border-b pb-2">
-        {(['recent', 'hot', 'popular', 'pinned'] as Tab[]).map((t) => (
+        {(["recent", "hot", "popular", "pinned"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`px-3 py-1 rounded-full ${
-              tab === t ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+              tab === t ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
             }`}
             onClick={() => setTab(t)}
           >
-            {t === 'recent'
-              ? 'Mới nhất'
-              : t === 'hot'
-              ? 'Hot'
-              : t === 'popular'
-              ? 'Xem nhiều'
-              : 'Đáng chú ý'}
+            {t === "recent"
+              ? "Mới nhất"
+              : t === "hot"
+              ? "Hot"
+              : t === "popular"
+              ? "Xem nhiều"
+              : "Đáng chú ý"}
           </button>
         ))}
       </div>
@@ -137,5 +137,4 @@ const HomePage: React.FC = () => {
     </div>
   );
 };
-
 export default HomePage;

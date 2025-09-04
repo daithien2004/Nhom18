@@ -1,8 +1,8 @@
 import {
   createPostService,
   getPostsService,
-  getPostByIdService,
-} from '../services/postService.js';
+  getPostDetailService,
+} from "../services/postService.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -27,12 +27,13 @@ export const getPosts = async (req, res) => {
   }
 };
 
-export const getPostById = async (req, res) => {
+export const getPostDetail = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const post = await getPostByIdService(id);
-    res.json(post);
+    const { postId } = req.params;
+    const userId = req.user.id;
+    const post = await getPostDetailService(postId, userId);
+    res.status(200).json(post);
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    next(error);
   }
 };
