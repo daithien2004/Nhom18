@@ -64,8 +64,8 @@ export const forgotPasswordReset = async (
 export const updateProfile = async (
   updates: Partial<Pick<UserProfile, "phone" | "gender" | "birthday" | "bio">>
 ): Promise<{ message: string; user: UserProfile }> => {
-  const URL_API = "/users/update-profile";
-  const response = await instance.post<{ message: string; user: UserProfile }>(
+  const URL_API = "/users/me";
+  const response = await instance.put<{ message: string; user: UserProfile }>(
     URL_API,
     updates
   );
@@ -73,11 +73,11 @@ export const updateProfile = async (
 };
 
 export const updateAvatar = async (file: File): Promise<any> => {
-  const URL_API = "/users/update-avatar";
+  const URL_API = "/users/me/avatar";
   const formData = new FormData();
   formData.append("avatar", file);
 
-  const res = await instance.post(URL_API, formData, {
+  const res = await instance.put(URL_API, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -86,11 +86,11 @@ export const updateAvatar = async (file: File): Promise<any> => {
 };
 
 export const updateCoverPhoto = async (file: File): Promise<any> => {
-  const URL_API = "/users/update-cover";
+  const URL_API = "/users/me/cover";
   const formData = new FormData();
   formData.append("coverPhoto", file);
 
-  const res = await instance.post(URL_API, formData, {
+  const res = await instance.put(URL_API, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

@@ -10,18 +10,14 @@ import multer from "multer";
 
 const router = express.Router();
 
-// Thêm route để lấy profile user hiện tại
+// RESTful user routes
 router.get("/me", auth, getProfile);
-router.post("/update-profile", auth, handleUpdateProfile);
+router.put("/me", auth, handleUpdateProfile);
+
 // multer lưu file tạm vào uploads/
 const upload = multer({ dest: "uploads/" });
 
-router.post("/update-avatar", auth, upload.single("avatar"), updateAvatar);
-router.post(
-  "/update-cover",
-  auth,
-  upload.single("coverPhoto"),
-  updateCoverPhoto
-);
+router.put("/me/avatar", auth, upload.single("avatar"), updateAvatar);
+router.put("/me/cover", auth, upload.single("coverPhoto"), updateCoverPhoto);
 
 export default router;
