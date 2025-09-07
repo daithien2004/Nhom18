@@ -5,60 +5,41 @@ import {
   toggleLikePostService,
   createCommentService,
 } from "../services/postService.js";
+import { sendSuccess } from "../utils/response.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 
-export const createPost = async (req, res) => {
-  try {
-    const { content, images } = req.body;
-    const authorId = req.user.id; // từ middleware auth
+export const createPost = asyncHandler(async (req, res) => {
+  const post = await createPostService({ 
+    authorId: req.user.id, 
+    content: req.body.content, 
+    images: req.body.images 
+  });
+  return sendSuccess(res, post, 'Tạo bài viết thành công', 201);
+});
 
-    const post = await createPostService({ authorId, content, images });
-    res.status(201).json(post);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+export const getPosts = asyncHandler(async (req, res) => {
+  const posts = await getPostsService({ 
+    type: req.query.type, 
+    limit: req.query.limit 
+  });
+  return sendSuccess(res, posts, 'Lấy danh sách bài viết thành công');
+});
 
-export const getPosts = async (req, res) => {
-  try {
-    const { type, limit } = req.query;
+export const getPostDetail = asyncHandler(async (req, res) => {
+  const post = await getPostDetailService(req.params.postId, req.user.id);
+  return sendSuccess(res, post, 'Lấy chi tiết bài viết thành công');
+});
 
-    const posts = await getPostsService({ type, limit });
-    res.json(posts);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+export const toggleLikePost = asyncHandler(async (req, res) => {
+  const result = await toggleLikePostService(req.params.postId, req.user.id);
+  return sendSuccess(res, result, 'Thao tác like thành công');
+});
 
-export const getPostDetail = async (req, res, next) => {
-  try {
-    const { postId } = req.params;
-    const userId = req.user.id;
-    const post = await getPostDetailService(postId, userId);
-    res.status(200).json(post);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const toggleLikePost = async (req, res, next) => {
-  try {
-    const { postId } = req.params;
-    const userId = req.user.id;
-    const result = await toggleLikePostService(postId, userId);
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const createComment = async (req, res, next) => {
-  try {
-    const { postId } = req.params;
-    const userId = req.user.id;
-    const { content } = req.body;
-    const comment = await createCommentService({ postId, userId, content });
-    res.status(201).json(comment);
-  } catch (error) {
-    next(error);
-  }
-};
+export const createComment = asyncHandler(async (req, res) => {
+  const comment = await createCommentService({ 
+    postId: req.params.postId, 
+    userId: req.user.id, 
+    content: req.body.content 
+  });
+  return sendSuccess(res, comment, 'Tạo bình luận thành công', 201);
+});

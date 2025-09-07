@@ -14,4 +14,17 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+instance.interceptors.response.use((response) => {
+  const wrapped = response?.data;
+  if (
+    wrapped &&
+    typeof wrapped === 'object' &&
+    'data' in wrapped &&
+    ('success' in wrapped || 'timestamp' in wrapped || 'message' in wrapped)
+  ) {
+    return { ...response, data: (wrapped as any).data };
+  }
+  return response;
+});
+
 export default instance;

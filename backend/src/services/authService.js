@@ -1,17 +1,18 @@
-import { User } from '../models/index.js';
+import * as userRepo from '../repositories/userRepository.js';
 import { sendOtpEmail } from './emailService.js';
-import { 
-  generateOtp, 
-  generateOtpExpiry, 
-  createOtp, 
-  validateOtp, 
-  deleteOtpByEmail 
+import {
+  generateOtp,
+  generateOtpExpiry,
+  createOtp,
+  validateOtp,
+  deleteOtpByEmail,
 } from './otpService.js';
 import { hashPassword, generateAndHashPassword } from './passwordService.js';
+import ApiError from '../utils/apiError.js';
 
 // Kiểm tra email đã tồn tại
 export const checkEmailExists = async (email) => {
-  const existingUser = await User.findOne({ email });
+  const existingUser = await userRepo.findByEmail(email);
   return existingUser !== null;
 };
 
@@ -20,7 +21,7 @@ export const requestRegistrationOtp = async (email, password) => {
   // Kiểm tra email đã tồn tại
   const emailExists = await checkEmailExists(email);
   if (emailExists) {
-    throw new Error('Email đã tồn tại');
+    throw new ApiError(400, 'Email đã tồn tại');
   }
 
   // Tạo OTP mới
@@ -37,22 +38,28 @@ export const requestRegistrationOtp = async (email, password) => {
 };
 
 // Xác thực OTP và tạo user mới
-export const verifyRegistrationOtp = async (username, email, otp, password, phone) => {
+export const verifyRegistrationOtp = async (
+  username,
+  email,
+  otp,
+  password,
+  phone
+) => {
   // Validate OTP
   const otpValidation = await validateOtp(email, otp);
   if (!otpValidation.isValid) {
-    throw new Error(otpValidation.message);
+    throw new ApiError(400, otpValidation.message);
   }
 
   // Hash password
   const hashedPassword = await hashPassword(password);
 
   // Tạo user mới
-  await User.create({ 
-    username, 
-    email, 
-    password: hashedPassword, 
-    phone 
+  await userRepo.createUser({
+    username,
+    email,
+    password: hashedPassword,
+    phone,
   });
 
   // Xóa OTP đã sử dụng
@@ -64,9 +71,9 @@ export const verifyRegistrationOtp = async (username, email, otp, password, phon
 // Tạo OTP cho quên mật khẩu
 export const requestPasswordResetOtp = async (email) => {
   // Kiểm tra user có tồn tại
-  const user = await User.findOne({ email });
+  const user = await userRepo.findByEmail(email);
   if (!user) {
-    throw new Error('Người dùng không tồn tại');
+    throw new ApiError(404, 'Người dùng không tồn tại');
   }
 
   // Tạo OTP mới
@@ -90,13 +97,13 @@ export const resetPasswordWithOtp = async (email, otp) => {
   // Validate OTP
   const otpValidation = await validateOtp(email, otp);
   if (!otpValidation.isValid) {
-    throw new Error(otpValidation.message);
+    throw new ApiError(400, otpValidation.message);
   }
 
   // Kiểm tra user có tồn tại
-  const user = await User.findOne({ email });
+  const user = await userRepo.findByEmail(email);
   if (!user) {
-    throw new Error('Người dùng không tồn tại');
+    throw new ApiError(404, 'Người dùng không tồn tại');
   }
 
   // Tạo password mới và hash
