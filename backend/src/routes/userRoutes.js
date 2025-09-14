@@ -1,18 +1,20 @@
 import express from "express";
 import {
   getProfile,
-  handleUpdateProfile,
+  updateProfile,
   updateAvatar,
   updateCoverPhoto,
 } from "../controllers/userController.js";
 import auth from "../middlewares/auth.js";
 import multer from "multer";
+import { validateBody } from "../middlewares/validation.js";
+import { updateUserSchema } from "../schemas/authSchemas.js";
 
 const router = express.Router();
 
 // RESTful user routes
 router.get("/me", auth, getProfile);
-router.put("/me", auth, handleUpdateProfile);
+router.put("/me", validateBody(updateUserSchema), auth, updateProfile);
 
 // multer lưu file tạm vào uploads/
 const upload = multer({ dest: "uploads/" });

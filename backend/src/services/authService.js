@@ -1,13 +1,7 @@
 import * as userRepo from '../repositories/userRepository.js';
-import { sendOtpEmail } from './emailService.js';
-import {
-  generateOtp,
-  generateOtpExpiry,
-  createOtp,
-  validateOtp,
-  deleteOtpByEmail,
-} from './otpService.js';
-import { hashPassword, generateAndHashPassword } from './passwordService.js';
+import * as emailService from './emailService.js';
+import * as otpService from './otpService.js';
+import * as passwordService from './passwordService.js';
 import ApiError from '../utils/apiError.js';
 
 // Kiểm tra email đã tồn tại
@@ -25,14 +19,14 @@ export const requestRegistrationOtp = async (email, password) => {
   }
 
   // Tạo OTP mới
-  const otp = generateOtp();
-  const expiresAt = generateOtpExpiry();
+  const otp = otpService.generateOtp();
+  const expiresAt = otpService.generateOtpExpiry();
 
   // Lưu OTP vào database
-  await createOtp(email, otp, expiresAt);
+  await otpService.createOtp(email, otp, expiresAt);
 
   // Gửi OTP qua email
-  await sendOtpEmail(email, otp);
+  await emailService.sendOtpEmail(email, otp);
 
   return { message: 'OTP đã gửi tới email' };
 };
@@ -46,13 +40,13 @@ export const verifyRegistrationOtp = async (
   phone
 ) => {
   // Validate OTP
-  const otpValidation = await validateOtp(email, otp);
+  const otpValidation = await otpService.validateOtp(email, otp);
   if (!otpValidation.isValid) {
     throw new ApiError(400, otpValidation.message);
   }
 
   // Hash password
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await passwordService.hashPassword(password);
 
   // Tạo user mới
   await userRepo.createUser({
@@ -63,7 +57,7 @@ export const verifyRegistrationOtp = async (
   });
 
   // Xóa OTP đã sử dụng
-  await deleteOtpByEmail(email);
+  await otpService.deleteOtpByEmail(email);
 
   return { message: 'Đăng ký thành công' };
 };
@@ -77,17 +71,17 @@ export const requestPasswordResetOtp = async (email) => {
   }
 
   // Tạo OTP mới
-  const otp = generateOtp();
-  const expiresAt = generateOtpExpiry();
+  const otp = otpService.generateOtp();
+  const expiresAt = otpService.generateOtpExpiry();
 
   // Xóa OTP cũ nếu có
-  await deleteOtpByEmail(email);
+  await otpService.deleteOtpByEmail(email);
 
   // Lưu OTP mới
-  await createOtp(email, otp, expiresAt);
+  await otpService.createOtp(email, otp, expiresAt);
 
   // Gửi OTP qua email
-  await sendOtpEmail(email, otp);
+  await emailService.sendOtpEmail(email, otp);
 
   return { message: 'OTP đã được gửi về email' };
 };
@@ -95,7 +89,7 @@ export const requestPasswordResetOtp = async (email) => {
 // Reset mật khẩu với OTP
 export const resetPasswordWithOtp = async (email, otp) => {
   // Validate OTP
-  const otpValidation = await validateOtp(email, otp);
+  const otpValidation = await otpService.validateOtp(email, otp);
   if (!otpValidation.isValid) {
     throw new ApiError(400, otpValidation.message);
   }
@@ -107,17 +101,17 @@ export const resetPasswordWithOtp = async (email, otp) => {
   }
 
   // Tạo password mới và hash
-  const { plainPassword, hashedPassword } = await generateAndHashPassword();
+  const { plainPassword, hashedPassword } = await passwordService.generateAndHashPassword();
 
   // Cập nhật password
   user.password = hashedPassword;
   await user.save();
 
   // Gửi password mới qua email
-  await sendOtpEmail(email, `Mật khẩu mới của bạn là: ${plainPassword}`);
+  await emailService.sendOtpEmail(email, `Mật khẩu mới của bạn là: ${plainPassword}`);
 
   // Xóa OTP đã sử dụng
-  await deleteOtpByEmail(email);
+  await otpService.deleteOtpByEmail(email);
 
   return { message: 'Mật khẩu mới đã được gửi về email' };
 };

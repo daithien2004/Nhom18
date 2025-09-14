@@ -2,18 +2,18 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cloudinary from '../config/cloudinary.js';
 import ApiError from '../utils/apiError.js';
-import { comparePassword } from './passwordService.js';
+import * as passwordService from './passwordService.js';
 import * as userRepo from '../repositories/userRepository.js';
 
 dotenv.config();
 
-export const handleLogin = async (email, password) => {
+export const login = async (email, password) => {
   const user = await userRepo.findByEmail(email);
   if (!user) {
     throw new ApiError(401, 'Email hoặc password không đúng');
   }
 
-  const isMatchPassword = await comparePassword(password, user.password);
+  const isMatchPassword = await passwordService.comparePassword(password, user.password);
   if (!isMatchPassword) {
     throw new ApiError(401, 'Email hoặc password không đúng');
   }
@@ -33,16 +33,12 @@ export const handleLogin = async (email, password) => {
  * Update user profile
  */
 export const updateProfile = async (userId, updates) => {
-  const allowedFields = ['username', 'gender', 'birthday', 'bio'];
+  const allowedFields = ['username', 'gender', 'birthday', 'bio', 'phone'];
   const updateData = {};
 
   allowedFields.forEach((field) => {
     if (updates[field] !== undefined) updateData[field] = updates[field];
   });
-
-  if (Object.keys(updateData).length === 0) {
-    throw new ApiError(400, 'No valid fields to update');
-  }
 
   const updatedUser = await userRepo.updateById(userId, updateData);
   if (!updatedUser) throw new ApiError(404, 'User not found');
@@ -77,7 +73,7 @@ export const updateUserImage = async (userId, file, type) => {
 /**
  * Get profile
  */
-export const getUserProfile = async (userId) => {
+export const getProfile = async (userId) => {
   const user = await userRepo.findByIdWithoutPassword(userId);
   if (!user) throw new ApiError(404, 'Không tìm thấy người dùng');
   return user;

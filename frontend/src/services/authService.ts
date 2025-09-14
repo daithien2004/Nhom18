@@ -1,16 +1,12 @@
-import instance from "../api/axiosInstant";
-import type {
-  LoginResponse,
-  RegisterData,
-  ApiResponse,
-  UserProfile,
-} from "../types/auth";
+import instance from '../api/axiosInstant';
+import type { LoginResponse, RegisterData, ApiResponse } from '../types/auth';
+import type { UserProfile } from '../types/user';
 
 export const login = async (
   email: string,
   password: string
 ): Promise<LoginResponse> => {
-  const URL_API = "/auth/login";
+  const URL_API = '/auth/login';
   const data = { email, password };
 
   const res = await instance.post<LoginResponse>(URL_API, data);
@@ -18,7 +14,7 @@ export const login = async (
 };
 
 export const getMe = async (): Promise<{ user: UserProfile }> => {
-  const response = await instance.get<{ user: UserProfile }>("/users/me");
+  const response = await instance.get<{ user: UserProfile }>('/users/me');
   return response.data;
 };
 
@@ -26,7 +22,7 @@ export const getMe = async (): Promise<{ user: UserProfile }> => {
 export const requestOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
-  const URL_API = "/auth/register/request-otp";
+  const URL_API = '/auth/register/request-otp';
   const response = await instance.post(URL_API, data);
   return response.data;
 };
@@ -35,7 +31,7 @@ export const requestOtp = async (
 export const verifyOtp = async (
   data: RegisterData
 ): Promise<ApiResponse<null>> => {
-  const URL_API = "/auth/register/verify-otp";
+  const URL_API = '/auth/register/verify-otp';
   return (await instance.post(URL_API, data)).data;
 };
 
@@ -43,7 +39,7 @@ export const verifyOtp = async (
 export const forgotPasswordRequestOtp = async (
   email: string
 ): Promise<ApiResponse<null>> => {
-  const URL_API = "/auth/forgot-password/request-otp";
+  const URL_API = '/auth/forgot-password/request-otp';
   const response = await instance.post(URL_API, { email });
   return response.data;
 };
@@ -53,7 +49,7 @@ export const forgotPasswordReset = async (
   email: string,
   otp: string
 ): Promise<ApiResponse<null>> => {
-  const URL_API = "/auth/forgot-password/reset";
+  const URL_API = '/auth/forgot-password/reset';
   const response = await instance.post(URL_API, { email, otp });
   return response.data;
 };
@@ -62,9 +58,9 @@ export const forgotPasswordReset = async (
  * @param updates { phone, gender, birthday, bio }
  */
 export const updateProfile = async (
-  updates: Partial<Pick<UserProfile, "phone" | "gender" | "birthday" | "bio">>
+  updates: Partial<Pick<UserProfile, 'phone' | 'gender' | 'birthday' | 'bio'>>
 ): Promise<{ message: string; user: UserProfile }> => {
-  const URL_API = "/users/me";
+  const URL_API = '/users/me';
   const response = await instance.put<{ message: string; user: UserProfile }>(
     URL_API,
     updates
@@ -73,26 +69,26 @@ export const updateProfile = async (
 };
 
 export const updateAvatar = async (file: File): Promise<any> => {
-  const URL_API = "/users/me/avatar";
+  const URL_API = '/users/me/avatar';
   const formData = new FormData();
-  formData.append("avatar", file);
+  formData.append('avatar', file);
 
   const res = await instance.put(URL_API, formData, {
     headers: {
-      "Content-Type": "multipart/form-data",
+      'Content-Type': 'multipart/form-data',
     },
   });
   return res.data;
 };
 
 export const updateCoverPhoto = async (file: File): Promise<any> => {
-  const URL_API = "/users/me/cover";
+  const URL_API = '/users/me/cover';
   const formData = new FormData();
-  formData.append("coverPhoto", file);
+  formData.append('coverPhoto', file);
 
   const res = await instance.put(URL_API, formData, {
     headers: {
-      "Content-Type": "multipart/form-data",
+      'Content-Type': 'multipart/form-data',
     },
   });
   return res.data;

@@ -24,8 +24,6 @@ const auth = (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(`Token verified for user: ${decoded.userId || decoded.id}`);
-
     // Thêm thông tin user vào request để sử dụng ở các middleware tiếp theo
     req.user = decoded;
 

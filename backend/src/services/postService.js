@@ -3,17 +3,11 @@ import { StatusCodes } from 'http-status-codes';
 import * as postRepo from '../repositories/postRepository.js';
 import * as commentRepo from '../repositories/commentRepository.js';
 
-export const createPostService = async ({ authorId, content, images }) => {
-  if (!content && (!images || images.length === 0)) {
-    throw new ApiError(
-      400,
-      'Bài đăng phải có nội dung hoặc ít nhất một hình ảnh.'
-    );
-  }
+export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
 };
 
-export const getPostsService = async ({ type, limit }) => {
+export const getPosts = async ({ type, limit }) => {
   const l = limit ? parseInt(limit) : 20;
   try {
     switch (type) {
@@ -27,12 +21,12 @@ export const getPostsService = async ({ type, limit }) => {
         return await postRepo.findRecentPosts(l);
     }
   } catch (err) {
-    console.error('Error in getPostsService:', err);
+    console.error('Error in getPosts:', err);
     return [];
   }
 };
 
-export const getPostDetailService = async (postId, userId) => {
+export const getPostDetail = async (postId, userId) => {
   const post = await postRepo.findPostAndIncreaseView(postId);
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
@@ -54,7 +48,7 @@ export const getPostDetailService = async (postId, userId) => {
   return post;
 };
 
-export const toggleLikePostService = async (postId, userId) => {
+export const toggleLikePost = async (postId, userId) => {
   const post = await postRepo.findPostById(postId);
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
@@ -74,14 +68,7 @@ export const toggleLikePostService = async (postId, userId) => {
   return { postId: post._id.toString(), isLiked, likeCount: post.likes.length };
 };
 
-export const createCommentService = async ({ postId, userId, content }) => {
-  if (!content || !content.trim()) {
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'Nội dung bình luận không được để trống'
-    );
-  }
-
+export const createComment = async ({ postId, userId, content }) => {
   const post = await postRepo.findPostById(postId);
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');

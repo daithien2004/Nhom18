@@ -9,7 +9,8 @@ import {
   updateAvatar,
   updateCoverPhoto,
 } from '../../services/authService';
-import type { RegisterData, UserProfile } from '../../types/auth';
+import type { RegisterData } from '../../types/auth';
+import type { UserProfile } from '../../types/user';
 
 // login thunk
 export const loginThunk = createAsyncThunk(

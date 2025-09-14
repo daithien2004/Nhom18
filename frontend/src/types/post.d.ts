@@ -29,3 +29,29 @@ export type PostDetail = {
   isLikedByCurrentUser: boolean;
   isSharedByCurrentUser: boolean;
 };
+
+export interface Post {
+  _id: string;
+  content: string;
+  images: string[];
+  author: {
+    username: string;
+    avatar: string;
+  };
+  likes: string[];
+  comments: Comment[];
+  createdAt: string;
+}
+
+export interface Comment {
+  _id: string;
+  content: string;
+  author: {
+    username: string;
+    avatar: string;
+  };
+  likes: string[];
+  createdAt: string;
+}
+
+export type Tab = 'recent' | 'hot' | 'popular' | 'pinned';

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import instance from "../api/axiosInstant";
-import type { Post } from "../types/auth";
-import type { Tab } from "../types/auth";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import instance from '../api/axiosInstant';
+import type { Post } from '../types/post';
+import type { Tab } from '../types/post';
+import { useNavigate } from 'react-router-dom';
+import { Heart, MessageCircle, Share2 } from 'lucide-react';
 
 interface PostSectionProps {
   tab: Tab;
@@ -19,7 +20,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
       const res = await instance.get(`/posts?type=${tab}&limit=8`);
       setPosts(res.data);
     } catch (error) {
-      console.error("Lỗi khi load bài viết:", error);
+      console.error('Lỗi khi load bài viết:', error);
     } finally {
       setLoading(false);
     }
@@ -31,7 +32,12 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
     setPosts((prev) =>
       prev.map((p) =>
         p._id === postId
-          ? { ...p, likes: p.likes.includes('me') ? p.likes.filter((id) => id !== 'me') : [...p.likes, 'me'] }
+          ? {
+              ...p,
+              likes: p.likes.includes('me')
+                ? p.likes.filter((id) => id !== 'me')
+                : [...p.likes, 'me'],
+            }
           : p
       )
     );
@@ -39,7 +45,9 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
       const res = await instance.post(`/posts/${postId}/like`);
       setPosts((prev) =>
         prev.map((p) =>
-          p._id === postId ? { ...p, likes: new Array(res.data.likeCount).fill('x') } : p
+          p._id === postId
+            ? { ...p, likes: new Array(res.data.likeCount).fill('x') }
+            : p
         )
       );
     } catch (err) {
@@ -60,18 +68,20 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
       {posts.map((post) => (
         <div
           key={post._id}
-          className="bg-white shadow-md rounded-2xl p-4 cursor-pointer"
-          onClick={() => navigate(`/posts/${post._id}`)} // <-- điều hướng khi bấm
+          className="bg-white shadow-sm border border-gray-200 rounded-2xl p-4 mb-4 hover:shadow-md transition cursor-pointer"
+          onClick={() => navigate(`/posts/${post._id}`)}
         >
           {/* Header */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || "/default-avatar.png"}
+              src={post.author.avatar || '/default-avatar.png'}
               alt="avatar"
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 rounded-full object-cover"
             />
             <div>
-              <p className="font-semibold">{post.author.username}</p>
+              <p className="font-semibold text-gray-900">
+                {post.author.username}
+              </p>
               <p className="text-xs text-gray-500">
                 {new Date(post.createdAt).toLocaleString()}
               </p>
@@ -79,31 +89,39 @@ const PostSection: React.FC<PostSectionProps> = ({ tab }) => {
           </div>
 
           {/* Content */}
-          <p className="mt-3 text-gray-800">{post.content}</p>
+          <p className="mt-3 text-gray-800 leading-relaxed">{post.content}</p>
 
           {/* Images */}
           {post.images.length > 0 && (
-            <div className="grid grid-cols-2 gap-2 mt-3">
+            <div className="grid grid-cols-2 gap-2 mt-3 rounded-lg overflow-hidden">
               {post.images.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
                   alt="post"
-                  className="w-full object-cover rounded-xl"
+                  className="w-full h-48 object-cover rounded-lg"
                 />
               ))}
             </div>
           )}
 
           {/* Action bar */}
-          <div className="flex justify-around items-center mt-3 border-t border-gray-200 pt-2 text-gray-600">
-            <button onClick={(e) => toggleLike(e, post._id)} className="flex items-center space-x-1 hover:text-blue-600">
-              👍 {post.likes.length}
+          <div className="flex justify-around items-center mt-4 border-t border-gray-100 pt-2 text-gray-600 text-sm">
+            <button
+              onClick={(e) => toggleLike(e, post._id)}
+              className="flex items-center gap-1 hover:text-red-500 transition"
+            >
+              <Heart size={18} />
+              <span>{post.likes.length}</span>
             </button>
-            <button className="flex items-center space-x-1 hover:text-blue-600">
-              💬 {post.comments.length}
+            <button className="flex items-center gap-1 hover:text-blue-500 transition">
+              <MessageCircle size={18} />
+              <span>{post.comments.length}</span>
             </button>
-            <button className="hover:text-blue-600">🔄 Chia sẻ</button>
+            <button className="flex items-center gap-1 hover:text-green-500 transition">
+              <Share2 size={18} />
+              <span>Chia sẻ</span>
+            </button>
           </div>
         </div>
       ))}

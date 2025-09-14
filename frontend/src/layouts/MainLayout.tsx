@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { UserCircle, MessageCircle } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
@@ -20,13 +21,12 @@ const MainLayout: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="bg-blue-600 w-20 flex flex-col items-center py-6">
+      <aside className="bg-blue-600 w-15 flex flex-col items-center py-6 justify-between fixed h-screen">
         {/* Avatar */}
         <div className="relative">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/8792/8792047.png"
-            alt="User Avatar"
-            className="w-14 h-14 rounded-full cursor-pointer"
+          <UserCircle
+            size={48}
+            className="text-white cursor-pointer hover:scale-110 transition-transform"
             onClick={toggleDropdown}
           />
           {/* Dropdown */}
@@ -55,6 +55,12 @@ const MainLayout: React.FC = () => {
             </div>
           )}
         </div>
+        {/* Message */}
+        <MessageCircle
+          size={36}
+          className="text-white cursor-pointer hover:scale-110 transition-transform"
+          onClick={() => navigate('/messages')}
+        />
       </aside>
       {/* Main content */}
       <main className="flex-1 p-5">

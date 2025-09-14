@@ -1,8 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchPostDetail, clearPostDetail, toggleLikeDetail } from '../store/slices/postSlice';
+import {
+  fetchPostDetail,
+  clearPostDetail,
+  toggleLikeDetail,
+} from '../store/slices/postSlice';
 import instance from '../api/axiosInstant';
+import {
+  X,
+  Heart,
+  MessageCircle,
+  Share2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -16,7 +28,9 @@ const PostDetailPage = () => {
 
   const goPrev = () => {
     if (!postDetail || postDetail.images.length === 0) return;
-    setCurrentImageIndex((idx) => (idx - 1 + postDetail.images.length) % postDetail.images.length);
+    setCurrentImageIndex(
+      (idx) => (idx - 1 + postDetail.images.length) % postDetail.images.length
+    );
   };
 
   const goNext = () => {
@@ -36,18 +50,14 @@ const PostDetailPage = () => {
   if (!postDetail) return <p>Không tìm thấy bài viết.</p>;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex z-50">
+    <div className="fixed inset-0 bg-black/90 flex z-50">
       {/* Nút đóng */}
       <button
         onClick={() => navigate('/')}
-        className="cursor-pointer absolute top-4 right-4 
-             w-10 h-10 flex items-center justify-center
-             rounded-full bg-white bg-opacity-80 shadow-lg
-             text-gray-800 text-3xl font-bold
-             hover:bg-gray-300
-             transition duration-200 "
+        className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center
+               rounded-full bg-white/90 text-gray-700 shadow-lg hover:bg-gray-200 transition"
       >
-        ✕
+        <X size={22} />
       </button>
 
       {/* LEFT: Image swiper */}
@@ -65,19 +75,24 @@ const PostDetailPage = () => {
                 {/* Prev button */}
                 <button
                   onClick={goPrev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 
+             w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 
+             flex items-center justify-center text-white shadow-lg 
+             transition"
                   aria-label="Previous image"
                 >
-                  ‹
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
-
                 {/* Next button */}
                 <button
                   onClick={goNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 w-10 h-10 rounded-full flex items-center justify-center shadow"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 
+             w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 
+             flex items-center justify-center text-white shadow-lg 
+             transition"
                   aria-label="Next image"
                 >
-                  ›
+                  <ChevronRight className="w-6 h-6" />
                 </button>
 
                 {/* Dots */}
@@ -86,10 +101,9 @@ const PostDetailPage = () => {
                     <button
                       key={i}
                       onClick={() => setCurrentImageIndex(i)}
-                      className={`w-2.5 h-2.5 rounded-full ${
+                      className={`w-2.5 h-2.5 rounded-full transition ${
                         i === currentImageIndex ? 'bg-white' : 'bg-white/40'
                       }`}
-                      aria-label={`Go to image ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -100,7 +114,7 @@ const PostDetailPage = () => {
       </div>
 
       {/* RIGHT: Content */}
-      <div className="px-4 w-[500px] bg-white flex flex-col justify-between max-h-screen">
+      <div className="w-[480px] bg-white flex flex-col max-h-screen">
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b border-gray-200">
           <img
@@ -109,7 +123,9 @@ const PostDetailPage = () => {
             className="w-10 h-10 rounded-full"
           />
           <div className="ml-3">
-            <p className="font-semibold">{postDetail.author.username}</p>
+            <p className="font-semibold text-gray-900">
+              {postDetail.author.username}
+            </p>
             <p className="text-xs text-gray-500">
               {new Date(postDetail.createdAt).toLocaleString()}
             </p>
@@ -118,12 +134,12 @@ const PostDetailPage = () => {
 
         {/* Content */}
         <div className="px-4 py-3 border-b border-gray-200">
-          <p className="text-gray-800">{postDetail.content}</p>
+          <p className="text-gray-800 leading-relaxed">{postDetail.content}</p>
         </div>
 
         {/* Stats */}
         <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex justify-between">
-          <span>👍 {postDetail.likeCount}</span>
+          <span>{postDetail.likeCount} lượt thích</span>
           <span>
             {postDetail.commentCount} bình luận • {postDetail.shareCount} chia
             sẻ
@@ -132,14 +148,29 @@ const PostDetailPage = () => {
 
         {/* Actions */}
         <div className="flex justify-around text-gray-600 text-sm py-2 border-b border-gray-200">
-          <button onClick={() => postId && dispatch(toggleLikeDetail(postId))} className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
-            <span>👍</span> <span>{postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}</span>
+          <button
+            onClick={() => postId && dispatch(toggleLikeDetail(postId))}
+            className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+          >
+            <Heart
+              size={18}
+              className={
+                postDetail.isLikedByCurrentUser
+                  ? 'fill-red-500 text-red-500'
+                  : ''
+              }
+            />
+            <span>
+              {postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}
+            </span>
           </button>
-          <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
-            <span>💬</span> <span>Bình luận</span>
+          <button className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+            <MessageCircle size={18} />
+            <span>Bình luận</span>
           </button>
-          <button className="flex items-center space-x-1 hover:bg-gray-100 px-4 py-1 rounded">
-            <span>🔄</span> <span>Chia sẻ</span>
+          <button className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+            <Share2 size={18} />
+            <span>Chia sẻ</span>
           </button>
         </div>
 
@@ -149,14 +180,14 @@ const PostDetailPage = () => {
             <p className="text-gray-500 text-sm">Chưa có bình luận nào.</p>
           ) : (
             postDetail.comments.map((comment: any) => (
-              <div key={comment._id} className="flex space-x-3">
+              <div key={comment._id} className="flex gap-3">
                 <img
                   src={comment.author.avatar || '/default-avatar.png'}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />
-                <div className="bg-gray-100 px-3 py-2 rounded-lg">
-                  <p className="text-sm font-semibold">
+                <div className="bg-gray-100 px-3 py-2 rounded-xl max-w-[80%]">
+                  <p className="text-sm font-semibold text-gray-800">
                     {comment.author.username}
                   </p>
                   <p className="text-gray-700 text-sm">{comment.content}</p>
@@ -170,7 +201,7 @@ const PostDetailPage = () => {
         </div>
 
         {/* Comment Input */}
-        <div className="px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
+        <div className="px-4 py-3 border-t border-gray-200 flex items-center gap-3">
           <img
             src={'/default-avatar.png'}
             alt="avatar"
@@ -184,12 +215,12 @@ const PostDetailPage = () => {
             onKeyDown={async (e) => {
               if (e.key === 'Enter' && postId && commentText.trim()) {
                 try {
-                  await instance.post(`/posts/${postId}/comments`, { content: commentText.trim() });
+                  await instance.post(`/posts/${postId}/comments`, {
+                    content: commentText.trim(),
+                  });
                   // Optimistically update list and count
                   // Note: We directly mutate UI here; alternatively, refetch detail
-                  dispatch(
-                    fetchPostDetail(postId)
-                  );
+                  dispatch(fetchPostDetail(postId));
                   setCommentText('');
                 } catch (err) {
                   // no-op
