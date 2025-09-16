@@ -1,0 +1,179 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import instance from "../../api/axiosInstant";
+import type { FriendRequest, FriendUser } from "../../types/friend";
+
+// =====================
+// Slice
+// =====================
+
+interface FriendState {
+  incomingRequests: FriendRequest[];
+  outgoingRequests: FriendRequest[];
+  friends: FriendUser[];
+  isLoadingFriends: boolean;
+  isLoadingIncoming: boolean;
+  isLoadingOutgoing: boolean;
+  isError: boolean;
+}
+
+const initialState: FriendState = {
+  incomingRequests: [],
+  outgoingRequests: [],
+  friends: [],
+  isLoadingFriends: false,
+  isLoadingIncoming: false,
+  isLoadingOutgoing: false,
+  isError: false,
+};
+
+// =====================
+// Async thunk
+// =====================
+
+// Lấy danh sách bạn bè
+export const fetchFriends = createAsyncThunk(
+  "friends/fetchFriends",
+  async () => {
+    const res = await instance.get("/friends");
+    return res.data as FriendUser[];
+  }
+);
+
+// Lấy lời mời nhận
+export const fetchIncomingRequests = createAsyncThunk(
+  "friends/fetchIncomingRequests",
+  async () => {
+    const res = await instance.get("/friends/requests/received");
+    return res.data.map((item: any) => ({
+      _id: item.from._id,
+      username: item.from.username,
+      avatar: item.from.avatar,
+      isOnline: item.from.isOnline,
+      status: item.status,
+    })) as FriendRequest[];
+  }
+);
+
+// Lấy lời mời đã gửi
+export const fetchOutgoingRequests = createAsyncThunk(
+  "friends/fetchOutgoingRequests",
+  async () => {
+    const res = await instance.get("/friends/requests/sent");
+    return res.data.map((item: any) => ({
+      _id: item.to._id,
+      username: item.to.username,
+      avatar: item.to.avatar,
+      isOnline: item.to.isOnline,
+      status: item.status,
+    })) as FriendRequest[];
+  }
+);
+
+// Chấp nhận lời mời kết bạn
+export const acceptFriendRequest = createAsyncThunk(
+  "friends/acceptFriendRequest",
+  async (fromUserId: string) => {
+    await instance.post("/friends/requests/accept", { fromUserId });
+    return fromUserId;
+  }
+);
+
+// Từ chối lời mời kết bạn
+export const rejectFriendRequest = createAsyncThunk(
+  "friends/rejectFriendRequest",
+  async (fromUserId: string) => {
+    await instance.post("/friends/requests/reject", { fromUserId });
+    return fromUserId;
+  }
+);
+
+// Gửi lời mời kết bạn
+export const sendFriendRequest = createAsyncThunk(
+  "friends/sendFriendRequest",
+  async (toUserId: string) => {
+    await instance.post("/friends/request", { toUserId });
+    return toUserId; // trả về id để update state
+  }
+);
+
+// --- Slice ---
+const friendSlice = createSlice({
+  name: "friends",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // --- Friends ---
+      .addCase(fetchFriends.pending, (state) => {
+        state.isLoadingFriends = true;
+        state.isError = false;
+      })
+      .addCase(fetchFriends.fulfilled, (state, action) => {
+        state.isLoadingFriends = false;
+        state.friends = action.payload;
+      })
+      .addCase(fetchFriends.rejected, (state) => {
+        state.isLoadingFriends = false;
+        state.isError = true;
+      })
+
+      // --- Incoming Requests ---
+      .addCase(fetchIncomingRequests.pending, (state) => {
+        state.isLoadingIncoming = true;
+        state.isError = false;
+      })
+      .addCase(fetchIncomingRequests.fulfilled, (state, action) => {
+        state.isLoadingIncoming = false;
+        state.incomingRequests = action.payload;
+      })
+      .addCase(fetchIncomingRequests.rejected, (state) => {
+        state.isLoadingIncoming = false;
+        state.isError = true;
+      })
+
+      // --- Outgoing Requests ---
+      .addCase(fetchOutgoingRequests.pending, (state) => {
+        state.isLoadingOutgoing = true;
+        state.isError = false;
+      })
+      .addCase(fetchOutgoingRequests.fulfilled, (state, action) => {
+        state.isLoadingOutgoing = false;
+        state.outgoingRequests = action.payload;
+      })
+      .addCase(fetchOutgoingRequests.rejected, (state) => {
+        state.isLoadingOutgoing = false;
+        state.isError = true;
+      })
+
+      // --- Accept Friend ---
+      .addCase(acceptFriendRequest.fulfilled, (state, action) => {
+        state.incomingRequests = state.incomingRequests.filter(
+          (r) => r._id !== action.payload
+        );
+        // Tự động thêm vào danh sách bạn bè
+        const acceptedUser = state.incomingRequests.find(
+          (r) => r._id === action.payload
+        );
+        if (acceptedUser) {
+          state.friends.push({
+            _id: acceptedUser._id,
+            username: acceptedUser.username,
+            avatar: acceptedUser.avatar,
+            isOnline: acceptedUser.isOnline,
+          });
+        }
+      })
+
+      // --- Reject Friend ---
+      .addCase(rejectFriendRequest.fulfilled, (state, action) => {
+        state.incomingRequests = state.incomingRequests.filter(
+          (r) => r._id !== action.payload
+        );
+      })
+
+      // --- Send Friend Request ---
+      .addCase(sendFriendRequest.fulfilled, (state, action) => {});
+  },
+});
+
+export default friendSlice.reducer;
