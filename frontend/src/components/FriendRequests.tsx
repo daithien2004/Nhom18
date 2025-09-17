@@ -1,23 +1,22 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "../store/store";
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchIncomingRequests,
   fetchOutgoingRequests,
   acceptFriendRequest,
   rejectFriendRequest,
-} from "../store/slices/friendSlice";
-import { UserPlus } from "lucide-react";
+} from '../store/slices/friendSlice';
+import { UserPlus } from 'lucide-react';
 
 export default function FriendRequests() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const {
     incomingRequests,
     outgoingRequests,
     isLoadingIncoming,
     isLoadingOutgoing,
     isError,
-  } = useSelector((state: RootState) => state.friends);
+  } = useAppSelector((state) => state.friends);
 
   useEffect(() => {
     dispatch(fetchIncomingRequests());
@@ -66,13 +65,13 @@ export default function FriendRequests() {
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-12 h-12 flex-shrink-0">
                       <img
-                        src={u.avatar || "/default-avatar.png"}
+                        src={u.avatar || '/default-avatar.png'}
                         alt={u.username}
                         className="w-full h-full rounded-full object-cover border-2 border-gray-100"
                       />
                       <span
                         className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                          u.isOnline ? "bg-green-500" : "bg-gray-400"
+                          u.isOnline ? 'bg-green-500' : 'bg-gray-400'
                         }`}
                       ></span>
                     </div>
@@ -81,7 +80,7 @@ export default function FriendRequests() {
                         {u.username}
                       </span>
                       <span className="text-xs text-gray-500 truncate">
-                        {u.status === "pending" ? "Đang chờ" : u.status}
+                        {u.status === 'pending' ? 'Đang chờ' : u.status}
                       </span>
                     </div>
                   </div>
@@ -122,13 +121,13 @@ export default function FriendRequests() {
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-12 h-12 flex-shrink-0">
                       <img
-                        src={u.avatar || "/default-avatar.png"}
+                        src={u.avatar || '/default-avatar.png'}
                         alt={u.username}
                         className="w-full h-full rounded-full object-cover border-2 border-gray-100"
                       />
                       <span
                         className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                          u.isOnline ? "bg-green-500" : "bg-gray-400"
+                          u.isOnline ? 'bg-green-500' : 'bg-gray-400'
                         }`}
                       ></span>
                     </div>
@@ -137,7 +136,7 @@ export default function FriendRequests() {
                         {u.username}
                       </span>
                       <span className="text-xs text-gray-500 truncate">
-                        {u.status === "pending" ? "Đang chờ" : u.status}
+                        {u.status === 'pending' ? 'Đang chờ' : u.status}
                       </span>
                     </div>
                   </div>

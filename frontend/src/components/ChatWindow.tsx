@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchOutgoingRequests,
   sendFriendRequest,
-} from "../store/slices/friendSlice";
-import type { AppDispatch, RootState } from "../store/store";
+} from '../store/slices/friendSlice';
 
 interface ChatWindowProps {
   user: {
     _id: string;
     username: string;
     avatar?: string;
-    status: "friend" | "pending" | "none";
+    status: 'friend' | 'pending' | 'none';
     isOnline?: boolean;
   };
 }
@@ -23,29 +22,29 @@ interface Message {
 }
 
 export default function ChatWindow({ user }: ChatWindowProps) {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(fetchOutgoingRequests());
   }, []);
 
-  const outgoingRequests = useSelector(
-    (state: RootState) => state.friends.outgoingRequests
+  const outgoingRequests = useAppSelector(
+    (state) => state.friends.outgoingRequests
   );
 
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, fromMe: false, text: "Chào bạn!" },
-    { id: 2, fromMe: true, text: "Chào bạn, bạn khỏe không?" },
+    { id: 1, fromMe: false, text: 'Chào bạn!' },
+    { id: 2, fromMe: true, text: 'Chào bạn, bạn khỏe không?' },
   ]);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
 
   const handleSend = () => {
-    if (inputText.trim() === "") return;
+    if (inputText.trim() === '') return;
     setMessages([
       ...messages,
       { id: messages.length + 1, fromMe: true, text: inputText },
     ]);
-    setInputText("");
+    setInputText('');
   };
 
   const handleAddFriend = async () => {
@@ -54,7 +53,7 @@ export default function ChatWindow({ user }: ChatWindowProps) {
       alert(`Đã gửi lời mời kết bạn tới ${user.username}`);
     } catch (err) {
       console.error(err);
-      alert("Gửi lời mời kết bạn thất bại. Vui lòng thử lại.");
+      alert('Gửi lời mời kết bạn thất bại. Vui lòng thử lại.');
     }
   };
 
@@ -68,13 +67,13 @@ export default function ChatWindow({ user }: ChatWindowProps) {
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10">
             <img
-              src={user.avatar || "/default-avatar.png"}
+              src={user.avatar || '/default-avatar.png'}
               alt={user.username}
               className="w-full h-full rounded-full object-cover border border-gray-200"
             />
             <span
               className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                user.isOnline ? "bg-green-500" : "bg-gray-400"
+                user.isOnline ? 'bg-green-500' : 'bg-gray-400'
               }`}
             ></span>
           </div>
@@ -83,22 +82,22 @@ export default function ChatWindow({ user }: ChatWindowProps) {
               {user.username}
             </span>
             <span className="text-xs text-gray-500">
-              {user.status === "friend" ? "Bạn bè" : "Người lạ"}
+              {user.status === 'friend' ? 'Bạn bè' : 'Người lạ'}
             </span>
           </div>
         </div>
 
-        {user.status === "none" && (
+        {user.status === 'none' && (
           <button
             onClick={handleAddFriend}
             disabled={isPending}
             className={`text-sm border px-3 py-1 rounded-full transition cursor-pointer ${
               isPending
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "text-blue-600 border-blue-200 hover:bg-blue-100"
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'text-blue-600 border-blue-200 hover:bg-blue-100'
             }`}
           >
-            {isPending ? "Đã gửi lời mời" : "Kết bạn"}
+            {isPending ? 'Đã gửi lời mời' : 'Kết bạn'}
           </button>
         )}
       </div>
@@ -108,13 +107,13 @@ export default function ChatWindow({ user }: ChatWindowProps) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${msg.fromMe ? "justify-end" : "justify-start"}`}
+            className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`px-4 py-2 rounded-2xl max-w-xs break-words ${
                 msg.fromMe
-                  ? "bg-blue-500 text-white rounded-br-none"
-                  : "bg-gray-200 text-gray-800 rounded-bl-none"
+                  ? 'bg-blue-500 text-white rounded-br-none'
+                  : 'bg-gray-200 text-gray-800 rounded-bl-none'
               } shadow-sm`}
             >
               {msg.text}
@@ -131,7 +130,7 @@ export default function ChatWindow({ user }: ChatWindowProps) {
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Nhập tin nhắn..."
           className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
         <button
           onClick={handleSend}

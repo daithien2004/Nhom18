@@ -1,28 +1,27 @@
-import { useEffect, useState, useMemo, type SetStateAction } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Search, MoreVertical, Users } from "lucide-react";
-import { fetchFriends } from "../store/slices/friendSlice";
+import { useEffect, useState, useMemo, type SetStateAction } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { Search, MoreVertical, Users } from 'lucide-react';
+import { fetchFriends } from '../store/slices/friendSlice';
 
-import type { RootState, AppDispatch } from "../store/store";
 import {
   clearResults,
   searchFriends,
-} from "../store/slices/friendListSearchSlice";
+} from '../store/slices/friendListSearchSlice';
 
 export default function FriendList() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { friends, isLoadingFriends, isError } = useSelector(
-    (state: RootState) => state.friends
+  const dispatch = useAppDispatch();
+  const { friends, isLoadingFriends, isError } = useAppSelector(
+    (state) => state.friends
   );
 
-  const friendListSearchState = useSelector(
-    (state: RootState) => state.friendListSearch
+  const friendListSearchState = useAppSelector(
+    (state) => state.friendListSearch
   );
 
   const searchResults = friendListSearchState?.results || [];
   const isSearching = friendListSearchState?.isLoading || false;
 
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     // Load friend list ban đầu
@@ -35,19 +34,19 @@ export default function FriendList() {
   // Gọi API search khi user gõ
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (searchText.trim() !== "") {
+      if (searchText.trim() !== '') {
         dispatch(searchFriends(searchText));
       } else {
         dispatch(clearResults());
       }
-    }, 100); // debounce 300ms
+    }, 300); // debounce 300ms
 
     return () => clearTimeout(delayDebounce);
   }, [searchText, dispatch]);
 
   // Nếu có searchResults thì hiển thị search, nếu không thì hiển thị friends
   const dataToShow =
-    searchResults.length > 0 || searchText.trim() !== ""
+    searchResults.length > 0 || searchText.trim() !== ''
       ? searchResults
       : friends;
 
@@ -124,13 +123,13 @@ export default function FriendList() {
                 <div className="flex items-center gap-3 flex-1">
                   <div className="relative w-12 h-12 flex-shrink-0">
                     <img
-                      src={f.avatar || "/default-avatar.png"}
+                      src={f.avatar || '/default-avatar.png'}
                       alt={f.username}
                       className="w-full h-full rounded-full object-cover border-2 border-gray-100"
                     />
                     <span
                       className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                        f.isOnline ? "bg-green-500" : "bg-gray-400"
+                        f.isOnline ? 'bg-green-500' : 'bg-gray-400'
                       }`}
                     ></span>
                   </div>
