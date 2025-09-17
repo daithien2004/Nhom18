@@ -15,6 +15,7 @@ export const getPosts = asyncHandler(async (req, res) => {
   const posts = await postService.getPosts({
     type: req.query.type,
     limit: req.query.limit,
+    page: req.query.page,
   });
   return sendSuccess(res, posts, 'Lấy danh sách bài viết thành công');
 });

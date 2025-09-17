@@ -1,7 +1,7 @@
-import React, { useState, type JSX } from "react";
-import PostSection from "../components/PostSection";
-import instance from "../api/axiosInstant";
-import type { Tab } from "../types/post";
+import React, { useState, type JSX } from 'react';
+import PostSection from '../components/PostSection';
+import instance from '../api/axiosInstant';
+import type { Post, Tab } from '../types/post';
 import {
   Clock,
   Flame,
@@ -10,13 +10,14 @@ import {
   Pin,
   TrendingUp,
   UserCircle,
-} from "lucide-react";
+} from 'lucide-react';
 
 const HomePage: React.FC = () => {
-  const [tab, setTab] = useState<Tab>("recent");
-  const [content, setContent] = useState("");
+  const [tab, setTab] = useState<Tab>('recent');
+  const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [newPost, setNewPost] = useState<Post | null>(null);
 
   // Upload ảnh
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,14 +27,14 @@ const HomePage: React.FC = () => {
     const uploadedUrls: string[] = [];
     for (const file of Array.from(files)) {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append('image', file);
       try {
-        const res = await instance.post("/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+        const res = await instance.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         uploadedUrls.push(res.data.url);
       } catch (err) {
-        console.error("Lỗi khi upload ảnh:", err);
+        console.error('Lỗi khi upload ảnh:', err);
       }
     }
     setImages((prev) => [...prev, ...uploadedUrls]);
@@ -44,12 +45,12 @@ const HomePage: React.FC = () => {
     if (!content && images.length === 0) return;
     try {
       setUploading(true);
-      await instance.post("/posts", { content, images });
-      setContent("");
+      const res = await instance.post('/posts', { content, images });
+      setContent('');
       setImages([]);
-      // Reload tab hiện tại
+      setNewPost(res.data); // 👉 gửi post mới xuống PostSection
     } catch (error) {
-      console.error("Lỗi khi đăng bài:", error);
+      console.error('Lỗi khi đăng bài:', error);
     } finally {
       setUploading(false);
     }
@@ -122,13 +123,13 @@ const HomePage: React.FC = () => {
             className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-2 py-1 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {uploading && <Loader2 className="animate-spin w-4 h-4" />}
-            {uploading ? "Đang đăng..." : "Đăng bài"}
+            {uploading ? 'Đang đăng...' : 'Đăng bài'}
           </button>
         </div>
       </div>
 
       <div className="flex space-x-6">
-        {(["recent", "hot", "popular", "pinned"] as Tab[]).map((t) => {
+        {(['recent', 'hot', 'popular', 'pinned'] as Tab[]).map((t) => {
           const icons: Record<Tab, JSX.Element> = {
             recent: <Clock size={16} />,
             hot: <Flame size={16} />,
@@ -142,25 +143,25 @@ const HomePage: React.FC = () => {
               onClick={() => setTab(t)}
               className={`relative pb-2 inline-flex items-center gap-1.5 text-sm font-medium transition ${
                 tab === t
-                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-blue-600"
-                  : "text-gray-600 hover:text-blue-500"
+                  ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
               }`}
             >
               {icons[t]}
-              {t === "recent"
-                ? "Mới nhất"
-                : t === "hot"
-                ? "Hot"
-                : t === "popular"
-                ? "Xem nhiều"
-                : "Đáng chú ý"}
+              {t === 'recent'
+                ? 'Mới nhất'
+                : t === 'hot'
+                ? 'Hot'
+                : t === 'popular'
+                ? 'Xem nhiều'
+                : 'Đáng chú ý'}
             </button>
           );
         })}
       </div>
 
       {/* Section posts */}
-      <PostSection tab={tab} />
+      <PostSection tab={tab} newPost={newPost} />
     </div>
   );
 };

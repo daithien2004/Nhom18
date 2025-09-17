@@ -7,18 +7,20 @@ export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
 };
 
-export const getPosts = async ({ type, limit }) => {
+export const getPosts = async ({ type, limit, page = 1 }) => {
   const l = limit ? parseInt(limit) : 20;
+  const p = page ? parseInt(page) : 1;
+  const skip = (p - 1) * l;
   try {
     switch (type) {
       case 'recent':
-        return await postRepo.findRecentPosts(l);
+        return await postRepo.findRecentPosts(l, skip);
       case 'hot':
-        return await postRepo.findHotPosts(l);
+        return await postRepo.findHotPosts(l, skip);
       case 'popular':
-        return await postRepo.findPopularPosts(l);
+        return await postRepo.findPopularPosts(l, skip);
       default:
-        return await postRepo.findRecentPosts(l);
+        return await postRepo.findRecentPosts(l, skip);
     }
   } catch (err) {
     console.error('Error in getPosts:', err);

@@ -4,7 +4,7 @@ export const createPost = async ({ author, content, images }) => {
   return await Post.create({ author, content, images });
 };
 
-export const findRecentPosts = async (limit) => {
+export const findRecentPosts = async (limit, skip) => {
   return await Post.find()
     .populate('author', 'username avatar')
     .populate({
@@ -13,10 +13,11 @@ export const findRecentPosts = async (limit) => {
       options: { strictPopulate: false },
     })
     .sort({ createdAt: -1 })
+    .skip(skip)
     .limit(limit);
 };
 
-export const findHotPosts = async (limit) => {
+export const findHotPosts = async (limit, skip) => {
   const agg = await Post.aggregate([
     {
       $addFields: {
@@ -28,9 +29,11 @@ export const findHotPosts = async (limit) => {
         },
       },
     },
-    { $sort: { totalInteractions: -1 } },
+    { $sort: { totalInteractions: -1, createdAt: -1 } },
+    { $skip: skip },
     { $limit: limit },
   ]);
+
   return await Post.populate(agg, [
     { path: 'author', select: 'username avatar' },
     {
@@ -41,7 +44,7 @@ export const findHotPosts = async (limit) => {
   ]);
 };
 
-export const findPopularPosts = async (limit) => {
+export const findPopularPosts = async (limit, skip) => {
   return await Post.find()
     .populate('author', 'username avatar')
     .populate({
@@ -50,6 +53,7 @@ export const findPopularPosts = async (limit) => {
       options: { strictPopulate: false },
     })
     .sort({ views: -1 })
+    .skip(skip)
     .limit(limit);
 };
 
