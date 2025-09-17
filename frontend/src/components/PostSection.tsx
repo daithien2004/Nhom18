@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import instance from '../api/axiosInstant';
-import type { Post, Tab } from '../types/post';
-import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
-
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import instance from "../api/axiosInstant";
+import type { Post, Tab } from "../types/post";
+import { useNavigate } from "react-router-dom";
+import { Heart, MessageCircle, Share2, Ellipsis } from "lucide-react";
+import PostMenu from "./PostMenu";
+import SavePostModal from "./SavePostModal";
 interface PostSectionProps {
   tab: Tab;
   newPost?: Post | null;
@@ -19,6 +20,8 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const navigate = useNavigate();
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   // fetch posts
   const fetchPosts = useCallback(
@@ -35,8 +38,8 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
         setPosts((prev) => (replace ? newPosts : [...prev, ...newPosts]));
         setHasMore(newPosts.length === LIMIT);
       } catch (err) {
-        if ((err as any).name !== 'CanceledError') {
-          console.error('Lỗi khi load bài viết:', err);
+        if ((err as any).name !== "CanceledError") {
+          console.error("Lỗi khi load bài viết:", err);
         }
       } finally {
         setInitialLoading(false);
@@ -60,7 +63,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   useEffect(() => {
     if (!newPost) return;
 
-    if (tab === 'recent') {
+    if (tab === "recent") {
       // prepend
       setPosts((prev) => [newPost, ...prev]);
     } else {
@@ -105,9 +108,9 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
         p._id === postId
           ? {
               ...p,
-              likes: p.likes.includes('me')
-                ? p.likes.filter((id) => id !== 'me')
-                : [...p.likes, 'me'],
+              likes: p.likes.includes("me")
+                ? p.likes.filter((id) => id !== "me")
+                : [...p.likes, "me"],
             }
           : p
       )
@@ -117,7 +120,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
       setPosts((prev) =>
         prev.map((p) =>
           p._id === postId
-            ? { ...p, likes: new Array(res.data.likeCount).fill('x') }
+            ? { ...p, likes: new Array(res.data.likeCount).fill("x") }
             : p
         )
       );
@@ -142,7 +145,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || '/default-avatar.png'}
+              src={post.author.avatar || "/default-avatar.png"}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -153,6 +156,29 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
               <p className="text-xs text-gray-500">
                 {new Date(post.createdAt).toLocaleString()}
               </p>
+            </div>
+
+            <div className="ml-auto">
+              <PostMenu
+                onQuanTam={() => console.log("Quan tâm")}
+                onKhongQuanTam={() => console.log("Không quan tâm")}
+                onLuu={() => {
+                  setSelectedPostId(post._id);
+                  setShowSaveModal(true);
+                }}
+                onThongBao={() => console.log("Thông báo")}
+                onNhung={() => console.log("Nhúng")}
+              />
+
+              {showSaveModal && selectedPostId && (
+                <SavePostModal
+                  postId={selectedPostId}
+                  onClose={() => {
+                    setShowSaveModal(false);
+                    setSelectedPostId(null); // reset lại
+                  }}
+                />
+              )}
             </div>
           </div>
 

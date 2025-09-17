@@ -3,7 +3,13 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useAppDispatch } from "../store/hooks";
 import { logout } from "../store/slices/authSlice";
-import { UserCircle, MessageCircle, Contact, Home } from "lucide-react";
+import {
+  UserCircle,
+  MessageCircle,
+  Contact,
+  Home,
+  Bookmark,
+} from "lucide-react";
 
 const MainLayout: React.FC = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
@@ -60,6 +66,13 @@ const MainLayout: React.FC = () => {
                 isActive("/friends") ? "text-yellow-300" : "text-white"
               }`}
               onClick={() => navigate("/friends")}
+            />
+            <Bookmark
+              size={32}
+              className={`cursor-pointer transition-transform hover:scale-110 ${
+                isActive("/post-categories") ? "text-yellow-300" : "text-white"
+              }`}
+              onClick={() => navigate("/post-categories")}
             />
           </div>
         </div>
