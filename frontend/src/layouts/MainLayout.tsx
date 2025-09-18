@@ -70,9 +70,11 @@ const MainLayout: React.FC = () => {
             <Bookmark
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/post-categories") ? "text-yellow-300" : "text-white"
+                isActive("/saved") || isActive("/post-categories")
+                  ? "text-yellow-300"
+                  : "text-white"
               }`}
-              onClick={() => navigate("/post-categories")}
+              onClick={() => navigate("/saved")}
             />
           </div>
         </div>

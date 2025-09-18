@@ -10,6 +10,7 @@ import MainLayout from "./layouts/MainLayout";
 import PostDetail from "./pages/PostDetail";
 import MessagesPage from "./pages/MessagesPage";
 import FriendsPage from "./pages/FriendsPage";
+import PostCategoryPage from "./pages/PostCategoryPage";
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
         <Route path="posts/:postId" element={<PostDetail />}></Route>
         <Route path="messages" element={<MessagesPage />} />
         <Route path="friends" element={<FriendsPage />} />
+        <Route path="saved" element={<PostCategoryPage />} />
+        <Route path="post-categories" element={<PostCategoryPage />} />
       </Route>
       <Route path="/login" element={<LoginPage />}></Route>
     </Routes>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import instance from "../api/axiosInstant";
 import type { Post, Tab } from "../types/post";
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Ellipsis } from "lucide-react";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
 import PostMenu from "./PostMenu";
 import SavePostModal from "./SavePostModal";
 interface PostSectionProps {
@@ -169,16 +169,6 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 onThongBao={() => console.log("Thông báo")}
                 onNhung={() => console.log("Nhúng")}
               />
-
-              {showSaveModal && selectedPostId && (
-                <SavePostModal
-                  postId={selectedPostId}
-                  onClose={() => {
-                    setShowSaveModal(false);
-                    setSelectedPostId(null); // reset lại
-                  }}
-                />
-              )}
             </div>
           </div>
 
@@ -230,6 +220,16 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
       ))}
       {loadingMore && (
         <p className="text-center text-gray-500">Đang tải thêm...</p>
+      )}
+
+      {showSaveModal && selectedPostId && (
+        <SavePostModal
+          postId={selectedPostId}
+          onClose={() => {
+            setShowSaveModal(false);
+            setSelectedPostId(null);
+          }}
+        />
       )}
     </div>
   );
