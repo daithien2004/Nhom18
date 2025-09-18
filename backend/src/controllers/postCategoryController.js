@@ -1,4 +1,4 @@
-import * as categoryService from "../services/postCategoryService.js";
+import * as categoryService from "../services/categoryService.js";
 import { sendSuccess } from "../utils/response.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 

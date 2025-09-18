@@ -145,7 +145,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || "/default-avatar.png"}
+              src={post.author.avatar || '/default-avatar.png'}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -160,14 +160,14 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
             <div className="ml-auto">
               <PostMenu
-                onQuanTam={() => console.log("Quan tâm")}
-                onKhongQuanTam={() => console.log("Không quan tâm")}
-                onLuu={() => {
+                onInterested={() => console.log('Quan tâm')}
+                onNotInterested={() => console.log('Không quan tâm')}
+                onSave={() => {
                   setSelectedPostId(post._id);
                   setShowSaveModal(true);
                 }}
-                onThongBao={() => console.log("Thông báo")}
-                onNhung={() => console.log("Nhúng")}
+                onNotify={() => console.log('Thông báo')}
+                onEmbed={() => console.log('Nhúng')}
               />
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import instance from "../api/axiosInstant";
+import { useEffect, useState } from 'react';
+import instance from '../api/axiosInstant';
 
 interface SavePostModalProps {
   postId: string;
@@ -8,16 +8,16 @@ interface SavePostModalProps {
 
 const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
   const [categories, setCategories] = useState<any[]>([]);
-  const [selected, setSelected] = useState<string>("");
+  const [selected, setSelected] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     // reset state mỗi khi postId thay đổi
-    setSelected("");
+    setSelected('');
   }, [postId]);
 
   useEffect(() => {
@@ -25,10 +25,10 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await instance.get("/post-categories/");
+        const { data } = await instance.get('/categories/');
         setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError("Không thể tải danh mục. Hãy đăng nhập.");
+        setError('Không thể tải danh mục. Hãy đăng nhập.');
       } finally {
         setLoading(false);
       }
@@ -40,16 +40,16 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      const { data: created } = await instance.post("/post-categories/", {
+      const { data: created } = await instance.post('/categories/', {
         name: newName.trim(),
       });
       // refresh list and preselect newly created
-      const { data } = await instance.get("/post-categories/");
+      const { data } = await instance.get('/categories/');
       const list = Array.isArray(data) ? data : [];
       setCategories(list);
       if (created && created._id) setSelected(created._id);
       setShowCreate(false);
-      setNewName("");
+      setNewName('');
     } catch (err) {
       // no-op
     } finally {
@@ -60,12 +60,12 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
   const handleSave = () => {
     if (!selected) return;
     instance
-      .post(`/post-categories/${selected}/save-post`, { postId })
+      .post(`/categories/${selected}/posts`, { postId })
       .then(() => {
-        alert("Đã lưu bài viết vào danh mục!");
+        alert('Đã lưu bài viết vào danh mục!');
         onClose();
       })
-      .catch((err) => console.error("Lỗi khi lưu:", err));
+      .catch((err) => console.error('Lỗi khi lưu:', err));
   };
   const handleClose = () => {
     onClose();
@@ -109,7 +109,7 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
                   <img
                     src={
                       cat.posts?.[0]?.images?.[0] ||
-                      "https://via.placeholder.com/48"
+                      'https://via.placeholder.com/48'
                     }
                     alt={cat.name}
                     className="w-10 h-10 rounded object-cover"
@@ -143,7 +143,7 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
               onClick={handleSave}
               disabled={!selected}
               className={`px-4 py-2 rounded text-white ${
-                !selected ? "bg-gray-300" : "bg-blue-600 hover:bg-blue-700"
+                !selected ? 'bg-gray-300' : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
               Xong
@@ -192,11 +192,11 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
                 disabled={!newName.trim() || creating}
                 className={`px-4 py-2 rounded text-white ${
                   !newName.trim() || creating
-                    ? "bg-gray-300"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    ? 'bg-gray-300'
+                    : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {creating ? "Đang tạo..." : "Tạo"}
+                {creating ? 'Đang tạo...' : 'Tạo'}
               </button>
             </div>
           </div>

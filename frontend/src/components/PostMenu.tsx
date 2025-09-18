@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Ellipsis,
   PlusCircle,
@@ -6,22 +6,22 @@ import {
   Bookmark,
   Bell,
   Code,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface PostMenuProps {
-  onQuanTam?: () => void;
-  onKhongQuanTam?: () => void;
-  onLuu?: () => void;
-  onThongBao?: () => void;
-  onNhung?: () => void;
+  onInterested?: () => void;
+  onNotInterested?: () => void;
+  onSave?: () => void;
+  onNotify?: () => void;
+  onEmbed?: () => void;
 }
 
 const PostMenu: React.FC<PostMenuProps> = ({
-  onQuanTam,
-  onKhongQuanTam,
-  onLuu,
-  onThongBao,
-  onNhung,
+  onInterested,
+  onNotInterested,
+  onSave,
+  onNotify,
+  onEmbed,
 }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -33,8 +33,8 @@ const PostMenu: React.FC<PostMenuProps> = ({
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -53,7 +53,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
           <ul className="p-2 text-sm text-gray-700">
             <li
-              onClick={onQuanTam}
+              onClick={onInterested}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <PlusCircle size={18} />
@@ -65,7 +65,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
               </div>
             </li>
             <li
-              onClick={onKhongQuanTam}
+              onClick={onNotInterested}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <MinusCircle size={18} />
@@ -79,7 +79,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
             <li
               onClick={(e) => {
                 e.stopPropagation();
-                onLuu?.();
+                onSave?.();
                 setOpen(false);
               }}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
@@ -91,7 +91,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
             <li
               onClick={(e) => {
                 e.stopPropagation();
-                onQuanTam?.();
+                onInterested?.();
                 setOpen(false);
               }}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
@@ -105,14 +105,14 @@ const PostMenu: React.FC<PostMenuProps> = ({
               </div>
             </li>
             <li
-              onClick={onThongBao}
+              onClick={onNotify}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <Bell size={18} />
               <p>Bật thông báo về bài viết này</p>
             </li>
             <li
-              onClick={onNhung}
+              onClick={onEmbed}
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <Code size={18} />

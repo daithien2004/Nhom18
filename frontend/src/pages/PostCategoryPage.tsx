@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import instance from "../api/axiosInstant";
-import { Plus, MoreHorizontal, Share2 } from "lucide-react";
+import { useEffect, useState } from 'react';
+import instance from '../api/axiosInstant';
+import { Plus, MoreHorizontal, Share2 } from 'lucide-react';
 
 interface Author {
   username: string;
@@ -29,7 +29,7 @@ const PostCategoryPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const selectedCategory = categories.find(
@@ -41,14 +41,14 @@ const PostCategoryPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await instance.get("/post-categories/");
+      const { data } = await instance.get('/categories/');
       const list = Array.isArray(data) ? (data as ApiCategory[]) : [];
       setCategories(list);
       if (list.length > 0 && !selectedCategoryId) {
         setSelectedCategoryId(list[0]._id);
       }
     } catch (err: any) {
-      setError("Không thể tải danh mục. Vui lòng đăng nhập và thử lại.");
+      setError('Không thể tải danh mục. Vui lòng đăng nhập và thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +60,7 @@ const PostCategoryPage = () => {
   }, []);
 
   const handleCreateCategory = () => {
-    setNewCategoryName("");
+    setNewCategoryName('');
     setShowCreateModal(true);
   };
 
@@ -68,7 +68,7 @@ const PostCategoryPage = () => {
     if (!newCategoryName.trim()) return;
     setIsCreating(true);
     try {
-      const { data: created } = await instance.post("/post-categories/", {
+      const { data: created } = await instance.post('/categories/', {
         name: newCategoryName.trim(),
       });
       await loadCategories();
@@ -98,13 +98,13 @@ const PostCategoryPage = () => {
             <div
               key={cat._id}
               className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-                selectedCategoryId === cat._id ? "bg-gray-100" : ""
+                selectedCategoryId === cat._id ? 'bg-gray-100' : ''
               }`}
               onClick={() => setSelectedCategoryId(cat._id)}
             >
               <img
                 src={
-                  cat.posts[0]?.images?.[0] || "https://via.placeholder.com/50"
+                  cat.posts[0]?.images?.[0] || 'https://via.placeholder.com/50'
                 }
                 alt={cat.name}
                 className="w-10 h-10 rounded object-cover"
@@ -131,7 +131,7 @@ const PostCategoryPage = () => {
       <main className="flex-1 p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">
-            {selectedCategory?.name || "Tất cả"}
+            {selectedCategory?.name || 'Tất cả'}
           </h2>
           <button
             onClick={loadCategories}
@@ -153,8 +153,8 @@ const PostCategoryPage = () => {
             >
               {/* Image */}
               <img
-                src={post.images?.[0] || "https://via.placeholder.com/200x150"}
-                alt={post.content?.slice(0, 20) || "post"}
+                src={post.images?.[0] || 'https://via.placeholder.com/200x150'}
+                alt={post.content?.slice(0, 20) || 'post'}
                 className="w-32 h-32 object-cover rounded"
               />
 
@@ -164,12 +164,12 @@ const PostCategoryPage = () => {
                   {post.content}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Tác giả: {post.author?.username || "Ẩn danh"}
+                  Tác giả: {post.author?.username || 'Ẩn danh'}
                 </p>
                 <p className="text-xs text-gray-400">
                   {post.createdAt
                     ? new Date(post.createdAt).toLocaleString()
-                    : ""}
+                    : ''}
                 </p>
 
                 <div className="mt-3 flex gap-2">
@@ -223,11 +223,11 @@ const PostCategoryPage = () => {
                 disabled={!newCategoryName.trim() || isCreating}
                 className={`px-4 py-2 rounded text-white ${
                   !newCategoryName.trim() || isCreating
-                    ? "bg-gray-300"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    ? 'bg-gray-300'
+                    : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {isCreating ? "Đang tạo..." : "Tạo"}
+                {isCreating ? 'Đang tạo...' : 'Tạo'}
               </button>
             </div>
           </div>
