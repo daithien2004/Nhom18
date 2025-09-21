@@ -1,137 +1,83 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import instance from "../api/axiosInstant";
-import type { Post, Tab } from "../types/post";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import PostMenu from "./PostMenu";
 import SavePostModal from "./SavePostModal";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  fetchPosts,
+  toggleLikePost,
+  incrementPage,
+  resetPosts,
+  addNewPost,
+} from "../store/slices/postsSlice";
+import type { Post, Tab } from "../types/post";
+import SharePostModal from "./SharePostModal";
+
 interface PostSectionProps {
   tab: Tab;
   newPost?: Post | null;
 }
 
-const LIMIT = 3;
-
 const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const observer = useRef<IntersectionObserver | null>(null);
-  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { posts, page, hasMore, isLoading } = useAppSelector(
+    (state) => state.posts
+  );
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  // fetch posts
-  const fetchPosts = useCallback(
-    async (pageNum: number, replace = false, signal?: AbortSignal) => {
-      if (pageNum === 1) setInitialLoading(true);
-      else setLoadingMore(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharePostId, setSharePostId] = useState<string | null>(null);
 
-      try {
-        const res = await instance.get(
-          `/posts?type=${tab}&limit=${LIMIT}&page=${pageNum}`,
-          { signal }
-        );
-        const newPosts = res.data as Post[];
-        setPosts((prev) => (replace ? newPosts : [...prev, ...newPosts]));
-        setHasMore(newPosts.length === LIMIT);
-      } catch (err) {
-        if ((err as any).name !== "CanceledError") {
-          console.error("Lỗi khi load bài viết:", err);
-        }
-      } finally {
-        setInitialLoading(false);
-        setLoadingMore(false);
-      }
-    },
-    [tab]
-  );
+  const observer = useRef<IntersectionObserver | null>(null);
+  const navigate = useNavigate();
 
-  // reset + fetch khi đổi tab
+  // Khi đổi tab
   useEffect(() => {
-    const controller = new AbortController();
-    setPosts([]);
-    setPage(1);
-    setHasMore(true);
-    fetchPosts(1, true, controller.signal);
-    return () => controller.abort();
-  }, [tab, fetchPosts]);
+    dispatch(resetPosts());
+    dispatch(fetchPosts({ tab, page: 1 }));
+  }, [tab, dispatch]);
 
-  // 👉 xử lý post mới
+  // Khi page thay đổi
   useEffect(() => {
-    if (!newPost) return;
-
-    if (tab === "recent") {
-      // prepend
-      setPosts((prev) => [newPost, ...prev]);
-    } else {
-      // fetch lại cho chắc
-      const controller = new AbortController();
-      fetchPosts(1, true, controller.signal);
-      return () => controller.abort();
+    if (page > 1) {
+      dispatch(fetchPosts({ tab, page }));
     }
-  }, [newPost, tab, fetchPosts]);
+  }, [page, tab, dispatch]);
 
-  // load thêm khi page thay đổi
+  // Thêm post mới
   useEffect(() => {
-    if (page > 1 && hasMore) {
-      const controller = new AbortController();
-      fetchPosts(page, false, controller.signal);
-      return () => controller.abort();
+    if (newPost) {
+      if (tab === "recent") dispatch(addNewPost(newPost));
+      else dispatch(fetchPosts({ tab, page: 1 }));
     }
-  }, [page, hasMore, fetchPosts]);
+  }, [newPost, tab, dispatch]);
 
-  // observer lazy load
+  // Lazy load
   const lastPostRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (!hasMore || !node) return;
       if (observer.current) observer.current.disconnect();
 
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && !loadingMore && hasMore) {
-          setPage((prev) => prev + 1);
+        if (entries[0].isIntersecting) {
+          dispatch(incrementPage());
         }
       });
 
       observer.current.observe(node);
     },
-    [loadingMore, hasMore]
+    [hasMore, dispatch]
   );
 
-  const toggleLike = async (e: React.MouseEvent, postId: string) => {
+  const handleLike = (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
-    // optimistic update
-    setPosts((prev) =>
-      prev.map((p) =>
-        p._id === postId
-          ? {
-              ...p,
-              likes: p.likes.includes("me")
-                ? p.likes.filter((id) => id !== "me")
-                : [...p.likes, "me"],
-            }
-          : p
-      )
-    );
-    try {
-      const res = await instance.post(`/posts/${postId}/like`);
-      setPosts((prev) =>
-        prev.map((p) =>
-          p._id === postId
-            ? { ...p, likes: new Array(res.data.likeCount).fill("x") }
-            : p
-        )
-      );
-    } catch {
-      fetchPosts(1, true);
-    }
+    dispatch(toggleLikePost(postId));
   };
 
-  if (initialLoading) return <p>Đang tải bài viết...</p>;
-  if (!initialLoading && posts.length === 0)
-    return <p>Chưa có bài viết nào.</p>;
+  if (isLoading && page === 1) return <p>Đang tải bài viết...</p>;
+  if (!isLoading && posts.length === 0) return <p>Chưa có bài viết nào.</p>;
 
   return (
     <div className="space-y-6">
@@ -145,7 +91,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || '/default-avatar.png'}
+              src={post.author.avatar || "/default-avatar.png"}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -157,70 +103,110 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 {new Date(post.createdAt).toLocaleString()}
               </p>
             </div>
-
             <div className="ml-auto">
               <PostMenu
-                onInterested={() => console.log('Quan tâm')}
-                onNotInterested={() => console.log('Không quan tâm')}
+                onInterested={() => console.log("Quan tâm")}
+                onNotInterested={() => console.log("Không quan tâm")}
                 onSave={() => {
                   setSelectedPostId(post._id);
                   setShowSaveModal(true);
                 }}
-                onNotify={() => console.log('Thông báo')}
-                onEmbed={() => console.log('Nhúng')}
+                onNotify={() => console.log("Thông báo")}
+                onEmbed={() => console.log("Nhúng")}
               />
             </div>
           </div>
 
           {/* Content */}
-          <p className="mt-3 text-gray-800 leading-relaxed">{post.content}</p>
+          <div className="mt-3 text-gray-800 leading-relaxed">
+            {post.caption && <p>{post.caption}</p>}
+            {post.sharedFrom && (
+              <div className="mt-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex items-center gap-2 mb-2">
+                  <img
+                    src={post.sharedFrom.author.avatar || "/default-avatar.png"}
+                    alt="avatar"
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                  <p className="text-sm font-semibold text-gray-900">
+                    {post.sharedFrom.author.username}
+                  </p>
+                </div>
+                {post.sharedFrom.content && (
+                  <p className="text-sm text-gray-700">
+                    {post.sharedFrom.content}
+                  </p>
+                )}
+                {(post.sharedFrom.images || []).length > 0 && (
+                  <div className="flex gap-2 mt-2 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
+                    {post.sharedFrom.images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt="shared post"
+                        className="w-48 h-32 object-cover rounded-lg flex-shrink-0 snap-start"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {!post.sharedFrom && post.content && (
+              <p className="text-gray-800">{post.content}</p>
+            )}
+          </div>
 
           {/* Images */}
-          {post.images.length > 0 &&
-            (post.images.length === 1 ? (
-              // Nếu chỉ có 1 ảnh → full width
-              <img
-                src={post.images[0]}
-                alt="post"
-                className="w-full h-64 object-cover rounded-lg mt-3"
-              />
-            ) : (
-              // Nếu nhiều ảnh → cuộn ngang
-              <div className="flex gap-2 mt-3 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                {post.images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt="post"
-                    className="w-64 h-48 object-cover rounded-lg flex-shrink-0 snap-start"
-                  />
-                ))}
-              </div>
-            ))}
+          {!post.sharedFrom && post.images && post.images.length > 0 && (
+            <>
+              {post.images.length === 1 ? (
+                <img
+                  src={post.images[0]}
+                  alt="post"
+                  className="w-full h-64 object-cover rounded-lg mt-3"
+                />
+              ) : (
+                <div className="flex gap-2 mt-3 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
+                  {post.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt="post"
+                      className="w-64 h-48 object-cover rounded-lg flex-shrink-0 snap-start"
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
 
           {/* Action bar */}
           <div className="flex justify-around items-center mt-4 border-t border-gray-100 pt-2 text-gray-600 text-sm">
             <button
-              onClick={(e) => toggleLike(e, post._id)}
-              className="flex items-center gap-1 hover:text-red-500 transition"
+              onClick={(e) => handleLike(e, post._id)}
+              className="flex items-center gap-1 hover:text-red-500 transition cursor-pointer"
             >
               <Heart size={18} />
-              <span>{post.likes.length}</span>
+              <span>{(post.likes || []).length}</span>
             </button>
-            <button className="flex items-center gap-1 hover:text-blue-500 transition">
+            <button className="flex items-center gap-1 hover:text-blue-500 transition cursor-pointer">
               <MessageCircle size={18} />
-              <span>{post.comments.length}</span>
+              <span>{(post.comments || []).length}</span>
             </button>
-            <button className="flex items-center gap-1 hover:text-green-500 transition">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSharePostId(post._id);
+                setShowShareModal(true);
+              }}
+              className="flex items-center gap-1 hover:text-green-500 transition cursor-pointer"
+            >
               <Share2 size={18} />
               <span>Chia sẻ</span>
             </button>
           </div>
         </div>
       ))}
-      {loadingMore && (
-        <p className="text-center text-gray-500">Đang tải thêm...</p>
-      )}
 
       {showSaveModal && selectedPostId && (
         <SavePostModal
@@ -228,6 +214,16 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           onClose={() => {
             setShowSaveModal(false);
             setSelectedPostId(null);
+          }}
+        />
+      )}
+
+      {showShareModal && sharePostId && (
+        <SharePostModal
+          postId={sharePostId}
+          onClose={() => {
+            setShowShareModal(false);
+            setSharePostId(null);
           }}
         />
       )}

@@ -13,7 +13,6 @@ export const createPostShare = async ({
 }) => {
   return await Post.create({ author, caption, sharedFrom });
 };
-
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find()
     .populate("author", "username avatar")
@@ -21,6 +20,10 @@ export const findRecentPosts = async (limit, skip) => {
       path: "comments",
       populate: { path: "author", select: "username avatar" },
       options: { strictPopulate: false },
+    })
+    .populate({
+      path: "sharedFrom",
+      populate: { path: "author", select: "username avatar" },
     })
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -51,6 +54,10 @@ export const findHotPosts = async (limit, skip) => {
       populate: { path: "author", select: "username avatar" },
       options: { strictPopulate: false },
     },
+    {
+      path: "sharedFrom",
+      populate: { path: "author", select: "username avatar" },
+    },
   ]);
 };
 
@@ -61,6 +68,10 @@ export const findPopularPosts = async (limit, skip) => {
       path: "comments",
       populate: { path: "author", select: "username avatar" },
       options: { strictPopulate: false },
+    })
+    .populate({
+      path: "sharedFrom",
+      populate: { path: "author", select: "username avatar" },
     })
     .sort({ views: -1 })
     .skip(skip)
@@ -78,6 +89,13 @@ export const findPostAndIncreaseView = async (postId) => {
     { new: true }
   )
     .populate("author", "username avatar isOnline")
+    .populate({
+      path: "sharedFrom",
+      populate: {
+        path: "author",
+        select: "username avatar isOnline",
+      },
+    })
     .populate({
       path: "comments",
       populate: { path: "author", select: "username avatar" },
