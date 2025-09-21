@@ -1,7 +1,7 @@
-import ApiError from '../utils/apiError.js';
-import { StatusCodes } from 'http-status-codes';
-import * as postRepo from '../repositories/postRepository.js';
-import * as commentRepo from '../repositories/commentRepository.js';
+import ApiError from "../utils/apiError.js";
+import { StatusCodes } from "http-status-codes";
+import * as postRepo from "../repositories/postRepository.js";
+import * as commentRepo from "../repositories/commentRepository.js";
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
@@ -13,17 +13,17 @@ export const getPosts = async ({ type, limit, page = 1 }) => {
   const skip = (p - 1) * l;
   try {
     switch (type) {
-      case 'recent':
+      case "recent":
         return await postRepo.findRecentPosts(l, skip);
-      case 'hot':
+      case "hot":
         return await postRepo.findHotPosts(l, skip);
-      case 'popular':
+      case "popular":
         return await postRepo.findPopularPosts(l, skip);
       default:
         return await postRepo.findRecentPosts(l, skip);
     }
   } catch (err) {
-    console.error('Error in getPosts:', err);
+    console.error("Error in getPosts:", err);
     return [];
   }
 };
@@ -31,7 +31,7 @@ export const getPosts = async ({ type, limit, page = 1 }) => {
 export const getPostDetail = async (postId, userId) => {
   const post = await postRepo.findPostAndIncreaseView(postId);
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
+    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
   }
 
   post.likes = post.likes || [];
@@ -53,7 +53,7 @@ export const getPostDetail = async (postId, userId) => {
 export const toggleLikePost = async (postId, userId) => {
   const post = await postRepo.findPostById(postId);
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
+    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
   }
 
   const likedIndex = post.likes.findIndex((id) => id.toString() === userId);
@@ -73,7 +73,7 @@ export const toggleLikePost = async (postId, userId) => {
 export const createComment = async ({ postId, userId, content }) => {
   const post = await postRepo.findPostById(postId);
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
+    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
   }
 
   const comment = await commentRepo.createComment({
@@ -86,4 +86,41 @@ export const createComment = async ({ postId, userId, content }) => {
   await post.save();
 
   return await commentRepo.findCommentById(comment._id);
+};
+
+export const sharePost = async ({ userId, postId, caption }) => {
+  let original = await postRepo.findPostById(postId);
+  if (!original) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+  }
+
+  console.log("origin", original);
+
+  // nếu post hiện tại là bài share thì truy ngược về bài gốc
+  if (original.sharedFrom) {
+    original = await postRepo.findPostById(original.sharedFrom);
+  }
+
+  // tạo post share
+  const shared = await postRepo.createPostShare({
+    author: userId,
+    caption: caption || "",
+    sharedFrom: original._id,
+  });
+
+  // thêm vào danh sách share của bài gốc
+  if (!original.shares.some((id) => id.toString() === shared._id.toString())) {
+    original.shares.push(shared._id);
+    await original.save();
+  }
+
+  return await postRepo.findPostDetail(shared._id, {
+    populate: [
+      { path: "author", select: "username avatar" },
+      {
+        path: "sharedFrom",
+        populate: { path: "author", select: "username avatar" },
+      },
+    ],
+  });
 };
