@@ -11,4 +11,10 @@ export const sendMessageSchema = z.object({
 
 export const messageQuerySchema = z.object({
   limit: z.string().optional(),
+  page: z.string().optional(),
+});
+
+export const markAsReadSchema = z.object({
+  conversationId: z.string().min(1, { message: 'Thiếu conversationId' }),
+  messageId: z.string().min(1, { message: 'Thiếu messageId' }),
 });

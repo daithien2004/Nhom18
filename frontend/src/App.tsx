@@ -8,25 +8,28 @@ import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import MainLayout from './layouts/MainLayout';
 import PostDetail from './pages/PostDetail';
-import MessagesPage from './pages/MessagesPage';
+import ConversationsPage from './pages/ConversationsPage';
 import FriendsPage from './pages/FriendsPage';
 import CategoryPage from './pages/CategoryPage';
+import { SocketProvider } from './sockets/SocketContext';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="profile" element={<ProfilePage />}></Route>
-        <Route path="posts/:postId" element={<PostDetail />}></Route>
-        <Route path="messages" element={<MessagesPage />} />
-        <Route path="friends" element={<FriendsPage />} />
-        <Route path="categories" element={<CategoryPage />} />
-      </Route>
-      <Route path="/login" element={<LoginPage />}></Route>
-    </Routes>
+    <SocketProvider>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="profile" element={<ProfilePage />}></Route>
+          <Route path="posts/:postId" element={<PostDetail />}></Route>
+          <Route path="conversations" element={<ConversationsPage />} />
+          <Route path="friends" element={<FriendsPage />} />
+          <Route path="categories" element={<CategoryPage />} />
+        </Route>
+        <Route path="/login" element={<LoginPage />}></Route>
+      </Routes>
+    </SocketProvider>
   );
 }
 

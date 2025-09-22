@@ -3,12 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import * as conversationRepo from '../repositories/conversationRepository.js';
 import * as messageRepo from '../repositories/messageRepository.js';
 
-export const sendMessage = async ({
+export const sendMessage = async (
   conversationId,
   senderId,
   text,
-  attachments,
-}) => {
+  attachments
+) => {
   const conv = await conversationRepo.findConversationById(conversationId);
   if (!conv)
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy hội thoại');
@@ -25,14 +25,6 @@ export const sendMessage = async ({
   return message;
 };
 
-export const getMessages = async ({ conversationId, limit }) => {
-  const conv = await conversationRepo.findConversationById(conversationId);
-  if (!conv)
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy hội thoại');
-
-  return await messageRepo.findMessagesByConversation(conversationId, limit);
-};
-
-export const getConversations = async (userId) => {
-  return await conversationRepo.findUserConversations(userId);
+export const markAsRead = async (conversationId, messageId, userId) => {
+  return await messageRepo.markAsRead(conversationId, messageId, userId);
 };

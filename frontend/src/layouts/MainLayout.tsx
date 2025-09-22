@@ -55,9 +55,9 @@ const MainLayout: React.FC = () => {
             <MessageCircle
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/messages') ? 'text-yellow-300' : 'text-white'
+                isActive('/conversations') ? 'text-yellow-300' : 'text-white'
               }`}
-              onClick={() => navigate('/messages')}
+              onClick={() => navigate('/conversations')}
             />
 
             <Contact

@@ -6,37 +6,19 @@ import {
   validateQuery,
 } from '../middlewares/validation.js';
 import {
-  sendMessageSchema,
-  conversationIdSchema,
-  messageQuerySchema,
+  markAsReadSchema,
 } from '../schemas/messageSchemas.js';
 import {
-  sendMessage,
-  getMessages,
-  getConversations,
+  markAsRead,
 } from '../controllers/messageController.js';
 
 const router = Router();
 
-// Lấy danh sách hội thoại của user
-router.get('/conversations', auth, getConversations);
-
-// Lấy tin nhắn trong 1 hội thoại
-router.get(
-  '/:conversationId/messages',
+router.patch(
+  '/:messageId/read',
   auth,
-  validateParams(conversationIdSchema),
-  validateQuery(messageQuerySchema),
-  getMessages
-);
-
-// Gửi tin nhắn
-router.post(
-  '/:conversationId/messages',
-  auth,
-  validateParams(conversationIdSchema),
-  validateBody(sendMessageSchema),
-  sendMessage
+  validateParams(markAsReadSchema),
+  markAsRead
 );
 
 export default router;

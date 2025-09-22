@@ -1,19 +1,30 @@
-import { useState, useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Search, MessageCircle, Users, UserPlus } from "lucide-react";
-import FriendList from "../components/FriendList";
-import FriendRequests from "../components/FriendRequests";
-import ChatWindow from "../components/ChatWindow";
+import { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Search, MessageCircle, Users, UserPlus } from 'lucide-react';
+import FriendList from '../components/FriendList';
+import FriendRequests from '../components/FriendRequests';
+import ChatWindow from '../components/ChatWindow';
 import {
   searchAllUsers,
   clearResults,
-} from "../store/slices/friendSearchSlice";
-import type { RootState, AppDispatch } from "../store/store";
+} from '../store/slices/friendSearchSlice';
+import type { RootState, AppDispatch } from '../store/store';
+import instance from '../api/axiosInstant';
+
+interface ChatUser {
+  _id: string;
+  username: string;
+  avatar?: string;
+  status: 'friend' | 'pending' | 'none';
+  isOnline?: boolean;
+  conversationId: string;
+  chatStatus: string;
+}
 
 export default function FriendsPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
-  const [searchText, setSearchText] = useState("");
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
+  const [searchText, setSearchText] = useState('');
 
   const { results: searchResults = [], isLoading } = useSelector(
     (state: RootState) => state.friendSearch
@@ -21,12 +32,12 @@ export default function FriendsPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [activeChatUser, setActiveChatUser] = useState(null);
+  const [activeChatUser, setActiveChatUser] = useState<ChatUser | null>(null);
 
   // debounce search
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (searchText.trim() !== "") {
+      if (searchText.trim() !== '') {
         dispatch(searchAllUsers(searchText));
         setShowDropdown(true);
       } else {
@@ -48,15 +59,27 @@ export default function FriendsPage() {
         setShowDropdown(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleUserClick = (user: any) => {
-    setActiveChatUser(user);
-    setShowDropdown(false);
-    setSearchText("");
-    dispatch(clearResults());
+  const handleUserClick = async (user: any) => {
+    try {
+      const res = await instance.get(`/conversations/1on1/${user._id}`);
+      const conversation = res.data;
+
+      setActiveChatUser({
+        ...user,
+        conversationId: conversation._id,
+        chatStatus: conversation.status, // 👈 active / pending
+      });
+
+      setShowDropdown(false);
+      setSearchText('');
+      dispatch(clearResults());
+    } catch (err) {
+      console.error('Lỗi khi lấy conversation:', err);
+    }
   };
 
   return (
@@ -95,13 +118,13 @@ export default function FriendsPage() {
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-10 h-10 flex-shrink-0">
                       <img
-                        src={user.avatar || "/default-avatar.png"}
+                        src={user.avatar || '/default-avatar.png'}
                         alt={user.username}
                         className="w-full h-full rounded-full object-cover border-2 border-gray-100"
                       />
                       <span
                         className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                          user.isOnline ? "bg-green-500" : "bg-gray-400"
+                          user.isOnline ? 'bg-green-500' : 'bg-gray-400'
                         }`}
                       ></span>
                     </div>
@@ -110,11 +133,11 @@ export default function FriendsPage() {
                         {user.username}
                       </span>
                       <span className="text-xs text-gray-500 truncate">
-                        {user.status === "friend"
-                          ? "Bạn bè"
-                          : user.status === "pending"
-                          ? "Đang chờ"
-                          : "Người lạ"}
+                        {user.status === 'friend'
+                          ? 'Bạn bè'
+                          : user.status === 'pending'
+                          ? 'Đang chờ'
+                          : 'Người lạ'}
                       </span>
                     </div>
                   </div>
@@ -132,13 +155,13 @@ export default function FriendsPage() {
         <nav className="flex flex-col mt-4 px-3 space-y-2">
           <button
             onClick={() => {
-              setActiveTab("friends");
+              setActiveTab('friends');
               setActiveChatUser(null);
             }}
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition hover:bg-blue-50  ${
-              activeTab === "friends"
-                ? "bg-blue-100 font-semibold text-blue-600"
-                : "text-gray-700"
+              activeTab === 'friends'
+                ? 'bg-blue-100 font-semibold text-blue-600'
+                : 'text-gray-700'
             }`}
           >
             <Users size={20} />
@@ -147,13 +170,13 @@ export default function FriendsPage() {
 
           <button
             onClick={() => {
-              setActiveTab("requests");
+              setActiveTab('requests');
               setActiveChatUser(null);
             }}
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition hover:bg-blue-50 ${
-              activeTab === "requests"
-                ? "bg-blue-100 font-semibold text-blue-600"
-                : "text-gray-700"
+              activeTab === 'requests'
+                ? 'bg-blue-100 font-semibold text-blue-600'
+                : 'text-gray-700'
             }`}
           >
             <UserPlus size={20} />
@@ -165,8 +188,12 @@ export default function FriendsPage() {
       {/* Main content */}
       <main className="flex-1 bg-gray-50 p-6 overflow-y-auto">
         {activeChatUser ? (
-          <ChatWindow user={activeChatUser} />
-        ) : activeTab === "friends" ? (
+          <ChatWindow
+            user={activeChatUser}
+            conversationId={activeChatUser.conversationId}
+            chatStatus={activeChatUser.chatStatus}
+          />
+        ) : activeTab === 'friends' ? (
           <FriendList />
         ) : (
           <FriendRequests />

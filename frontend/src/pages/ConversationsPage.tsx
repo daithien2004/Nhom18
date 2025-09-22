@@ -14,10 +14,10 @@ import {
   fetchMessages,
   sendMessage,
   selectConversation,
-} from '../store/slices/messageSlice';
+} from '../store/slices/conversationSlice';
 import type { Message, Conversation } from '../types/message';
 
-const MessagesPage: React.FC = () => {
+const ConversationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const {
     conversations,
@@ -26,7 +26,7 @@ const MessagesPage: React.FC = () => {
     loadingConversations,
     loadingMessages,
     sendingMessage,
-  } = useAppSelector((state) => state.messages);
+  } = useAppSelector((state) => state.conversations);
   const userId = useAppSelector((state) => state.auth.user?._id); // Lấy ID người dùng từ auth
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -252,4 +252,4 @@ const MessagesPage: React.FC = () => {
   );
 };
 
-export default MessagesPage;
+export default ConversationsPage;

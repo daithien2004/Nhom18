@@ -24,6 +24,10 @@ const ConversationSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Message',
     },
+    status: {
+      type: String,
+      enum: ['pending', 'active'],
+    },
   },
   { timestamps: true }
 );

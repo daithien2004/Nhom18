@@ -1,45 +1,45 @@
-// src/store/slices/messageSlice.ts
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
-import type { Message, Conversation } from '../../types/message';
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from '@reduxjs/toolkit';
+import type { Conversation, Message } from '../../types/message';
 import instance from '../../api/axiosInstant';
 
-// ------------------------
-// Async thunks
-// ------------------------
 export const fetchConversations = createAsyncThunk(
-  'messages/fetchConversations',
+  'conversations/fetchConversations',
   async () => {
-    const res = await instance.get('/messages/conversations');
+    const res = await instance.get('/conversations');
     return res.data.data as Conversation[];
   }
 );
 
 export const fetchMessages = createAsyncThunk(
-  'messages/fetchMessages',
-  async (payload: { conversationId: string; limit?: number }) => {
-    const { conversationId, limit } = payload;
-    const res = await instance.get(`/messages/${conversationId}/messages`, {
-      params: { limit },
+  'conversations/fetchMessages',
+  async (payload: {
+    conversationId: string;
+    limit?: number;
+    page?: number;
+  }) => {
+    const { conversationId, limit, page } = payload;
+    const res = await instance.get(`/:conversationId/messages`, {
+      params: { limit, page },
     });
     return { conversationId, messages: res.data.data as Message[] };
   }
 );
 
 export const sendMessage = createAsyncThunk(
-  'messages/sendMessage',
+  'conversations/sendMessage',
   async (payload: {
     conversationId: string;
     text: string;
     attachments?: string[];
   }) => {
-    const res = await instance.post(
-      `/messages/${payload.conversationId}/messages`,
-      {
-        text: payload.text,
-        attachments: payload.attachments,
-      }
-    );
+    const res = await instance.post(`/:conversationId/messages`, {
+      text: payload.text,
+      attachments: payload.attachments,
+    });
     return {
       conversationId: payload.conversationId,
       message: res.data.data as Message,
@@ -50,7 +50,7 @@ export const sendMessage = createAsyncThunk(
 // ------------------------
 // Slice
 // ------------------------
-interface MessagesState {
+interface ConversationsState {
   conversations: Conversation[];
   messages: Record<string, Message[]>; // key: conversationId
   selectedConversationId: string | null;
@@ -60,7 +60,7 @@ interface MessagesState {
   error: string | null;
 }
 
-const initialState: MessagesState = {
+const initialState: ConversationsState = {
   conversations: [],
   messages: {},
   selectedConversationId: null,
@@ -70,8 +70,8 @@ const initialState: MessagesState = {
   error: null,
 };
 
-const messageSlice = createSlice({
-  name: 'messages',
+const conversationSlice = createSlice({
+  name: 'coversations',
   initialState,
   reducers: {
     selectConversation: (state, action: PayloadAction<string | null>) => {
@@ -151,5 +151,6 @@ const messageSlice = createSlice({
   },
 });
 
-export const { selectConversation, clearMessagesState } = messageSlice.actions;
-export default messageSlice.reducer;
+export const { selectConversation, clearMessagesState } =
+  conversationSlice.actions;
+export default conversationSlice.reducer;

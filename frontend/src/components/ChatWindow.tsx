@@ -4,6 +4,8 @@ import {
   fetchOutgoingRequests,
   sendFriendRequest,
 } from '../store/slices/friendSlice';
+import instance from '../api/axiosInstant';
+import { useSocket } from '../sockets/SocketContext';
 
 interface ChatWindowProps {
   user: {
@@ -13,15 +15,22 @@ interface ChatWindowProps {
     status: 'friend' | 'pending' | 'none';
     isOnline?: boolean;
   };
+  conversationId: string; // cần truyền vào
+  chatStatus: string; // cần truyền vào
 }
 
 interface Message {
-  id: number;
+  _id: string;
+  sender: string;
   fromMe: boolean;
   text: string;
 }
 
-export default function ChatWindow({ user }: ChatWindowProps) {
+export default function ChatWindow({
+  user,
+  conversationId,
+  chatStatus,
+}: ChatWindowProps) {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -32,19 +41,69 @@ export default function ChatWindow({ user }: ChatWindowProps) {
     (state) => state.friends.outgoingRequests
   );
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, fromMe: false, text: 'Chào bạn!' },
-    { id: 2, fromMe: true, text: 'Chào bạn, bạn khỏe không?' },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const socket = useSocket();
 
-  const handleSend = () => {
-    if (inputText.trim() === '') return;
-    setMessages([
-      ...messages,
-      { id: messages.length + 1, fromMe: true, text: inputText },
-    ]);
-    setInputText('');
+  // Lấy danh sách tin nhắn cũ
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const fetchMessages = async () => {
+      try {
+        const res = await instance.get(
+          `/conversations/${conversationId}/messages`
+        );
+        const msgs: Message[] = res.data.map((m: any) => ({
+          ...m,
+          fromMe: m.sender === user._id ? false : true,
+        }));
+        setMessages(msgs);
+      } catch (err) {
+        console.error('Lỗi khi lấy tin nhắn:', err);
+      }
+    };
+
+    fetchMessages();
+  }, [conversationId, user._id]);
+
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    socket.emit('joinConversation', conversationId);
+
+    const handleNewMessage = (message: Message) => {
+      setMessages((prev) => [
+        ...prev,
+        { ...message, fromMe: message.sender === user._id ? false : true },
+      ]);
+    };
+
+    socket.on('newMessage', handleNewMessage);
+
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+    };
+  }, [socket, conversationId, user._id]);
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+
+    const newMessage = {
+      conversationId,
+      text: inputText,
+      receiverId: user._id,
+    };
+
+    try {
+      await instance.post(
+        `/conversations/${conversationId}/messages`,
+        newMessage
+      );
+      setInputText('');
+    } catch (err) {
+      console.error('Lỗi khi gửi tin nhắn:', err);
+    }
   };
 
   const handleAddFriend = async () => {
@@ -102,39 +161,44 @@ export default function ChatWindow({ user }: ChatWindowProps) {
         )}
       </div>
 
-      {/* Chat content */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      {/* Messages */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
         {messages.map((msg) => (
           <div
-            key={msg.id}
+            key={msg._id}
             className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`px-4 py-2 rounded-2xl max-w-xs break-words ${
+              className={`px-4 py-2 rounded-2xl max-w-xs ${
                 msg.fromMe
                   ? 'bg-blue-500 text-white rounded-br-none'
                   : 'bg-gray-200 text-gray-800 rounded-bl-none'
-              } shadow-sm`}
+              }`}
             >
               {msg.text}
             </div>
           </div>
         ))}
+        {chatStatus === 'pending' && (
+          <div className="text-center text-gray-500 mt-5 italic">
+            Tin nhắn này đang chờ cho đến khi {user.username} chấp nhận kết bạn
+          </div>
+        )}
       </div>
 
-      {/* Input */}
+      {/* Input box */}
       <div className="flex p-4 border-t bg-white gap-2 items-center">
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Nhập tin nhắn..."
-          className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="flex-1 rounded-full border px-4 py-2"
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
         />
         <button
           onClick={handleSend}
-          className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition cursor-pointer"
+          className="bg-blue-500 text-white px-4 py-2 rounded-full"
         >
           Gửi
         </button>
