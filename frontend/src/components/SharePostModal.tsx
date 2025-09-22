@@ -4,13 +4,15 @@ import { sharePost } from "../store/slices/postsSlice";
 
 interface SharePostModalProps {
   postId: string;
-  postAuthor?: { username: string; avatar?: string };
+  username?: string;
+  avatar?: string;
   onClose: () => void;
 }
 
 const SharePostModal: React.FC<SharePostModalProps> = ({
   postId,
-  postAuthor,
+  username,
+  avatar,
   onClose,
 }) => {
   const [caption, setCaption] = useState("");
@@ -48,7 +50,7 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
           <h3 className="text-lg font-semibold">Chia sẻ bài viết</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 font-bold text-xl"
+            className="text-gray-400 hover:text-gray-600 font-bold text-xl cursor-pointer"
           >
             ×
           </button>
@@ -57,13 +59,11 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
         {/* User info */}
         <div className="flex items-center gap-3 mb-4">
           <img
-            src={postAuthor?.avatar || "/default-avatar.png"}
+            src={avatar || "/default-avatar.png"}
             alt="avatar"
             className="w-10 h-10 rounded-full object-cover"
           />
-          <p className="font-semibold text-gray-900">
-            {postAuthor?.username || "Bạn"}
-          </p>
+          <p className="font-semibold text-gray-900">{username || "Bạn"}</p>
         </div>
 
         {/* Caption input */}
@@ -79,14 +79,14 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+            className="px-4 py-2 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition cursor-pointer"
             disabled={loading}
           >
             Hủy
           </button>
           <button
             onClick={handleShare}
-            className="px-4 py-2 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 transition flex items-center justify-center"
+            className="px-4 py-2 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 transition flex items-center justify-center cursor-pointer"
             disabled={loading}
           >
             {loading ? "Đang chia sẻ..." : "Chia sẻ"}

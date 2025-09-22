@@ -15,19 +15,22 @@ export const createPostShare = async ({
 };
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find()
-    .populate("author", "username avatar")
-    .populate({
-      path: "comments",
-      populate: { path: "author", select: "username avatar" },
-      options: { strictPopulate: false },
-    })
-    .populate({
-      path: "sharedFrom",
-      populate: { path: "author", select: "username avatar" },
-    })
+    .populate([
+      { path: "author", select: "username avatar" },
+      {
+        path: "comments",
+        populate: { path: "author", select: "username avatar" },
+        options: { strictPopulate: false },
+      },
+      {
+        path: "sharedFrom",
+        populate: { path: "author", select: "username avatar" },
+      },
+    ])
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 };
 
 export const findHotPosts = async (limit, skip) => {
@@ -63,19 +66,22 @@ export const findHotPosts = async (limit, skip) => {
 
 export const findPopularPosts = async (limit, skip) => {
   return await Post.find()
-    .populate("author", "username avatar")
-    .populate({
-      path: "comments",
-      populate: { path: "author", select: "username avatar" },
-      options: { strictPopulate: false },
-    })
-    .populate({
-      path: "sharedFrom",
-      populate: { path: "author", select: "username avatar" },
-    })
+    .populate([
+      { path: "author", select: "username avatar" },
+      {
+        path: "comments",
+        populate: { path: "author", select: "username avatar" },
+        options: { strictPopulate: false },
+      },
+      {
+        path: "sharedFrom",
+        populate: { path: "author", select: "username avatar" },
+      },
+    ])
     .sort({ views: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .lean();
 };
 
 export const findPostById = async (id) => {

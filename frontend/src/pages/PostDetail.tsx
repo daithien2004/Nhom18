@@ -30,10 +30,13 @@ const PostDetailPage = () => {
 
   const [showShareModal, setShowShareModal] = useState(false);
 
-  // Fetch khi mount
   useEffect(() => {
     if (postId) dispatch(fetchPostDetail(postId));
-    return () => dispatch(clearPostDetail());
+
+    return () => {
+      // bọc trong function để satisfy EffectCallback
+      dispatch(clearPostDetail());
+    };
   }, [dispatch, postId]);
 
   // Shared post

@@ -172,7 +172,16 @@ const friendSlice = createSlice({
       })
 
       // --- Send Friend Request ---
-      .addCase(sendFriendRequest.fulfilled, (state, action) => {});
+      .addCase(sendFriendRequest.fulfilled, (state, action) => {
+        const newRequest = {
+          _id: action.payload,
+          username: "", // có thể để trống hoặc lấy từ user hiện tại nếu có
+          avatar: "",
+          status: "pending", // hoặc 'none' tùy kiểu
+        } as FriendRequest;
+
+        state.outgoingRequests.push(newRequest);
+      });
   },
 });
 

@@ -20,6 +20,13 @@ interface PostSectionProps {
 }
 
 const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
+  interface User {
+    username: string;
+    avatar: string;
+  }
+
+  const [shareUser, setShareUser] = useState<User | null>(null);
+
   const dispatch = useAppDispatch();
   const { posts, page, hasMore, isLoading } = useAppSelector(
     (state) => state.posts
@@ -198,6 +205,10 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 e.stopPropagation();
                 setSharePostId(post._id);
                 setShowShareModal(true);
+                setShareUser({
+                  username: post.author.username,
+                  avatar: post.author.avatar || "/default-avatar.png",
+                });
               }}
               className="flex items-center gap-1 hover:text-green-500 transition cursor-pointer"
             >
@@ -221,6 +232,8 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
       {showShareModal && sharePostId && (
         <SharePostModal
           postId={sharePostId}
+          username={shareUser?.username}
+          avatar={shareUser?.avatar}
           onClose={() => {
             setShowShareModal(false);
             setSharePostId(null);

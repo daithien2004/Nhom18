@@ -116,6 +116,7 @@ export const sharePost = async ({ userId, postId, caption }) => {
   }
 
   // nếu post hiện tại là bài share thì truy ngược về bài gốc
+  // original.sharedFrom khác null là bài share
   if (original.sharedFrom) {
     original = await postRepo.findPostById(original.sharedFrom);
   }
