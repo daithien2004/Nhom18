@@ -1,17 +1,22 @@
 export interface Message {
-  _id: string;
-  conversationId: string;
-  sender: UserType;
+  id: string;
+  sender: {
+    id: string | undefined;
+    username?: string | undefined;
+    avatar?: string | undefined;
+  };
+  conversationId: string | null;
   text?: string;
   attachments?: string[];
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface Conversation {
-  _id: string;
-  participants: UserType[];
-  lastMessage?: Message;
+  id: string;
+  participants: string[];
+  lastMessage?: Message | null;
   isGroup: boolean;
   groupName?: string;
   groupAvatar?: string;
+  updatedAt?: string;
 }

@@ -3,17 +3,20 @@ import { useForm } from 'react-hook-form';
 import { FormLoginSchema, type FormLogin } from '../schemas/FormLoginSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginThunk } from '../store/slices/authSlice';
+import { loginThunk } from '../store/thunks/authThunks';
+import { toast } from 'react-toastify';
+import { ClipLoader } from 'react-spinners';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth); // lấy state từ redux
+  const { loading } = useAppSelector((state) => state.auth); // lấy state từ redux
+  const loginLoading = loading.login;
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty, isValid },
+    formState: { errors, isValid },
   } = useForm<FormLogin>({
     resolver: zodResolver(FormLoginSchema),
     defaultValues: { email: 'alice@example.com', password: '123456' },
@@ -21,15 +24,23 @@ const LoginPage = () => {
   });
 
   const onSubmit = async (data: FormLogin) => {
-    const resultAction = await dispatch(
-      loginThunk({ email: data.email, password: data.password })
-    );
+    const resultAction = await dispatch(loginThunk(data));
 
     if (loginThunk.fulfilled.match(resultAction)) {
-      alert('Đăng nhập thành công!');
+      toast.success('Đăng nhập thành công!');
       navigate('/');
     } else {
-      alert(error || 'Đăng nhập thất bại!');
+      const payload = resultAction.payload;
+
+      if (payload && typeof payload === 'object') {
+        if ('message' in payload && typeof payload.message === 'string') {
+          // Lỗi chung từ backend
+          toast.error(payload.message); // ✅ đã là string
+        }
+      } else {
+        // fallback
+        toast.error('Đăng nhập thất bại!');
+      }
     }
   };
 
@@ -100,13 +111,17 @@ const LoginPage = () => {
           <button
             type="submit"
             className="cursor-pointer bg-blue-500 rounded-2xl text-white py-2 hover:bg-blue-800 disabled:opacity-50"
-            disabled={loading}
+            disabled={loginLoading || !isValid}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loginLoading ? (
+              <>
+                <ClipLoader size={20} color="#fff" className="mr-2" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </button>
-
-          {/* Error */}
-          {error && <p className="text-red-500">{error}</p>}
 
           <label>
             Don't have an account? Register{' '}

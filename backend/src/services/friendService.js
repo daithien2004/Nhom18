@@ -55,7 +55,7 @@ export const getSentFriendRequests = async (currentUserId) => {
       if (fr.from.toString() === currentUserId && fr.status === 'pending') {
         sentRequests.push({
           to: {
-            _id: u._id,
+            id: u.id,
             username: u.username,
             avatar: u.avatar,
             isOnline: u.isOnline,
@@ -79,7 +79,7 @@ export const getReceivedFriendRequests = async (currentUserId) => {
     .filter((fr) => fr.status === 'pending')
     .map((fr) => ({
       from: {
-        _id: fr.from._id,
+        id: fr.from.id,
         username: fr.from.username,
         avatar: fr.from.avatar,
         isOnline: fr.from.isOnline,
@@ -157,15 +157,15 @@ export const searchAllUsers = async (userId, query) => {
   const users = await friendRepo.findAllUsersByQuery(userId, query);
   return users.map((u) => {
     let status = 'none';
-    if (me.friends.includes(u._id)) status = 'friend';
+    if (me.friends.includes(u.id)) status = 'friend';
     else if (
       me.friendRequests.some(
-        (r) => r.from.equals(u._id) && r.status === 'pending'
+        (r) => r.from.equals(u.id) && r.status === 'pending'
       )
     )
       status = 'pending';
     return {
-      _id: u._id,
+      id: u.id,
       username: u.username,
       avatar: u.avatar,
       isOnline: u.isOnline,
@@ -184,7 +184,7 @@ export const searchFriends = async (userId, query) => {
     query
   );
   return friends.map((u) => ({
-    _id: u._id,
+    id: u.id,
     username: u.username,
     avatar: u.avatar,
     isOnline: u.isOnline,

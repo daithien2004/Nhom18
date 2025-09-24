@@ -12,6 +12,7 @@ import { Server } from 'socket.io';
 import { registerMessageHandlers } from './sockets/messageSocket.js';
 import http from 'http';
 import socketAuth from './middlewares/socketAuth.js';
+import { errorHandling } from './middlewares/errorHandling.js';
 
 const app = express();
 const server = http.createServer(app); // Tạo server HTTP từ app
@@ -34,6 +35,8 @@ app.use('/upload', uploadRoutes);
 app.use('/messages', messageRoutes);
 app.use('/conversations', conversationRoutes);
 app.use('/friends', friendRoutes);
+
+app.use(errorHandling);
 
 app.set('io', io);
 

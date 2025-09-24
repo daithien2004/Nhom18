@@ -1,5 +1,5 @@
-import { StatusCodes } from "http-status-codes";
-import { sendError } from "../utils/response.js";
+import { StatusCodes } from 'http-status-codes';
+import { sendError } from '../utils/response.js';
 
 // Middleware xử lý lỗi tập trung trong ứng dụng Back-end NodeJS (ExpressJS)
 export const errorHandling = (err, req, res, next) => {
@@ -8,7 +8,7 @@ export const errorHandling = (err, req, res, next) => {
 
   // Lấy message từ error hoặc sử dụng message mặc định theo status code
   const message = err.message || StatusCodes[err.statusCode];
-  
+
   // Log error trong development
   if (process.env.NODE_ENV === 'development') {
     console.error({

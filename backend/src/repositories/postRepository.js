@@ -82,7 +82,6 @@ export const findPostAndIncreaseView = async (postId) => {
       path: "comments",
       populate: { path: "author", select: "username avatar" },
     })
-    .lean();
 };
 
 export const findPostDetail = async (id, options = {}) => {

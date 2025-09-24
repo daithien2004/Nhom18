@@ -1,29 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchOutgoingRequests,
   sendFriendRequest,
 } from '../store/slices/friendSlice';
-import instance from '../api/axiosInstant';
+import {
+  fetchMessages,
+  sendMessage,
+  selectConversation,
+  addMessage,
+} from '../store/slices/conversationSlice';
 import { useSocket } from '../sockets/SocketContext';
+import { toast } from 'react-toastify';
+import { Loader2 } from 'lucide-react';
+import type { Message } from '../types/message';
+import instance from '../api/axiosInstant';
 
 interface ChatWindowProps {
   user: {
-    _id: string;
+    id: string;
     username: string;
     avatar?: string;
     status: 'friend' | 'pending' | 'none';
     isOnline?: boolean;
   };
-  conversationId: string; // cần truyền vào
-  chatStatus: string; // cần truyền vào
-}
-
-interface Message {
-  _id: string;
-  sender: string;
-  fromMe: boolean;
-  text: string;
+  conversationId: string;
+  chatStatus: string;
 }
 
 export default function ChatWindow({
@@ -32,51 +34,54 @@ export default function ChatWindow({
   chatStatus,
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    dispatch(fetchOutgoingRequests());
-  }, []);
-
+  const socket = useSocket();
+  const { messages, sendingMessage, error } = useAppSelector(
+    (state) => state.conversations
+  );
   const outgoingRequests = useAppSelector(
     (state) => state.friends.outgoingRequests
   );
-
-  const [messages, setMessages] = useState<Message[]>([]);
+  const currentUser = useAppSelector((state) => state.auth.user);
   const [inputText, setInputText] = useState('');
-  const socket = useSocket();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // State cho file đã chọn
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref cho input file
 
-  // Lấy danh sách tin nhắn cũ
+  // Xử lý chọn file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+    }
+  };
+
+  // Fetch outgoing requests
   useEffect(() => {
-    if (!conversationId) return;
+    dispatch(fetchOutgoingRequests());
+  }, [dispatch]);
 
-    const fetchMessages = async () => {
-      try {
-        const res = await instance.get(
-          `/conversations/${conversationId}/messages`
-        );
-        const msgs: Message[] = res.data.map((m: any) => ({
-          ...m,
-          fromMe: m.sender === user._id ? false : true,
-        }));
-        setMessages(msgs);
-      } catch (err) {
-        console.error('Lỗi khi lấy tin nhắn:', err);
-      }
-    };
+  // Fetch messages when conversation changes
+  useEffect(() => {
+    if (conversationId) {
+      dispatch(selectConversation(conversationId));
+      dispatch(fetchMessages({ conversationId, limit: 10 }));
+    }
+  }, [conversationId, dispatch]);
 
-    fetchMessages();
-  }, [conversationId, user._id]);
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
+  // Setup WebSocket
   useEffect(() => {
     if (!socket || !conversationId) return;
 
     socket.emit('joinConversation', conversationId);
 
     const handleNewMessage = (message: Message) => {
-      setMessages((prev) => [
-        ...prev,
-        { ...message, fromMe: message.sender === user._id ? false : true },
-      ]);
+      dispatch(addMessage({ conversationId, message }));
     };
 
     socket.on('newMessage', handleNewMessage);
@@ -84,40 +89,53 @@ export default function ChatWindow({
     return () => {
       socket.off('newMessage', handleNewMessage);
     };
-  }, [socket, conversationId, user._id]);
+  }, [socket, conversationId, dispatch]);
 
+  // Xử lý gửi tin nhắn với văn bản và/hoặc ảnh
   const handleSend = async () => {
-    if (!inputText.trim()) return;
-
-    const newMessage = {
-      conversationId,
-      text: inputText,
-      receiverId: user._id,
-    };
+    if (!inputText.trim() && selectedFiles.length === 0) return; // Đảm bảo có văn bản hoặc file
+    if (!conversationId || !currentUser) return;
 
     try {
-      await instance.post(
-        `/conversations/${conversationId}/messages`,
-        newMessage
-      );
+      // Tải file lên server (sẽ triển khai endpoint này)
+      const uploadedUrls: string[] = [];
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await instance.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        uploadedUrls.push(response.data.url);
+      }
+
+      // Gửi tin nhắn với văn bản và URL ảnh
+      await dispatch(
+        sendMessage({
+          conversationId,
+          text: inputText,
+          attachments: uploadedUrls,
+        })
+      ).unwrap();
       setInputText('');
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Xóa input file
+      }
     } catch (err) {
-      console.error('Lỗi khi gửi tin nhắn:', err);
+      // Lỗi được xử lý trong Redux
     }
   };
 
   const handleAddFriend = async () => {
     try {
-      await dispatch(sendFriendRequest(user._id)).unwrap();
-      alert(`Đã gửi lời mời kết bạn tới ${user.username}`);
+      await dispatch(sendFriendRequest(user.id)).unwrap();
+      toast.success(`Đã gửi lời mời kết bạn tới ${user.username}`);
     } catch (err) {
-      console.error(err);
-      alert('Gửi lời mời kết bạn thất bại. Vui lòng thử lại.');
+      toast.error('Gửi lời mời kết bạn thất bại. Vui lòng thử lại.');
     }
   };
 
-  // Kiểm tra xem đã gửi lời mời hay chưa
-  const isPending = outgoingRequests.some((r) => r._id === user._id);
+  const isPending = outgoingRequests.some((r) => r.id === user.id);
 
   return (
     <div className="flex flex-col h-full border rounded-2xl bg-white shadow-lg overflow-hidden">
@@ -150,7 +168,7 @@ export default function ChatWindow({
           <button
             onClick={handleAddFriend}
             disabled={isPending}
-            className={`text-sm border px-3 py-1 rounded-full transition cursor-pointer ${
+            className={`text-sm border px-3 py-1 rounded-full transition ${
               isPending
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 : 'text-blue-600 border-blue-200 hover:bg-blue-100'
@@ -163,19 +181,39 @@ export default function ChatWindow({
 
       {/* Messages */}
       <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
-        {messages.map((msg) => (
+        {messages[conversationId]?.map((msg) => (
           <div
-            key={msg._id}
-            className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}
+            key={msg.id}
+            className={`flex ${
+              msg.sender.id === currentUser?.id
+                ? 'justify-end'
+                : 'justify-start'
+            }`}
           >
             <div
               className={`px-4 py-2 rounded-2xl max-w-xs ${
-                msg.fromMe
+                msg.sender.id === currentUser?.id
                   ? 'bg-blue-500 text-white rounded-br-none'
                   : 'bg-gray-200 text-gray-800 rounded-bl-none'
               }`}
             >
-              {msg.text}
+              {/* Hiển thị văn bản nếu có */}
+              {msg.text && <div>{msg.text}</div>}
+
+              {/* Hiển thị ảnh đính kèm */}
+              {(msg.attachments ?? []).length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {msg.attachments?.map((attachment, index) => (
+                    <img
+                      key={index}
+                      src={attachment}
+                      alt={`Ảnh đính kèm ${index + 1}`}
+                      className="max-w-full h-auto rounded-lg cursor-pointer"
+                      onClick={() => window.open(attachment, '_blank')} // Mở ảnh trong tab mới khi nhấp
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -188,19 +226,71 @@ export default function ChatWindow({
 
       {/* Input box */}
       <div className="flex p-4 border-t bg-white gap-2 items-center">
+        {/* Nút chọn file */}
+        <label className="cursor-pointer">
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            multiple
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <svg
+            className="w-6 h-6 text-gray-600 hover:text-blue-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15.172 7l-6.586 6.586a2 2 0 002.828 2.828l6.586-6.586M12 3v6m0 0H6m6 0h6"
+            />
+          </svg>
+        </label>
+
+        {/* Hiển thị tên file đã chọn */}
+        {selectedFiles.length > 0 && (
+          <div className="text-sm text-gray-600">
+            {selectedFiles.map((file) => file.name).join(', ')}
+          </div>
+        )}
+
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Nhập tin nhắn..."
-          className="flex-1 rounded-full border px-4 py-2"
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          className="flex-1 rounded-full border px-4 py-2 outline-none disabled:opacity-50"
+          disabled={sendingMessage || !currentUser}
+          onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              !sendingMessage &&
+              currentUser &&
+              (inputText.trim() || selectedFiles.length > 0)
+            ) {
+              handleSend();
+            }
+          }}
         />
         <button
           onClick={handleSend}
-          className="bg-blue-500 text-white px-4 py-2 rounded-full"
+          disabled={
+            sendingMessage ||
+            !currentUser ||
+            (!inputText.trim() && selectedFiles.length === 0)
+          }
+          className="bg-blue-500 text-white px-4 py-2 rounded-full disabled:bg-gray-300"
         >
-          Gửi
+          {sendingMessage ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            'Gửi'
+          )}
         </button>
       </div>
     </div>

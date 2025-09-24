@@ -8,7 +8,7 @@ interface Author {
 }
 
 interface ApiPost {
-  _id: string;
+  id: string;
   content: string;
   images: string[];
   author: Author;
@@ -16,7 +16,7 @@ interface ApiPost {
 }
 
 interface ApiCategory {
-  _id: string;
+  id: string;
   name: string;
   posts: ApiPost[];
 }
@@ -33,7 +33,7 @@ const PostCategoryPage = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   const selectedCategory = categories.find(
-    (c: ApiCategory) => c._id === selectedCategoryId
+    (c: ApiCategory) => c.id === selectedCategoryId
   );
   const selectedPosts = selectedCategory ? selectedCategory.posts : [];
 
@@ -45,7 +45,7 @@ const PostCategoryPage = () => {
       const list = Array.isArray(data) ? (data as ApiCategory[]) : [];
       setCategories(list);
       if (list.length > 0 && !selectedCategoryId) {
-        setSelectedCategoryId(list[0]._id);
+        setSelectedCategoryId(list[0].id);
       }
     } catch (err: any) {
       setError('Không thể tải danh mục. Vui lòng đăng nhập và thử lại.');
@@ -72,8 +72,8 @@ const PostCategoryPage = () => {
         name: newCategoryName.trim(),
       });
       await loadCategories();
-      if (created && created._id) {
-        setSelectedCategoryId(created._id);
+      if (created && created.id) {
+        setSelectedCategoryId(created.id);
       }
       setShowCreateModal(false);
     } catch (err) {
@@ -96,11 +96,11 @@ const PostCategoryPage = () => {
         <div className="space-y-2">
           {categories.map((cat: ApiCategory) => (
             <div
-              key={cat._id}
+              key={cat.id}
               className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-                selectedCategoryId === cat._id ? 'bg-gray-100' : ''
+                selectedCategoryId === cat.id ? 'bg-gray-100' : ''
               }`}
-              onClick={() => setSelectedCategoryId(cat._id)}
+              onClick={() => setSelectedCategoryId(cat.id)}
             >
               <img
                 src={
@@ -148,7 +148,7 @@ const PostCategoryPage = () => {
         <div className="space-y-4">
           {selectedPosts.map((post: ApiPost) => (
             <div
-              key={post._id}
+              key={post.id}
               className="bg-white rounded-lg shadow p-4 flex gap-4"
             >
               {/* Image */}

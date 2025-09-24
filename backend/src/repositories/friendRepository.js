@@ -4,7 +4,6 @@ import User from "../models/User.js";
 export const findFriends = async (userId) => {
   const user = await User.findById(userId)
     .populate("friends", "username avatar isOnline")
-    .lean();
   return user?.friends || [];
 };
 
@@ -22,7 +21,6 @@ export const saveUser = async (user) => {
 export const findUsersWithFriendRequestsFrom = async (currentUserId) => {
   return await User.find({ "friendRequests.from": currentUserId })
     .select("username avatar isOnline friendRequests")
-    .lean();
 };
 
 // Lấy ra danh sách lời mời kết bạn đã nhận được

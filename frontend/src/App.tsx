@@ -12,6 +12,8 @@ import ConversationsPage from './pages/ConversationsPage';
 import FriendsPage from './pages/FriendsPage';
 import CategoryPage from './pages/CategoryPage';
 import { SocketProvider } from './sockets/SocketContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // nhớ import css
 
 function App() {
   return (
@@ -21,14 +23,26 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="profile" element={<ProfilePage />}></Route>
-          <Route path="posts/:postId" element={<PostDetail />}></Route>
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="posts/:postId" element={<PostDetail />} />
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="friends" element={<FriendsPage />} />
           <Route path="categories" element={<CategoryPage />} />
         </Route>
-        <Route path="/login" element={<LoginPage />}></Route>
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
+
+      {/* Container chung cho toàn bộ app */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </SocketProvider>
   );
 }

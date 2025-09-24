@@ -4,9 +4,11 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchPostDetail,
   clearPostDetail,
-  toggleLikeDetail,
+  toggleLike,
+  addComment,
+  clearCommentError,
 } from '../store/slices/postSlice';
-import instance from '../api/axiosInstant';
+import { toast } from 'react-toastify'; // Giả định dùng toast
 import {
   X,
   Heart,
@@ -14,15 +16,20 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { postDetail, isLoading, isError } = useAppSelector(
-    (state) => state.post
-  );
+  const {
+    postDetail,
+    isLoadingDetail,
+    isErrorDetail,
+    isCommenting,
+    commentError,
+  } = useAppSelector((state) => state.posts);
   const [commentText, setCommentText] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -45,8 +52,27 @@ const PostDetailPage = () => {
     };
   }, [dispatch, postId]);
 
-  if (isLoading) return <p>Đang tải bài viết...</p>;
-  if (isError) return <p>Lỗi khi tải bài viết.</p>;
+  useEffect(() => {
+    if (commentError) {
+      toast.error(commentError);
+      dispatch(clearCommentError());
+    }
+  }, [commentError, dispatch]);
+
+  const handleAddComment = async () => {
+    if (!postId || !commentText.trim()) return;
+    try {
+      await dispatch(
+        addComment({ postId, content: commentText.trim() })
+      ).unwrap();
+      setCommentText('');
+    } catch (err) {
+      // Lỗi đã được xử lý trong thunk
+    }
+  };
+
+  if (isLoadingDetail) return <p>Đang tải bài viết...</p>;
+  if (isErrorDetail) return <p>Lỗi khi tải bài viết.</p>;
   if (!postDetail) return <p>Không tìm thấy bài viết.</p>;
 
   return (
@@ -72,7 +98,6 @@ const PostDetailPage = () => {
 
             {postDetail.images.length > 1 && (
               <>
-                {/* Prev button */}
                 <button
                   onClick={goPrev}
                   className="absolute left-4 top-1/2 -translate-y-1/2 
@@ -83,7 +108,6 @@ const PostDetailPage = () => {
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
-                {/* Next button */}
                 <button
                   onClick={goNext}
                   className="absolute right-4 top-1/2 -translate-y-1/2 
@@ -95,7 +119,6 @@ const PostDetailPage = () => {
                   <ChevronRight className="w-6 h-6" />
                 </button>
 
-                {/* Dots */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                   {postDetail.images.map((_, i) => (
                     <button
@@ -149,8 +172,11 @@ const PostDetailPage = () => {
         {/* Actions */}
         <div className="flex justify-around text-gray-600 text-sm py-2 border-b border-gray-200">
           <button
-            onClick={() => postId && dispatch(toggleLikeDetail(postId))}
+            onClick={() =>
+              postId && dispatch(toggleLike({ postId, isPostList: false }))
+            }
             className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+            disabled={isCommenting}
           >
             <Heart
               size={18}
@@ -179,8 +205,8 @@ const PostDetailPage = () => {
           {postDetail.comments.length === 0 ? (
             <p className="text-gray-500 text-sm">Chưa có bình luận nào.</p>
           ) : (
-            postDetail.comments.map((comment: any) => (
-              <div key={comment._id} className="flex gap-3">
+            postDetail.comments.map((comment) => (
+              <div key={comment.id} className="flex gap-3">
                 <img
                   src={comment.author.avatar || '/default-avatar.png'}
                   alt="avatar"
@@ -207,28 +233,24 @@ const PostDetailPage = () => {
             alt="avatar"
             className="w-8 h-8 rounded-full"
           />
-          <input
-            type="text"
-            placeholder="Viết bình luận..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === 'Enter' && postId && commentText.trim()) {
-                try {
-                  await instance.post(`/posts/${postId}/comments`, {
-                    content: commentText.trim(),
-                  });
-                  // Optimistically update list and count
-                  // Note: We directly mutate UI here; alternatively, refetch detail
-                  dispatch(fetchPostDetail(postId));
-                  setCommentText('');
-                } catch (err) {
-                  // no-op
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Viết bình luận..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isCommenting && commentText.trim()) {
+                  handleAddComment();
                 }
-              }
-            }}
-            className="flex-1 bg-gray-100 px-3 py-2 rounded-full text-sm outline-none"
-          />
+              }}
+              disabled={isCommenting}
+              className="w-full bg-gray-100 px-3 py-2 rounded-full text-sm outline-none disabled:opacity-50"
+            />
+            {isCommenting && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-500" />
+            )}
+          </div>
         </div>
       </div>
     </div>

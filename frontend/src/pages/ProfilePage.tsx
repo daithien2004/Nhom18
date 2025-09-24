@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import React, { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchProfile,
   updateProfileThunk,
   updateAvatarThunk,
   updateCoverPhotoThunk,
-} from "../store/slices/authSlice";
-import { FaEdit } from "react-icons/fa";
+} from '../store/thunks/authThunks';
+import { FaEdit } from 'react-icons/fa';
 
 const ProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<any>({ gender: "Other" });
+  const [formData, setFormData] = useState<any>({ gender: 'Other' });
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -51,7 +51,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => setIsEditing(!isEditing)}
             className="text-blue-500 hover:text-blue-700 flex items-center gap-2"
           >
-            <FaEdit /> {isEditing ? "Cancel" : "Edit"}
+            <FaEdit /> {isEditing ? 'Cancel' : 'Edit'}
           </button>
         </div>
 
@@ -158,7 +158,7 @@ const ProfilePage: React.FC = () => {
               <input
                 type="text"
                 name="username"
-                value={formData.username || ""}
+                value={formData.username || ''}
                 onChange={handleChange}
                 className="p-3 border rounded-lg w-full"
               />
@@ -181,7 +181,7 @@ const ProfilePage: React.FC = () => {
               Phone
             </label>
             <p className="p-3 bg-gray-50 rounded-lg">
-              {user?.phone || "Not provided"}
+              {user?.phone || 'Not provided'}
             </p>
           </div>
 
@@ -203,7 +203,7 @@ const ProfilePage: React.FC = () => {
               </select>
             ) : (
               <p className="p-3 bg-gray-50 rounded-lg capitalize">
-                {user?.gender || "Not specified"}
+                {user?.gender || 'Not specified'}
               </p>
             )}
           </div>
@@ -217,7 +217,7 @@ const ProfilePage: React.FC = () => {
               <input
                 type="date"
                 name="birthday"
-                value={formData.birthday || ""}
+                value={formData.birthday || ''}
                 onChange={handleChange}
                 className="p-3 border rounded-lg w-full"
               />
@@ -225,7 +225,7 @@ const ProfilePage: React.FC = () => {
               <p className="p-3 bg-gray-50 rounded-lg">
                 {user?.birthday
                   ? new Date(user.birthday).toLocaleDateString()
-                  : "Not provided"}
+                  : 'Not provided'}
               </p>
             )}
           </div>
@@ -239,11 +239,11 @@ const ProfilePage: React.FC = () => {
               <span
                 className={`px-2 py-1 rounded-full text-xs ${
                   user?.isVerified
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
                 }`}
               >
-                {user?.isVerified ? "Verified" : "Not Verified"}
+                {user?.isVerified ? 'Verified' : 'Not Verified'}
               </span>
             </p>
           </div>
@@ -257,13 +257,13 @@ const ProfilePage: React.FC = () => {
           {isEditing ? (
             <textarea
               name="bio"
-              value={formData.bio || ""}
+              value={formData.bio || ''}
               onChange={handleChange}
               className="p-3 border rounded-lg w-full min-h-[100px]"
             />
           ) : (
             <p className="p-3 bg-gray-50 rounded-lg min-h-[100px]">
-              {user?.bio || "No bio provided"}
+              {user?.bio || 'No bio provided'}
             </p>
           )}
         </div>
@@ -279,7 +279,7 @@ const ProfilePage: React.FC = () => {
               <span className="ml-2 text-gray-800">
                 {user?.createdAt
                   ? new Date(user.createdAt).toLocaleDateString()
-                  : "N/A"}
+                  : 'N/A'}
               </span>
             </div>
             <div>
@@ -287,7 +287,7 @@ const ProfilePage: React.FC = () => {
               <span className="ml-2 text-gray-800">
                 {user?.updatedAt
                   ? new Date(user.updatedAt).toLocaleDateString()
-                  : "N/A"}
+                  : 'N/A'}
               </span>
             </div>
           </div>

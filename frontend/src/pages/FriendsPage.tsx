@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { Search, MessageCircle, Users, UserPlus } from 'lucide-react';
 import FriendList from '../components/FriendList';
 import FriendRequests from '../components/FriendRequests';
@@ -8,11 +8,10 @@ import {
   searchAllUsers,
   clearResults,
 } from '../store/slices/friendSearchSlice';
-import type { RootState, AppDispatch } from '../store/store';
 import instance from '../api/axiosInstant';
 
 interface ChatUser {
-  _id: string;
+  id: string;
   username: string;
   avatar?: string;
   status: 'friend' | 'pending' | 'none';
@@ -22,12 +21,12 @@ interface ChatUser {
 }
 
 export default function FriendsPage() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [searchText, setSearchText] = useState('');
 
-  const { results: searchResults = [], isLoading } = useSelector(
-    (state: RootState) => state.friendSearch
+  const { results: searchResults = [] } = useAppSelector(
+    (state) => state.friendSearch
   );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -65,12 +64,12 @@ export default function FriendsPage() {
 
   const handleUserClick = async (user: any) => {
     try {
-      const res = await instance.get(`/conversations/1on1/${user._id}`);
+      const res = await instance.get(`/conversations/1on1/${user.id}`);
       const conversation = res.data;
 
       setActiveChatUser({
         ...user,
-        conversationId: conversation._id,
+        conversationId: conversation.id,
         chatStatus: conversation.status, // 👈 active / pending
       });
 
@@ -111,7 +110,7 @@ export default function FriendsPage() {
             >
               {searchResults.map((user) => (
                 <div
-                  key={user._id}
+                  key={user.id}
                   className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
                   onClick={() => handleUserClick(user)}
                 >

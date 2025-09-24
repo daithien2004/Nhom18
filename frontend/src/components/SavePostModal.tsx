@@ -47,7 +47,7 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
       const { data } = await instance.get('/categories/');
       const list = Array.isArray(data) ? data : [];
       setCategories(list);
-      if (created && created._id) setSelected(created._id);
+      if (created && created.id) setSelected(created.id);
       setShowCreate(false);
       setNewName('');
     } catch (err) {
@@ -101,9 +101,9 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
 
             {categories.map((cat) => (
               <div
-                key={cat._id}
+                key={cat.id}
                 className="flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer"
-                onClick={() => setSelected(cat._id)}
+                onClick={() => setSelected(cat.id)}
               >
                 <div className="flex items-center gap-3">
                   <img
@@ -123,8 +123,8 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
                   type="radio"
                   name="category"
                   className="accent-blue-600"
-                  checked={selected === cat._id}
-                  onChange={() => setSelected(cat._id)}
+                  checked={selected === cat.id}
+                  onChange={() => setSelected(cat.id)}
                 />
               </div>
             ))}

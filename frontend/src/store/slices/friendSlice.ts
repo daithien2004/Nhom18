@@ -45,7 +45,7 @@ export const fetchIncomingRequests = createAsyncThunk(
   async () => {
     const res = await instance.get("/friends/requests/received");
     return res.data.map((item: any) => ({
-      _id: item.from._id,
+      id: item.from.id,
       username: item.from.username,
       avatar: item.from.avatar,
       isOnline: item.from.isOnline,
@@ -60,7 +60,7 @@ export const fetchOutgoingRequests = createAsyncThunk(
   async () => {
     const res = await instance.get("/friends/requests/sent");
     return res.data.map((item: any) => ({
-      _id: item.to._id,
+      id: item.to.id,
       username: item.to.username,
       avatar: item.to.avatar,
       isOnline: item.to.isOnline,
@@ -148,15 +148,15 @@ const friendSlice = createSlice({
       // --- Accept Friend ---
       .addCase(acceptFriendRequest.fulfilled, (state, action) => {
         state.incomingRequests = state.incomingRequests.filter(
-          (r) => r._id !== action.payload
+          (r) => r.id !== action.payload
         );
         // Tự động thêm vào danh sách bạn bè
         const acceptedUser = state.incomingRequests.find(
-          (r) => r._id === action.payload
+          (r) => r.id === action.payload
         );
         if (acceptedUser) {
           state.friends.push({
-            _id: acceptedUser._id,
+            id: acceptedUser.id,
             username: acceptedUser.username,
             avatar: acceptedUser.avatar,
             isOnline: acceptedUser.isOnline,
@@ -167,7 +167,7 @@ const friendSlice = createSlice({
       // --- Reject Friend ---
       .addCase(rejectFriendRequest.fulfilled, (state, action) => {
         state.incomingRequests = state.incomingRequests.filter(
-          (r) => r._id !== action.payload
+          (r) => r.id !== action.payload
         );
       })
 

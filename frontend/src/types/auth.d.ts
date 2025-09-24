@@ -3,7 +3,6 @@ export interface RegisterData {
   email: string;
   password: string;
   phone: string;
-  otp?: string;
 }
 
 export interface ApiResponse<T> {
@@ -13,9 +12,5 @@ export interface ApiResponse<T> {
 
 export type LoginResponse = {
   accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    username: string;
-  };
+  user: Pick<UserProfile, 'id' | 'email' | 'username'>;
 };

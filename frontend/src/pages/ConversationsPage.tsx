@@ -27,12 +27,12 @@ const ConversationsPage: React.FC = () => {
     loadingMessages,
     sendingMessage,
   } = useAppSelector((state) => state.conversations);
-  const userId = useAppSelector((state) => state.auth.user?._id); // Lấy ID người dùng từ auth
+  const userId = useAppSelector((state) => state.auth.user?.id); // Lấy ID người dùng từ auth
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const selectedConversation = conversations.find(
-    (c) => c._id === selectedConversationId
+    (c) => c.id === selectedConversationId
   );
 
   const selectedMessages = selectedConversationId
@@ -93,12 +93,12 @@ const ConversationsPage: React.FC = () => {
           ) : (
             conversations.map((conv: Conversation) => (
               <button
-                key={conv._id}
+                key={conv.id}
                 className={classNames(
                   'w-full px-4 py-3 cursor-pointer hover:bg-gray-200 flex items-center text-left',
-                  { 'bg-gray-200': selectedConversationId === conv._id }
+                  { 'bg-gray-200': selectedConversationId === conv.id }
                 )}
-                onClick={() => dispatch(selectConversation(conv._id))}
+                onClick={() => dispatch(selectConversation(conv.id))}
                 aria-label={`Mở cuộc trò chuyện với ${
                   conv.isGroup ? conv.groupName : conv.participants[0].username
                 }`}
@@ -180,10 +180,10 @@ const ConversationsPage: React.FC = () => {
                 <div className="text-gray-500">Không có tin nhắn nào</div>
               ) : (
                 selectedMessages.map((msg: Message) => {
-                  const isMe = msg.sender._id === userId;
+                  const isMe = msg.sender.id === userId;
                   return (
                     <div
-                      key={msg._id}
+                      key={msg.id}
                       className={classNames('flex', {
                         'justify-end': isMe,
                         'justify-start': !isMe,

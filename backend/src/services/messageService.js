@@ -20,7 +20,7 @@ export const sendMessage = async (
     attachments,
   });
 
-  await conversationRepo.updateLastMessage(conversationId, message._id);
+  await conversationRepo.updateLastMessage(conversationId, message.id);
 
   return message;
 };

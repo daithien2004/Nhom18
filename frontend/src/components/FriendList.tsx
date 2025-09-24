@@ -117,7 +117,7 @@ export default function FriendList() {
             <h4 className="px-5 py-1 text-gray-500 font-semibold">{letter}</h4>
             {friends.map((f) => (
               <div
-                key={f._id}
+                key={f.id}
                 className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 cursor-pointer transition rounded-xl"
               >
                 <div className="flex items-center gap-3 flex-1">

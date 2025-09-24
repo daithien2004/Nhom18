@@ -59,7 +59,7 @@ export default function FriendRequests() {
             <div className="space-y-3">
               {incomingRequests.map((u) => (
                 <div
-                  key={u._id}
+                  key={u.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition shadow-sm"
                 >
                   <div className="flex items-center gap-3 flex-1">
@@ -86,13 +86,13 @@ export default function FriendRequests() {
                   </div>
                   <div className="flex gap-2 ml-4 flex-shrink-0">
                     <button
-                      onClick={() => handleAccept(u._id)}
+                      onClick={() => handleAccept(u.id)}
                       className="bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm hover:bg-blue-600 transition cursor-pointer"
                     >
                       Chấp nhận
                     </button>
                     <button
-                      onClick={() => handleReject(u._id)}
+                      onClick={() => handleReject(u.id)}
                       className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-sm hover:bg-gray-300 transition cursor-pointer"
                     >
                       Từ chối
@@ -115,7 +115,7 @@ export default function FriendRequests() {
             <div className="space-y-3">
               {outgoingRequests.map((u) => (
                 <div
-                  key={u._id}
+                  key={u.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition shadow-sm"
                 >
                   <div className="flex items-center gap-3 flex-1">

@@ -9,7 +9,7 @@ import friendListSearchReducer from '../store/slices/friendListSearchSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    post: postReducer,
+    posts: postReducer,
     conversations: conversationReducer,
     friends: friendReducer,
     friendSearch: friendSearchReducer,

@@ -1,7 +1,7 @@
 export type PostDetail = {
-  _id: string;
+  id: string;
   author: {
-    _id: string;
+    id: string;
     username: string;
     avatar: string;
     isOnline: boolean;
@@ -10,7 +10,7 @@ export type PostDetail = {
   images: string[];
   likes: string[]; // mảng ObjectId user dạng string
   comments: Array<{
-    _id: string;
+    id: string;
     content: string;
     author: {
       username: string;
@@ -31,7 +31,7 @@ export type PostDetail = {
 };
 
 export interface Post {
-  _id: string;
+  id: string;
   content: string;
   images: string[];
   author: {
@@ -44,13 +44,13 @@ export interface Post {
 }
 
 export interface Comment {
-  _id: string;
+  id: string;
   content: string;
   author: {
+    id: string;
     username: string;
     avatar: string;
   };
-  likes: string[];
   createdAt: string;
 }
 

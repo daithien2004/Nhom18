@@ -2,6 +2,8 @@ import React, { useState, type JSX } from 'react';
 import PostSection from '../components/PostSection';
 import instance from '../api/axiosInstant';
 import type { Post, Tab } from '../types/post';
+import { useAppDispatch, useAppSelector } from '../store/hooks'; // Adjust import path
+import { createPost } from '../store/slices/postSlice'; // Adjust import path
 import {
   Clock,
   Flame,
@@ -11,12 +13,15 @@ import {
   TrendingUp,
   UserCircle,
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const HomePage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { isCreating, createError } = useAppSelector((state) => state.posts);
+
   const [tab, setTab] = useState<Tab>('recent');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [newPost, setNewPost] = useState<Post | null>(null);
 
   // Upload ảnh
@@ -34,25 +39,28 @@ const HomePage: React.FC = () => {
         });
         uploadedUrls.push(res.data.url);
       } catch (err) {
+        toast.error('Tải ảnh lên thất bại!');
         console.error('Lỗi khi upload ảnh:', err);
       }
     }
-    setImages((prev) => [...prev, ...uploadedUrls]);
+    if (uploadedUrls.length > 0) {
+      setImages((prev) => [...prev, ...uploadedUrls]);
+      toast.success(`Tải lên ${uploadedUrls.length} ảnh thành công!`);
+    }
   };
 
-  // Tạo post
+  // Tạo post với Redux
   const handleCreatePost = async () => {
     if (!content && images.length === 0) return;
+
     try {
-      setUploading(true);
-      const res = await instance.post('/posts', { content, images });
+      const result = await dispatch(createPost({ content, images })).unwrap();
       setContent('');
       setImages([]);
-      setNewPost(res.data); // 👉 gửi post mới xuống PostSection
+      setNewPost(result); // 👉 gửi post mới xuống PostSection
     } catch (error) {
+      toast.error('Đăng bài thất bại. Vui lòng thử lại!');
       console.error('Lỗi khi đăng bài:', error);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -116,15 +124,22 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-2 text-right">
-          <button
-            onClick={handleCreatePost}
-            disabled={uploading}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-2 py-1 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {uploading && <Loader2 className="animate-spin w-4 h-4" />}
-            {uploading ? 'Đang đăng...' : 'Đăng bài'}
-          </button>
+        <div className="mt-2">
+          {/* Error message */}
+          {createError && (
+            <div className="text-red-500 text-sm mb-2">{createError}</div>
+          )}
+
+          <div className="text-right">
+            <button
+              onClick={handleCreatePost}
+              disabled={isCreating || (!content && images.length === 0)}
+              className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-2 py-1 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreating && <Loader2 className="animate-spin w-4 h-4" />}
+              {isCreating ? 'Đang đăng...' : 'Đăng bài'}
+            </button>
+          </div>
         </div>
       </div>
 

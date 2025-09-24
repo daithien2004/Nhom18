@@ -22,23 +22,20 @@ export const findConversationBetweenUsers = async (userId1, userId2) => {
     participants: { $all: [userId1, userId2], $size: 2 },
   })
     .populate({ path: 'participants', select: 'username avatar' })
-    .populate({ path: 'lastMessage' })
-    .lean();
+    .populate({ path: 'lastMessage' });
 };
 
 export const findConversationById = async (id) => {
   return await Conversation.findById(id)
     .populate({ path: 'participants', select: 'username avatar' })
-    .populate({ path: 'lastMessage' })
-    .lean();
+    .populate({ path: 'lastMessage' });
 };
 
 export const findUserConversations = async (userId) => {
   return await Conversation.find({ participants: userId })
     .populate({ path: 'participants', select: 'username avatar' })
     .populate({ path: 'lastMessage' })
-    .sort({ updatedAt: -1 })
-    .lean();
+    .sort({ updatedAt: -1 });
 };
 
 export const updateLastMessage = async (conversationId, messageId) => {

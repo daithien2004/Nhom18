@@ -1,132 +1,49 @@
 // src/store/slices/authSlice.ts
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import {
-  login,
-  getMe,
-  requestOtp,
-  verifyOtp,
-  updateProfile,
-  updateAvatar,
-  updateCoverPhoto,
-} from '../../services/authService';
-import type { RegisterData } from '../../types/auth';
+  loginThunk,
+  fetchProfile,
+  requestOtpThunk,
+  verifyOtpThunk,
+  updateProfileThunk,
+  updateAvatarThunk,
+  updateCoverPhotoThunk,
+} from '../thunks/authThunks';
 import type { UserProfile } from '../../types/user';
+import { getAccessToken, removeAccessToken } from '../../utils/authHelpers';
 
-// login thunk
-export const loginThunk = createAsyncThunk(
-  'auth/login',
-  async (dto: { email: string; password: string }, { rejectWithValue }) => {
-    try {
-      const result = await login(dto.email, dto.password); // { accessToken, user }
-      // 👉 lưu accessToken vào localStorage ngay khi login thành công
-      localStorage.setItem('accessToken', result.accessToken);
-      return result;
-    } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Login failed');
-    }
-  }
-);
-
-// fetch profile thunk
-export const fetchProfile = createAsyncThunk(
-  'auth/fetchProfile',
-  async (_, { rejectWithValue }) => {
-    try {
-      const result = await getMe(); // { user }
-      return result;
-    } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Fetch profile failed');
-    }
-  }
-);
-// update profile thunk
-export const updateProfileThunk = createAsyncThunk(
-  'users/update-profile',
-  async (
-    updates: Partial<
-      Pick<UserProfile, 'phone' | 'gender' | 'birthday' | 'bio'>
-    >,
-    { rejectWithValue }
-  ) => {
-    try {
-      const result = await updateProfile(updates); // { message, user }
-      return result.user; // trả về user mới
-    } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Update profile failed');
-    }
-  }
-);
-
-// Gửi OTP cho đăng ký
-export const requestOtpThunk = createAsyncThunk(
-  'auth/requestOtp',
-  async (data: RegisterData, { rejectWithValue }) => {
-    try {
-      const res = await requestOtp(data);
-      return res;
-    } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Request OTP failed');
-    }
-  }
-);
-
-// Xác thực OTP cho đăng ký
-export const verifyOtpThunk = createAsyncThunk(
-  'auth/verifyOtp',
-  async (data: RegisterData & { otp: string }, { rejectWithValue }) => {
-    try {
-      const res = await verifyOtp(data);
-      return res;
-    } catch (err: any) {
-      return rejectWithValue(err?.response?.data || 'Verify OTP failed');
-    }
-  }
-);
-
-export const updateAvatarThunk = createAsyncThunk<
-  UserProfile,
-  File,
-  { rejectValue: string }
->('auth/updateAvatar', async (file, { rejectWithValue }) => {
-  try {
-    const res = await updateAvatar(file);
-    return res.user;
-  } catch (err: any) {
-    return rejectWithValue(
-      err.response?.data?.message || 'Upload avatar failed'
-    );
-  }
-});
-
-export const updateCoverPhotoThunk = createAsyncThunk<
-  UserProfile,
-  File,
-  { rejectValue: string }
->('auth/updateCoverPhoto', async (file, { rejectWithValue }) => {
-  try {
-    const res = await updateCoverPhoto(file);
-    return res.user;
-  } catch (err: any) {
-    return rejectWithValue(
-      err.response?.data?.message || 'Upload cover photo failed'
-    );
-  }
-});
-
-type AuthState = {
-  user: any;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: any;
+type AuthError = {
+  message: string;
+  code?: string;
 };
 
-// 👉 Lấy accessToken từ localStorage khi app load lại
+type AuthState = {
+  user: UserProfile | null;
+  token: string | null;
+  loading: {
+    login: boolean;
+    fetchProfile: boolean;
+    updateProfile: boolean;
+    requestOtp: boolean;
+    verifyOtp: boolean;
+    updateAvatar: boolean;
+    updateCoverPhoto: boolean;
+  };
+  error: AuthError | null;
+};
+
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
-  loading: false,
+  token: getAccessToken(),
+  loading: {
+    login: false,
+    fetchProfile: false,
+    updateProfile: false,
+    requestOtp: false,
+    verifyOtp: false,
+    updateAvatar: false,
+    updateCoverPhoto: false,
+  },
   error: null,
 };
 
@@ -136,99 +53,114 @@ const authSlice = createSlice({
   reducers: {
     logout(state) {
       state.user = null;
-      state.accessToken = null;
-      state.isAuthenticated = false;
       state.error = null;
-      // 👉 clear token khi logout
-      localStorage.removeItem('accessToken');
+      removeAccessToken();
     },
     clearError(state) {
       state.error = null;
     },
   },
   extraReducers: (builder) => {
-    builder
-      // Login cases
-      .addCase(loginThunk.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(loginThunk.fulfilled, (s, a) => {
-        s.loading = false;
-        s.accessToken = a.payload.accessToken;
-        s.user = a.payload.user;
-        s.isAuthenticated = true;
-      })
-      .addCase(loginThunk.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload;
-      })
-      // Fetch profile cases
-      .addCase(fetchProfile.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(fetchProfile.fulfilled, (s, a) => {
-        s.loading = false;
-        s.user = a.payload.user;
-        s.isAuthenticated = true;
-      })
-      .addCase(fetchProfile.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload;
-      })
-      // Request OTP cases
-      .addCase(requestOtpThunk.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(requestOtpThunk.fulfilled, (s) => {
-        s.loading = false;
-        s.error = null;
-      })
-      .addCase(requestOtpThunk.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload;
-      })
-      // Verify OTP cases
-      .addCase(verifyOtpThunk.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(verifyOtpThunk.fulfilled, (s) => {
-        s.loading = false;
-        s.error = null;
-      })
-      .addCase(verifyOtpThunk.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload;
-      })
-      // update profile 👇
-      .addCase(updateProfileThunk.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(updateProfileThunk.fulfilled, (s, a) => {
-        s.loading = false;
-        s.user = a.payload; // cập nhật user mới
-      })
-      .addCase(updateProfileThunk.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload;
-      })
-      .addCase(updateAvatarThunk.fulfilled, (state, action) => {
-        state.user = {
-          ...(state.user || {}), // đảm bảo luôn là object
-          ...(action.payload || {}), // merge payload nếu có
-        };
-      })
+    const handlePending = (
+      state: AuthState,
+      key: keyof AuthState['loading']
+    ) => {
+      state.loading[key] = true;
+      state.error = null;
+    };
 
-      .addCase(updateCoverPhotoThunk.fulfilled, (state, action) => {
+    const handleRejected = (
+      state: AuthState,
+      key: keyof AuthState['loading'],
+      action: any
+    ) => {
+      state.loading[key] = false;
+      state.error = action.payload;
+    };
+    builder
+      // Login
+      .addCase(loginThunk.pending, (state) => handlePending(state, 'login'))
+      .addCase(loginThunk.fulfilled, (state, action) => {
+        state.loading.login = false;
         state.user = {
-          ...(state.user || {}), // tránh undefined
-          ...(action.payload || {}), // merge payload nếu có
-        };
-      });
+          id: action.payload.user.id,
+          email: action.payload.user.email,
+          username: action.payload.user.username,
+          // user chưa đủ field => tạm để null/undefined
+        } as UserProfile | null;
+        state.token = getAccessToken();
+      })
+      .addCase(loginThunk.rejected, (state, action) =>
+        handleRejected(state, 'login', action)
+      )
+      // Fetch Profile
+      .addCase(fetchProfile.pending, (state) =>
+        handlePending(state, 'fetchProfile')
+      )
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.loading.fetchProfile = false;
+        state.user = action.payload.user;
+      })
+      .addCase(fetchProfile.rejected, (state, action) =>
+        handleRejected(state, 'fetchProfile', action)
+      )
+      // Request OTP
+      .addCase(requestOtpThunk.pending, (state) =>
+        handlePending(state, 'requestOtp')
+      )
+      .addCase(requestOtpThunk.fulfilled, (state) => {
+        state.loading.requestOtp = false;
+      })
+      .addCase(requestOtpThunk.rejected, (state, action) =>
+        handleRejected(state, 'requestOtp', action)
+      )
+      // Verify OTP
+      .addCase(verifyOtpThunk.pending, (state) =>
+        handlePending(state, 'verifyOtp')
+      )
+      .addCase(verifyOtpThunk.fulfilled, (state) => {
+        state.loading.verifyOtp = false;
+      })
+      .addCase(verifyOtpThunk.rejected, (state, action) =>
+        handleRejected(state, 'verifyOtp', action)
+      )
+      // Update Profile
+      .addCase(updateProfileThunk.pending, (state) =>
+        handlePending(state, 'updateProfile')
+      )
+      .addCase(updateProfileThunk.fulfilled, (state, action) => {
+        state.loading.updateProfile = false;
+        state.user = action.payload;
+      })
+      .addCase(updateProfileThunk.rejected, (state, action) =>
+        handleRejected(state, 'updateProfile', action)
+      )
+      // Update Avatar
+      .addCase(updateAvatarThunk.pending, (state) =>
+        handlePending(state, 'updateAvatar')
+      )
+      .addCase(updateAvatarThunk.fulfilled, (state, action) => {
+        state.loading.updateAvatar = false;
+        if (state.user && action.payload) {
+          state.user = { ...state.user, ...action.payload };
+        }
+      })
+      .addCase(updateAvatarThunk.rejected, (state, action) =>
+        handleRejected(state, 'updateAvatar', action)
+      )
+      // Update Cover Photo
+      .addCase(updateCoverPhotoThunk.pending, (state) =>
+        handlePending(state, 'updateCoverPhoto')
+      )
+      .addCase(updateCoverPhotoThunk.fulfilled, (state, action) => {
+        state.loading.updateCoverPhoto = false;
+        if (state.user && action.payload) {
+          state.user = { ...state.user, ...action.payload };
+        }
+      })
+      .addCase(updateCoverPhotoThunk.rejected, (state, action) =>
+        handleRejected(state, 'updateCoverPhoto', action)
+      );
   },
 });
 

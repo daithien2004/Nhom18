@@ -6,7 +6,16 @@ export const createMessage = async ({
   text,
   attachments,
 }) => {
-  return await Message.create({ conversationId, sender, text, attachments });
+  const message = await Message.create({
+    conversationId,
+    sender: sender,
+    text,
+    attachments,
+    readBy: [sender], // Đánh dấu đã đọc bởi người gửi
+  });
+
+  // Populate sender info trước khi return
+  return await message.populate('sender', 'id username avatar');
 };
 
 export const markAsRead = async (conversationId, messageId, userId) => {

@@ -40,7 +40,23 @@ const userSchema = new Schema(
     lastActive: { type: Date, default: Date.now },
     lastSeen: { type: Date },
   },
-  { timestamps: true } // tự động có createdAt, updatedAt
+  {
+    timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString(); // Chuyển _id thành id
+        delete ret._id; // Xóa trường _id
+        return ret;
+      },
+    },
+    toObject: {
+      transform: (doc, ret) => {
+        ret.id = ret._id.toString(); // Chuyển _id thành id
+        delete ret._id; // Xóa trường _id
+        return ret;
+      },
+    },
+  } // tự động có createdAt, updatedAt
 );
 
 export default model('User', userSchema);

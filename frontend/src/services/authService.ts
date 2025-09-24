@@ -35,24 +35,6 @@ export const verifyOtp = async (
   return (await instance.post(URL_API, data)).data;
 };
 
-// Quên mật khẩu - Bước 1: Gửi OTP
-export const forgotPasswordRequestOtp = async (
-  email: string
-): Promise<ApiResponse<null>> => {
-  const URL_API = '/auth/forgot-password/request-otp';
-  const response = await instance.post(URL_API, { email });
-  return response.data;
-};
-
-// Quên mật khẩu - Bước 2: Reset mật khẩu
-export const forgotPasswordReset = async (
-  email: string,
-  otp: string
-): Promise<ApiResponse<null>> => {
-  const URL_API = '/auth/forgot-password/reset';
-  const response = await instance.post(URL_API, { email, otp });
-  return response.data;
-};
 /**
  * Update user profile
  * @param updates { phone, gender, birthday, bio }

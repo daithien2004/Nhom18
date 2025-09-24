@@ -1,12 +1,12 @@
 import axios, { AxiosError } from 'axios';
-import { getToken } from '../utils/authHelpers';
+import { getAccessToken } from '../utils/authHelpers';
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
 });
 
 instance.interceptors.request.use((config) => {
-  const token = getToken();
+  const token = getAccessToken();
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
