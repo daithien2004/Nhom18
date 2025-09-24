@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../store/slices/authSlice';
-import postReducer from '../store/slices/postSlice';
+import postReducer from './slices/postSlice';
 import conversationReducer from '../store/slices/conversationSlice';
 import friendReducer from '../store/slices/friendSlice';
 import friendSearchReducer from '../store/slices/friendSearchSlice';

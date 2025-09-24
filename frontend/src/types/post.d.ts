@@ -6,9 +6,10 @@ export type PostDetail = {
     avatar: string;
     isOnline: boolean;
   };
-  content: string;
+  caption?: string; // người share viết thêm gì
+  content?: string; // nội dung bài gốc
   images: string[];
-  likes: string[]; // mảng ObjectId user dạng string
+  likes: string[];
   comments: Array<{
     id: string;
     content: string;
@@ -19,7 +20,7 @@ export type PostDetail = {
     createdAt: string;
   }>;
   views: number;
-  shares: string[]; // mảng ObjectId user dạng string
+  shares: string[];
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -28,11 +29,14 @@ export type PostDetail = {
   shareCount: number;
   isLikedByCurrentUser: boolean;
   isSharedByCurrentUser: boolean;
+  sharedFrom?: PostDetail | null; // <--- thêm để hỗ trợ bài share
 };
 
 export interface Post {
   id: string;
-  content: string;
+  content?: string; // bài gốc mới có content, bài share có thể không có
+  caption?: string; // caption khi share bài
+
   images: string[];
   author: {
     username: string;
@@ -40,7 +44,11 @@ export interface Post {
   };
   likes: string[];
   comments: Comment[];
+  shares: string[]; // danh sách id các post share
+  views: number;
+  sharedFrom?: Post | null; // bài gốc nếu đây là bài share
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Comment {

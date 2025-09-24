@@ -130,6 +130,16 @@ export const addComment = createAsyncThunk(
   }
 );
 
+// Thêm createAsyncThunk cho share post
+export const sharePost = createAsyncThunk(
+  'posts/sharePost',
+  async ({ postId, caption }: { postId: string; caption: string }) => {
+    const res = await instance.post(`/posts/${postId}/share`, { caption });
+    // Giả sử API trả về post mới (shared post)
+    return res.data as Post;
+  }
+);
+
 const postSlice = createSlice({
   name: 'posts',
   initialState,
@@ -292,6 +302,19 @@ const postSlice = createSlice({
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }
+      })
+      .addCase(sharePost.pending, (state) => {
+        // nếu muốn có state.loadingShare riêng thì thêm vào PostState
+        state.isCreating = true;
+      })
+      .addCase(sharePost.fulfilled, (state, action: PayloadAction<Post>) => {
+        state.isCreating = false;
+        // Thêm post được share lên đầu danh sách
+        state.posts = [action.payload, ...state.posts];
+      })
+      .addCase(sharePost.rejected, (state, action) => {
+        state.isCreating = false;
+        state.error = action.payload as string;
       });
   },
 });

@@ -34,18 +34,39 @@ export const getPostDetail = async (postId, userId) => {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
+  // Đảm bảo các mảng luôn tồn tại
   post.likes = post.likes || [];
   post.comments = post.comments || [];
   post.shares = post.shares || [];
 
+  // Thêm thống kê
   post.likeCount = post.likes.length;
   post.commentCount = post.comments.length;
   post.shareCount = post.shares.length;
 
+  // Trạng thái người dùng hiện tại
   post.isLikedByCurrentUser = post.likes.some((id) => id.toString() === userId);
   post.isSharedByCurrentUser = post.shares.some(
     (id) => id.toString() === userId
   );
+
+  // Nếu là bài share thì cũng normalize sharedFrom
+  if (post.sharedFrom) {
+    post.sharedFrom.likes = post.sharedFrom.likes || [];
+    post.sharedFrom.comments = post.sharedFrom.comments || [];
+    post.sharedFrom.shares = post.sharedFrom.shares || [];
+
+    post.sharedFrom.likeCount = post.sharedFrom.likes.length;
+    post.sharedFrom.commentCount = post.sharedFrom.comments.length;
+    post.sharedFrom.shareCount = post.sharedFrom.shares.length;
+
+    post.sharedFrom.isLikedByCurrentUser = post.sharedFrom.likes.some(
+      (id) => id.toString() === userId
+    );
+    post.sharedFrom.isSharedByCurrentUser = post.sharedFrom.shares.some(
+      (id) => id.toString() === userId
+    );
+  }
 
   return post;
 };
@@ -93,10 +114,8 @@ export const sharePost = async ({ userId, postId, caption }) => {
   if (!original) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
-
-  console.log('origin', original);
-
   // nếu post hiện tại là bài share thì truy ngược về bài gốc
+  // original.sharedFrom khác null là bài share
   if (original.sharedFrom) {
     original = await postRepo.findPostById(original.sharedFrom);
   }

@@ -1,6 +1,6 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import instance from "../../api/axiosInstant";
-import type { FriendRequest, FriendUser } from "../../types/friend";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import instance from '../../api/axiosInstant';
+import type { FriendRequest, FriendUser } from '../../types/friend';
 
 // =====================
 // Slice
@@ -32,18 +32,18 @@ const initialState: FriendState = {
 
 // Lấy danh sách bạn bè
 export const fetchFriends = createAsyncThunk(
-  "friends/fetchFriends",
+  'friends/fetchFriends',
   async () => {
-    const res = await instance.get("/friends");
+    const res = await instance.get('/friends');
     return res.data as FriendUser[];
   }
 );
 
 // Lấy lời mời nhận
 export const fetchIncomingRequests = createAsyncThunk(
-  "friends/fetchIncomingRequests",
+  'friends/fetchIncomingRequests',
   async () => {
-    const res = await instance.get("/friends/requests/received");
+    const res = await instance.get('/friends/requests/received');
     return res.data.map((item: any) => ({
       id: item.from.id,
       username: item.from.username,
@@ -56,9 +56,9 @@ export const fetchIncomingRequests = createAsyncThunk(
 
 // Lấy lời mời đã gửi
 export const fetchOutgoingRequests = createAsyncThunk(
-  "friends/fetchOutgoingRequests",
+  'friends/fetchOutgoingRequests',
   async () => {
-    const res = await instance.get("/friends/requests/sent");
+    const res = await instance.get('/friends/requests/sent');
     return res.data.map((item: any) => ({
       id: item.to.id,
       username: item.to.username,
@@ -71,34 +71,34 @@ export const fetchOutgoingRequests = createAsyncThunk(
 
 // Chấp nhận lời mời kết bạn
 export const acceptFriendRequest = createAsyncThunk(
-  "friends/acceptFriendRequest",
+  'friends/acceptFriendRequest',
   async (fromUserId: string) => {
-    await instance.post("/friends/requests/accept", { fromUserId });
+    await instance.post('/friends/requests/accept', { fromUserId });
     return fromUserId;
   }
 );
 
 // Từ chối lời mời kết bạn
 export const rejectFriendRequest = createAsyncThunk(
-  "friends/rejectFriendRequest",
+  'friends/rejectFriendRequest',
   async (fromUserId: string) => {
-    await instance.post("/friends/requests/reject", { fromUserId });
+    await instance.post('/friends/requests/reject', { fromUserId });
     return fromUserId;
   }
 );
 
 // Gửi lời mời kết bạn
 export const sendFriendRequest = createAsyncThunk(
-  "friends/sendFriendRequest",
+  'friends/sendFriendRequest',
   async (toUserId: string) => {
-    await instance.post("/friends/request", { toUserId });
+    await instance.post('/friends/request', { toUserId });
     return toUserId; // trả về id để update state
   }
 );
 
 // --- Slice ---
 const friendSlice = createSlice({
-  name: "friends",
+  name: 'friends',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -172,7 +172,16 @@ const friendSlice = createSlice({
       })
 
       // --- Send Friend Request ---
-      .addCase(sendFriendRequest.fulfilled, (state, action) => {});
+      .addCase(sendFriendRequest.fulfilled, (state, action) => {
+        const newRequest = {
+          id: action.payload,
+          username: '', // có thể để trống hoặc lấy từ user hiện tại nếu có
+          avatar: '',
+          status: 'pending', // hoặc 'none' tùy kiểu
+        } as FriendRequest;
+
+        state.outgoingRequests.push(newRequest);
+      });
   },
 });
 
