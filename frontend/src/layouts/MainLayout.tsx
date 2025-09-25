@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { createPortal } from 'react-dom';
-import { useAppDispatch } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
+import React, { useState } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useAppDispatch } from "../store/hooks";
+import { logout } from "../store/slices/authSlice";
 import {
   UserCircle,
   MessageCircle,
   Contact,
   Home,
   Bookmark,
-} from 'lucide-react';
+  History,
+} from "lucide-react";
 
 const MainLayout: React.FC = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
@@ -19,7 +20,7 @@ const MainLayout: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    navigate("/login");
   };
 
   const toggleDropdown = () => {
@@ -47,32 +48,40 @@ const MainLayout: React.FC = () => {
             <Home
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/home') ? 'text-yellow-300' : 'text-white'
+                isActive("/home") ? "text-yellow-300" : "text-white"
               }`}
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
             />
 
             <MessageCircle
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/conversations') ? 'text-yellow-300' : 'text-white'
+                isActive("/conversations") ? "text-yellow-300" : "text-white"
               }`}
-              onClick={() => navigate('/conversations')}
+              onClick={() => navigate("/conversations")}
             />
 
             <Contact
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/friends') ? 'text-yellow-300' : 'text-white'
+                isActive("/friends") ? "text-yellow-300" : "text-white"
               }`}
-              onClick={() => navigate('/friends')}
+              onClick={() => navigate("/friends")}
             />
+            <History
+              size={32}
+              className={`cursor-pointer transition-transform hover:scale-110 ${
+                isActive("/activity") ? "text-yellow-300" : "text-white"
+              }`}
+              onClick={() => navigate("/activity")}
+            />
+
             <Bookmark
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/categories') ? 'text-yellow-300' : 'text-white'
+                isActive("/categories") ? "text-yellow-300" : "text-white"
               }`}
-              onClick={() => navigate('/categories')}
+              onClick={() => navigate("/categories")}
             />
           </div>
         </div>
@@ -94,7 +103,7 @@ const MainLayout: React.FC = () => {
               <li
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => {
-                  navigate('/profile');
+                  navigate("/profile");
                   setIsDropDownOpen(false);
                 }}
               >
@@ -103,7 +112,7 @@ const MainLayout: React.FC = () => {
               <li
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => {
-                  navigate('/setting');
+                  navigate("/setting");
                   setIsDropDownOpen(false);
                 }}
               >

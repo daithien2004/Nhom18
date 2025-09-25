@@ -1,5 +1,5 @@
 // src/store/slices/authSlice.ts
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 import {
   loginThunk,
   fetchProfile,
@@ -8,9 +8,9 @@ import {
   updateProfileThunk,
   updateAvatarThunk,
   updateCoverPhotoThunk,
-} from '../thunks/authThunks';
-import type { UserProfile } from '../../types/user';
-import { getAccessToken, removeAccessToken } from '../../utils/authHelpers';
+} from "../thunks/authThunks";
+import type { UserProfile } from "../../types/user";
+import { getAccessToken, removeAccessToken } from "../../utils/authHelpers";
 
 type AuthError = {
   message: string;
@@ -48,13 +48,20 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     logout(state) {
       state.user = null;
       state.error = null;
       removeAccessToken();
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("activityState");
+        }
+      } catch {
+        // ignore
+      }
     },
     clearError(state) {
       state.error = null;
@@ -63,7 +70,7 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     const handlePending = (
       state: AuthState,
-      key: keyof AuthState['loading']
+      key: keyof AuthState["loading"]
     ) => {
       state.loading[key] = true;
       state.error = null;
@@ -71,7 +78,7 @@ const authSlice = createSlice({
 
     const handleRejected = (
       state: AuthState,
-      key: keyof AuthState['loading'],
+      key: keyof AuthState["loading"],
       action: any
     ) => {
       state.loading[key] = false;
@@ -79,7 +86,7 @@ const authSlice = createSlice({
     };
     builder
       // Login
-      .addCase(loginThunk.pending, (state) => handlePending(state, 'login'))
+      .addCase(loginThunk.pending, (state) => handlePending(state, "login"))
       .addCase(loginThunk.fulfilled, (state, action) => {
         state.loading.login = false;
         state.user = {
@@ -91,53 +98,53 @@ const authSlice = createSlice({
         state.token = getAccessToken();
       })
       .addCase(loginThunk.rejected, (state, action) =>
-        handleRejected(state, 'login', action)
+        handleRejected(state, "login", action)
       )
       // Fetch Profile
       .addCase(fetchProfile.pending, (state) =>
-        handlePending(state, 'fetchProfile')
+        handlePending(state, "fetchProfile")
       )
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading.fetchProfile = false;
         state.user = action.payload.user;
       })
       .addCase(fetchProfile.rejected, (state, action) =>
-        handleRejected(state, 'fetchProfile', action)
+        handleRejected(state, "fetchProfile", action)
       )
       // Request OTP
       .addCase(requestOtpThunk.pending, (state) =>
-        handlePending(state, 'requestOtp')
+        handlePending(state, "requestOtp")
       )
       .addCase(requestOtpThunk.fulfilled, (state) => {
         state.loading.requestOtp = false;
       })
       .addCase(requestOtpThunk.rejected, (state, action) =>
-        handleRejected(state, 'requestOtp', action)
+        handleRejected(state, "requestOtp", action)
       )
       // Verify OTP
       .addCase(verifyOtpThunk.pending, (state) =>
-        handlePending(state, 'verifyOtp')
+        handlePending(state, "verifyOtp")
       )
       .addCase(verifyOtpThunk.fulfilled, (state) => {
         state.loading.verifyOtp = false;
       })
       .addCase(verifyOtpThunk.rejected, (state, action) =>
-        handleRejected(state, 'verifyOtp', action)
+        handleRejected(state, "verifyOtp", action)
       )
       // Update Profile
       .addCase(updateProfileThunk.pending, (state) =>
-        handlePending(state, 'updateProfile')
+        handlePending(state, "updateProfile")
       )
       .addCase(updateProfileThunk.fulfilled, (state, action) => {
         state.loading.updateProfile = false;
         state.user = action.payload;
       })
       .addCase(updateProfileThunk.rejected, (state, action) =>
-        handleRejected(state, 'updateProfile', action)
+        handleRejected(state, "updateProfile", action)
       )
       // Update Avatar
       .addCase(updateAvatarThunk.pending, (state) =>
-        handlePending(state, 'updateAvatar')
+        handlePending(state, "updateAvatar")
       )
       .addCase(updateAvatarThunk.fulfilled, (state, action) => {
         state.loading.updateAvatar = false;
@@ -146,11 +153,11 @@ const authSlice = createSlice({
         }
       })
       .addCase(updateAvatarThunk.rejected, (state, action) =>
-        handleRejected(state, 'updateAvatar', action)
+        handleRejected(state, "updateAvatar", action)
       )
       // Update Cover Photo
       .addCase(updateCoverPhotoThunk.pending, (state) =>
-        handlePending(state, 'updateCoverPhoto')
+        handlePending(state, "updateCoverPhoto")
       )
       .addCase(updateCoverPhotoThunk.fulfilled, (state, action) => {
         state.loading.updateCoverPhoto = false;
@@ -159,7 +166,7 @@ const authSlice = createSlice({
         }
       })
       .addCase(updateCoverPhotoThunk.rejected, (state, action) =>
-        handleRejected(state, 'updateCoverPhoto', action)
+        handleRejected(state, "updateCoverPhoto", action)
       );
   },
 });

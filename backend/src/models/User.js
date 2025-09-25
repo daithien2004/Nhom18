@@ -1,4 +1,4 @@
-import { Schema, Types, model } from 'mongoose';
+import { Schema, Types, model } from "mongoose";
 
 const userSchema = new Schema(
   {
@@ -9,13 +9,13 @@ const userSchema = new Schema(
     username: { type: String, required: true },
 
     // Profile
-    avatar: { type: String, default: '' },
-    coverPhoto: { type: String, default: '' },
-    bio: { type: String, default: '' },
+    avatar: { type: String, default: "" },
+    coverPhoto: { type: String, default: "" },
+    bio: { type: String, default: "" },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other'],
-      default: 'other',
+      enum: ["male", "female", "other"],
+      default: "other",
     },
     birthday: { type: Date },
 
@@ -23,14 +23,14 @@ const userSchema = new Schema(
     isVerified: { type: Boolean, default: false },
 
     // Friends
-    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
     friendRequests: [
       {
-        from: { type: Types.ObjectId, ref: 'User', required: true },
+        from: { type: Types.ObjectId, ref: "User", required: true },
         status: {
           type: String,
-          enum: ['pending', 'accepted', 'rejected'],
-          default: 'pending',
+          enum: ["pending", "accepted", "rejected"],
+          default: "pending",
         },
       },
     ],
@@ -44,14 +44,14 @@ const userSchema = new Schema(
     timestamps: true,
     toJSON: {
       transform: (doc, ret) => {
-        ret.id = ret._id.toString(); // Chuyển _id thành id
+        ret.id = ret._id && ret._id.toString ? ret._id.toString() : ret.id; // an toàn
         delete ret._id; // Xóa trường _id
         return ret;
       },
     },
     toObject: {
       transform: (doc, ret) => {
-        ret.id = ret._id.toString(); // Chuyển _id thành id
+        ret.id = ret._id && ret._id.toString ? ret._id.toString() : ret.id; // an toàn
         delete ret._id; // Xóa trường _id
         return ret;
       },
@@ -59,4 +59,4 @@ const userSchema = new Schema(
   } // tự động có createdAt, updatedAt
 );
 
-export default model('User', userSchema);
+export default model("User", userSchema);

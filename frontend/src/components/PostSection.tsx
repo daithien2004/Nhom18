@@ -1,17 +1,18 @@
-import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
-import PostMenu from './PostMenu';
-import SavePostModal from './SavePostModal';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import type { Post, Tab } from '../types/post';
-import SharePostModal from './SharePostModal';
+import React, { useEffect, useCallback, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
+import PostMenu from "./PostMenu";
+import SavePostModal from "./SavePostModal";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import type { Post, Tab } from "../types/post";
+import SharePostModal from "./SharePostModal";
+import { likeAdded, likeRemoved } from "../store/slices/activitySlice";
 import {
   addNewPost,
   fetchPostsThunk,
   resetPosts,
   toggleLike,
-} from '../store/slices/postSlice';
+} from "../store/slices/postSlice";
 
 interface PostSectionProps {
   tab: Tab;
@@ -48,7 +49,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   // Xử lý bài viết mới
   useEffect(() => {
     if (!newPost) return;
-    if (tab === 'recent') {
+    if (tab === "recent") {
       dispatch(addNewPost(newPost));
     } else {
       dispatch(fetchPostsThunk({ tab, page: 1, limit: LIMIT, replace: true }));
@@ -78,9 +79,40 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   );
 
   // Xử lý thích bài viết
-  const toggleLikeHandler = (e: React.MouseEvent, postId: string) => {
+  const toggleLikeHandler = async (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
-    dispatch(toggleLike({ postId, isPostList: true }));
+    const target = posts.find((p: Post) => p.id === postId);
+    try {
+      const action = await dispatch(toggleLike({ postId, isPostList: true }));
+      const payload: any = (action as any).payload;
+      if (target && payload && typeof payload.isLiked === "boolean") {
+        if (payload.isLiked) {
+          dispatch(
+            likeAdded({
+              post: {
+                id: target.id,
+                content: target.content,
+                caption: target.caption,
+                images: target.images || [],
+                author: {
+                  username: target.author.username,
+                  avatar: target.author.avatar,
+                },
+                likes: target.likes as any,
+                comments: target.comments as any,
+                shares: target.shares as any,
+                views: target.views,
+                createdAt: target.createdAt,
+              } as any,
+            })
+          );
+        } else {
+          dispatch(likeRemoved({ postId }));
+        }
+      }
+    } catch {
+      // no-op
+    }
   };
 
   if (initialLoading) return <p>Đang tải bài viết...</p>;
@@ -89,7 +121,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
   return (
     <div className="space-y-6">
-      {posts.map((post, idx) => (
+      {posts.map((post: Post, idx: number) => (
         <div
           key={post.id}
           ref={idx === posts.length - 1 ? lastPostRef : null}
@@ -99,7 +131,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || '/default-avatar.png'}
+              src={post.author.avatar || "/default-avatar.png"}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -113,14 +145,14 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
             </div>
             <div className="ml-auto">
               <PostMenu
-                onInterested={() => console.log('Quan tâm')}
-                onNotInterested={() => console.log('Không quan tâm')}
+                onInterested={() => console.log("Quan tâm")}
+                onNotInterested={() => console.log("Không quan tâm")}
                 onSave={() => {
                   setSelectedPostId(post.id);
                   setShowSaveModal(true);
                 }}
-                onNotify={() => console.log('Thông báo')}
-                onEmbed={() => console.log('Nhúng')}
+                onNotify={() => console.log("Thông báo")}
+                onEmbed={() => console.log("Nhúng")}
               />
             </div>
           </div>
@@ -131,7 +163,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
               <div className="mt-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
                 <div className="flex items-center gap-2 mb-2">
                   <img
-                    src={post.sharedFrom.author.avatar || '/default-avatar.png'}
+                    src={post.sharedFrom.author.avatar || "/default-avatar.png"}
                     alt="avatar"
                     className="w-6 h-6 rounded-full object-cover"
                   />
@@ -146,7 +178,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 )}
                 {(post.sharedFrom.images || []).length > 0 && (
                   <div className="flex gap-2 mt-2 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                    {post.sharedFrom.images.map((img, idx) => (
+                    {post.sharedFrom.images.map((img: string, idx: number) => (
                       <img
                         key={idx}
                         src={img}
@@ -174,7 +206,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 />
               ) : (
                 <div className="flex gap-2 mt-3 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                  {post.images.map((img, idx) => (
+                  {post.images.map((img: string, idx: number) => (
                     <img
                       key={idx}
                       src={img}
@@ -206,7 +238,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 setShowShareModal(true);
                 setShareUser({
                   username: post.author.username,
-                  avatar: post.author.avatar || '/default-avatar.png',
+                  avatar: post.author.avatar || "/default-avatar.png",
                 });
               }}
               className="flex items-center gap-1 hover:text-green-500 transition cursor-pointer"
