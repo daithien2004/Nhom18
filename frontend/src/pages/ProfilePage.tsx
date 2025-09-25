@@ -33,7 +33,7 @@ const ProfilePage: React.FC = () => {
     });
   };
 
-  if (loading) {
+  if (loading.fetchProfile) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-xl">Loading...</div>

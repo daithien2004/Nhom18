@@ -31,7 +31,8 @@ export const loginThunk = createAsyncThunk(
 export const fetchProfile = createAsyncThunk(
   'auth/fetchProfile',
   async (_, { rejectWithValue }) => {
-    return handleApi(() => getMe(), rejectWithValue, 'Fetch profile failed');
+    const r = handleApi(() => getMe(), rejectWithValue, 'Fetch profile failed');
+    return r;
   }
 );
 
