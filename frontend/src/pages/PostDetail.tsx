@@ -229,9 +229,7 @@ const PostDetailPage = () => {
         {/* Actions */}
         <div className="flex justify-around text-gray-600 text-sm py-2 border-b border-gray-200">
           <button
-            onClick={() =>
-              postId && dispatch(toggleLike({ postId, isPostList: false }))
-            }
+            onClick={() => postId && dispatch(toggleLike({ postId }))}
             className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             disabled={isCommenting}
           >

@@ -29,57 +29,75 @@ const MainLayout: React.FC = () => {
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
-      <aside className="bg-blue-700 w-20 flex flex-col items-center py-6 justify-between fixed h-screen shadow-lg">
+      <aside className="bg-white w-20 flex flex-col items-center py-6 justify-between fixed h-screen shadow-md">
         <div className="flex flex-col items-center gap-6">
           {/* Avatar + Dropdown */}
           <div className="relative">
             <UserCircle
               size={48}
-              className="text-white cursor-pointer hover:scale-110 transition-transform"
+              className="text-gray-800 cursor-pointer hover:scale-110 transition-transform"
               onClick={toggleDropdown}
             />
           </div>
 
           {/* Navigation */}
           <div className="flex flex-col items-center gap-6 mt-8">
-            <Home
-              size={32}
-              className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/home') ? 'text-yellow-300' : 'text-white'
-              }`}
-              onClick={() => navigate('/')}
-            />
-
-            <MessageCircle
-              size={32}
-              className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/conversations') ? 'text-yellow-300' : 'text-white'
-              }`}
-              onClick={() => navigate('/conversations')}
-            />
-
-            <Contact
-              size={32}
-              className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/friends') ? 'text-yellow-300' : 'text-white'
-              }`}
-              onClick={() => navigate('/friends')}
-            />
-            <Bookmark
-              size={32}
-              className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive('/categories') ? 'text-yellow-300' : 'text-white'
-              }`}
-              onClick={() => navigate('/categories')}
-            />
+            <div className="relative group">
+              <Home
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/home') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/')}
+              />
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Trang chủ
+              </div>
+            </div>
+            <div className="relative group">
+              <MessageCircle
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/conversations') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/conversations')}
+              />
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Tin nhắn
+              </div>
+            </div>
+            <div className="relative group">
+              <Contact
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/friends') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/friends')}
+              />
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Bạn bè
+              </div>
+            </div>
+            <div className="relative group">
+              <Bookmark
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/categories') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/categories')}
+              />
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                Danh mục
+              </div>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 ml-20 p-5 overflow-y-auto">
+      <main className="flex-1 ml-20 p-5 overflow-y-auto bg-white shadow-sm">
         <Outlet />
       </main>
 
@@ -87,12 +105,12 @@ const MainLayout: React.FC = () => {
       {isDropdownOpen &&
         createPortal(
           <div
-            className="absolute left-20 top-6 w-48 bg-white shadow-lg rounded-lg z-[9999]"
+            className="absolute left-20 top-6 w-48 bg-white shadow-md border border-gray-200 rounded-lg z-[9999]"
             style={{ minWidth: 200 }}
           >
             <ul>
               <li
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                 onClick={() => {
                   navigate('/profile');
                   setIsDropDownOpen(false);
@@ -101,7 +119,7 @@ const MainLayout: React.FC = () => {
                 Hồ sơ của bạn
               </li>
               <li
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                 onClick={() => {
                   navigate('/setting');
                   setIsDropDownOpen(false);
@@ -110,7 +128,7 @@ const MainLayout: React.FC = () => {
                 Cài đặt
               </li>
               <li
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                 onClick={() => {
                   handleLogout();
                   setIsDropDownOpen(false);

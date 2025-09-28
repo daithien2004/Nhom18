@@ -32,15 +32,21 @@ const MessageSchema = new Schema(
     timestamps: true,
     toJSON: {
       transform: (doc, ret) => {
-        ret.id = ret._id.toString(); // Chuyển _id thành id
-        delete ret._id; // Xóa trường _id
+        if (ret._id) {
+          // Kiểm tra _id tồn tại
+          ret.id = ret._id.toString();
+          delete ret._id;
+        }
         return ret;
       },
     },
     toObject: {
       transform: (doc, ret) => {
-        ret.id = ret._id.toString(); // Chuyển _id thành id
-        delete ret._id; // Xóa trường _id
+        if (ret._id) {
+          // Kiểm tra _id tồn tại
+          ret.id = ret._id.toString();
+          delete ret._id;
+        }
         return ret;
       },
     },

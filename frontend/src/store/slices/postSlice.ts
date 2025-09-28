@@ -93,17 +93,14 @@ export const fetchPostDetail = createAsyncThunk(
 // Thunk chung để thích bài viết
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
-  async (
-    { postId, isPostList }: { postId: string; isPostList: boolean },
-    { rejectWithValue }
-  ) => {
+  async ({ postId }: { postId: string }, { rejectWithValue }) => {
     try {
       const res = await instance.post(`/posts/${postId}/like`);
       return {
         postId,
         likeCount: res.data.likeCount,
         isLiked: res.data.isLiked,
-        isPostList,
+        likes: res.data.likes, // Mảng likes chứa userId, username, avatar
       };
     } catch (err) {
       return rejectWithValue('Lỗi khi thích bài viết');
@@ -210,36 +207,69 @@ const postSlice = createSlice({
     // Toggle like
     builder
       .addCase(toggleLike.pending, (state, action) => {
-        if (action.meta.arg.isPostList) {
-          state.posts = state.posts.map((p) =>
-            p.id === action.meta.arg.postId
-              ? {
-                  ...p,
-                  likes: p.likes.includes('me')
-                    ? p.likes.filter((id) => id !== 'me')
-                    : [...p.likes, 'me'],
-                }
-              : p
-          );
+        state.posts = state.posts.map((p) =>
+          p.id === action.meta.arg.postId
+            ? {
+                ...p,
+                isLikedByCurrentUser: !p.isLikedByCurrentUser, // Tạm thời đảo trạng thái like
+                likeCount: p.isLikedByCurrentUser
+                  ? p.likeCount - 1
+                  : p.likeCount + 1,
+              }
+            : p
+        );
+        if (
+          state.postDetail &&
+          state.postDetail.id === action.meta.arg.postId
+        ) {
+          state.postDetail.isLikedByCurrentUser =
+            !state.postDetail.isLikedByCurrentUser;
+          state.postDetail.likeCount = state.postDetail.isLikedByCurrentUser
+            ? state.postDetail.likeCount - 1
+            : state.postDetail.likeCount + 1;
         }
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        if (action.payload.isPostList) {
-          state.posts = state.posts.map((p) =>
-            p.id === action.payload.postId
-              ? { ...p, likes: new Array(action.payload.likeCount).fill('x') }
-              : p
-          );
-        } else if (
-          state.postDetail &&
-          state.postDetail.id === action.payload.postId
-        ) {
+        state.posts = state.posts.map((p) =>
+          p.id === action.payload.postId
+            ? {
+                ...p,
+                likeCount: action.payload.likeCount,
+                isLikedByCurrentUser: action.payload.isLiked,
+                likes: action.payload.likes, // Cập nhật mảng likes với userId, username, avatar
+              }
+            : p
+        );
+        if (state.postDetail && state.postDetail.id === action.payload.postId) {
           state.postDetail.likeCount = action.payload.likeCount;
           state.postDetail.isLikedByCurrentUser = action.payload.isLiked;
+          state.postDetail.likes = action.payload.likes; // Cập nhật mảng likes cho postDetail
         }
       })
       .addCase(toggleLike.rejected, (state, action) => {
         state.error = action.payload as string;
+        // Hoàn nguyên trạng thái nếu lỗi
+        state.posts = state.posts.map((p) =>
+          p.id === action.meta.arg.postId
+            ? {
+                ...p,
+                isLikedByCurrentUser: !p.isLikedByCurrentUser, // Đảo lại trạng thái
+                likeCount: p.isLikedByCurrentUser
+                  ? p.likeCount - 1
+                  : p.likeCount + 1,
+              }
+            : p
+        );
+        if (
+          state.postDetail &&
+          state.postDetail.id === action.meta.arg.postId
+        ) {
+          state.postDetail.isLikedByCurrentUser =
+            !state.postDetail.isLikedByCurrentUser;
+          state.postDetail.likeCount = state.postDetail.isLikedByCurrentUser
+            ? state.postDetail.likeCount - 1
+            : state.postDetail.likeCount + 1;
+        }
       });
 
     // Create post

@@ -33,19 +33,15 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   const navigate = useNavigate();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
-
   const [shareUser, setShareUser] = useState<User | null>(null);
 
-  // Reset và fetch bài viết khi thay đổi tab
   useEffect(() => {
     dispatch(resetPosts());
     dispatch(fetchPostsThunk({ tab, page: 1, limit: LIMIT, replace: true }));
   }, [tab, dispatch]);
 
-  // Xử lý bài viết mới
   useEffect(() => {
     if (!newPost) return;
     if (tab === 'recent') {
@@ -77,10 +73,9 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
     [loadingMore, hasMore, tab, page, dispatch]
   );
 
-  // Xử lý thích bài viết
   const toggleLikeHandler = (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
-    dispatch(toggleLike({ postId, isPostList: true }));
+    dispatch(toggleLike({ postId }));
   };
 
   if (initialLoading) return <p>Đang tải bài viết...</p>;
@@ -145,15 +140,76 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                   </p>
                 )}
                 {(post.sharedFrom.images || []).length > 0 && (
-                  <div className="flex gap-2 mt-2 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                    {post.sharedFrom.images.map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt="shared post"
-                        className="w-48 h-32 object-cover rounded-lg flex-shrink-0 snap-start"
-                      />
-                    ))}
+                  <div className="mt-2">
+                    {(post.sharedFrom.images || []).length === 1 ? (
+                      <div className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <img
+                          src={post.sharedFrom.images[0]}
+                          alt="shared post"
+                          className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    ) : (post.sharedFrom.images || []).length === 2 ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {post.sharedFrom.images.map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                          >
+                            <img
+                              src={img}
+                              alt="shared post"
+                              className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (post.sharedFrom.images || []).length === 3 ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                          <img
+                            src={post.sharedFrom.images[0]}
+                            alt="shared post"
+                            className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="grid grid-rows-2 gap-2">
+                          {post.sharedFrom.images.slice(1).map((img, idx) => (
+                            <div
+                              key={idx}
+                              className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                            >
+                              <img
+                                src={img}
+                                alt="shared post"
+                                className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {post.sharedFrom.images.slice(0, 4).map((img, idx) => (
+                          <div
+                            key={idx}
+                            className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                          >
+                            <img
+                              src={img}
+                              alt="shared post"
+                              className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            {idx === 3 &&
+                              post.sharedFrom!.images.length > 4 && (
+                                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-lg font-semibold">
+                                  +{post.sharedFrom!.images.length - 4}
+                                </div>
+                              )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -165,39 +221,103 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
           {/* Images */}
           {!post.sharedFrom && post.images && post.images.length > 0 && (
-            <>
+            <div className="mt-3">
               {post.images.length === 1 ? (
-                <img
-                  src={post.images[0]}
-                  alt="post"
-                  className="w-full h-64 object-cover rounded-lg mt-3"
-                />
-              ) : (
-                <div className="flex gap-2 mt-3 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
+                <div className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <img
+                    src={post.images[0]}
+                    alt="post"
+                    className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+              ) : post.images.length === 2 ? (
+                <div className="grid grid-cols-2 gap-2">
                   {post.images.map((img, idx) => (
-                    <img
+                    <div
                       key={idx}
-                      src={img}
+                      className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                    >
+                      <img
+                        src={img}
+                        alt="post"
+                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : post.images.length === 3 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <img
+                      src={post.images[0]}
                       alt="post"
-                      className="w-64 h-48 object-cover rounded-lg flex-shrink-0 snap-start"
+                      className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                  </div>
+                  <div className="grid grid-rows-2 gap-2">
+                    {post.images.slice(1).map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                      >
+                        <img
+                          src={img}
+                          alt="post"
+                          className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {post.images.slice(0, 4).map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+                    >
+                      <img
+                        src={img}
+                        alt="post"
+                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      {idx === 3 && post.images.length > 4 && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-lg font-semibold">
+                          +{post.images.length - 4}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
-            </>
+            </div>
           )}
           {/* Action bar */}
-          <div className="flex justify-around items-center mt-4 border-t border-gray-100 pt-2 text-gray-600 text-sm">
+          <div className="flex justify-around items-center mt-4 border-t border-gray-200 pt-3 text-gray-600">
             <button
               onClick={(e) => toggleLikeHandler(e, post.id)}
-              className="flex items-center gap-1 hover:text-red-500 transition"
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <Heart size={18} />
-              <span>{(post.likes || []).length}</span>
+              <Heart
+                size={20}
+                className={`${
+                  post.isLikedByCurrentUser
+                    ? 'text-red-500 fill-red-500'
+                    : 'text-gray-600'
+                } transition-colors duration-200`}
+              />
+              <span className="text-sm font-medium">
+                {(post.likes || []).length} Thích
+              </span>
             </button>
-            <button className="flex items-center gap-1 hover:text-blue-500 transition cursor-pointer">
-              <MessageCircle size={18} />
-              <span>{(post.comments || []).length}</span>
+            <button
+              onClick={() => navigate(`/posts/${post.id}`)}
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            >
+              <MessageCircle size={20} className="text-gray-600" />
+              <span className="text-sm font-medium">
+                {(post.comments || []).length} Bình luận
+              </span>
             </button>
             <button
               onClick={(e) => {
@@ -209,10 +329,10 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                   avatar: post.author.avatar || '/default-avatar.png',
                 });
               }}
-              className="flex items-center gap-1 hover:text-green-500 transition cursor-pointer"
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <Share2 size={18} />
-              <span>Chia sẻ</span>
+              <Share2 size={20} className="text-gray-600" />
+              <span className="text-sm font-medium">Chia sẻ</span>
             </button>
           </div>
         </div>

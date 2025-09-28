@@ -1,9 +1,9 @@
-import React, { useState, type JSX } from 'react';
+import React, { useEffect, useState, type JSX } from 'react';
 import PostSection from '../components/PostSection';
 import instance from '../api/axiosInstant';
 import type { Post, Tab } from '../types/post';
-import { useAppDispatch, useAppSelector } from '../store/hooks'; // Adjust import path
-import { createPost } from '../store/slices/postSlice'; // Adjust import path
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { createPost } from '../store/slices/postSlice';
 import {
   Clock,
   Flame,
@@ -11,18 +11,25 @@ import {
   Loader2,
   Pin,
   TrendingUp,
-  UserCircle,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import NotificationDropdown from '../components/NotificationDropdown';
+import { fetchProfile } from '../store/thunks/authThunks';
 
 const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { isCreating, createError } = useAppSelector((state) => state.posts);
+  const { user } = useAppSelector((state) => state.auth);
 
   const [tab, setTab] = useState<Tab>('recent');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [newPost, setNewPost] = useState<Post | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State để quản lý modal
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   // Upload ảnh
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +56,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Tạo post với Redux
+  // Tạo post
   const handleCreatePost = async () => {
     if (!content && images.length === 0) return;
 
@@ -57,7 +64,9 @@ const HomePage: React.FC = () => {
       const result = await dispatch(createPost({ content, images })).unwrap();
       setContent('');
       setImages([]);
-      setNewPost(result); // 👉 gửi post mới xuống PostSection
+      setNewPost(result);
+      setIsModalOpen(false); // Đóng modal sau khi đăng bài thành công
+      toast.success('Đăng bài thành công!');
     } catch (error) {
       toast.error('Đăng bài thất bại. Vui lòng thử lại!');
       console.error('Lỗi khi đăng bài:', error);
@@ -66,41 +75,68 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Form tạo post */}
-      <div className="bg-white p-4 rounded-2xl shadow-md">
+      {/* Header */}
+      <div className="flex justify-between items-center py-3 px-2">
+        <h1 className="text-xl font-bold">Trang chủ</h1>
+        <NotificationDropdown />
+      </div>
+
+      {/* Nút hoặc khu vực để mở modal */}
+      <div className="bg-white p-4 rounded-2xl shadow-md cursor-pointer">
         <div className="flex space-x-3">
-          <UserCircle
-            color="black"
-            size={48}
-            className="text-white cursor-pointer hover:scale-110 transition-transform"
+          <img
+            src={user?.avatar || 'https://via.placeholder.com/48'}
+            alt="User avatar"
+            className="w-12 h-12 rounded-full object-cover cursor-pointer hover:scale-110 transition-transform"
           />
-          {/* Textarea + Upload */}
-          <div className="flex flex-col flex-1">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Bạn đang nghĩ gì thế?"
-              className="w-full border-none resize-none focus:ring-0 rounded-lg p-2 bg-gray-100"
-              rows={3}
-            />
-            {/* Upload ảnh */}
-            <div className="mt-2 flex flex-col space-y-2">
-              <label htmlFor="file-upload" className="inline-block">
-                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-gray-600 hover:bg-gray-100 transition">
-                  <ImageIcon size={20} className="text-green-500" />
-                  <span className="text-sm font-medium">Ảnh</span>
-                </div>
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                className="hidden"
+          <div className="flex-1">
+            <div
+              className="w-full border-none rounded-lg p-2 bg-gray-100 text-gray-500"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Bạn đang nghĩ gì thế?
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 min-h-screen flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-4">Tạo bài viết</h2>
+            <div className="flex flex-col space-y-4">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Bạn đang nghĩ gì thế?"
+                className="w-full border-none resize-none focus:ring-0 rounded-lg p-2 bg-gray-100"
+                rows={4}
               />
+              <div className="flex justify-between items-center">
+                <label htmlFor="file-upload" className="inline-block">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full cursor-pointer hover:bg-blue-100 transition-all duration-300">
+                    <ImageIcon size={20} className="text-blue-600" />
+                    <span className="text-sm font-semibold">Thêm ảnh</span>
+                  </div>
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </div>
               {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-3 gap-2">
                   {images.map((img, idx) => (
                     <div key={idx} className="relative group">
                       <img
@@ -120,29 +156,31 @@ const HomePage: React.FC = () => {
                   ))}
                 </div>
               )}
+              {createError && (
+                <div className="text-red-500 text-sm">{createError}</div>
+              )}
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleCreatePost}
+                  disabled={isCreating || (!content && images.length === 0)}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCreating && <Loader2 className="animate-spin w-4 h-4" />}
+                  {isCreating ? 'Đang đăng...' : 'Đăng bài'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        <div className="mt-2">
-          {/* Error message */}
-          {createError && (
-            <div className="text-red-500 text-sm mb-2">{createError}</div>
-          )}
-
-          <div className="text-right">
-            <button
-              onClick={handleCreatePost}
-              disabled={isCreating || (!content && images.length === 0)}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white font-medium px-2 py-1 rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isCreating && <Loader2 className="animate-spin w-4 h-4" />}
-              {isCreating ? 'Đang đăng...' : 'Đăng bài'}
-            </button>
-          </div>
-        </div>
-      </div>
-
+      {/* Tabs */}
       <div className="flex space-x-6">
         {(['recent', 'hot', 'popular', 'pinned'] as Tab[]).map((t) => {
           const icons: Record<Tab, JSX.Element> = {
@@ -159,7 +197,7 @@ const HomePage: React.FC = () => {
               className={`relative pb-2 inline-flex items-center gap-1.5 text-sm font-medium transition ${
                 tab === t
                   ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-blue-600'
-                  : 'text-gray-600 hover:text-blue-500'
+                  : 'text-gray-800 hover:text-blue-500'
               }`}
             >
               {icons[t]}
@@ -180,4 +218,5 @@ const HomePage: React.FC = () => {
     </div>
   );
 };
+
 export default HomePage;

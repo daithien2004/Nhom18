@@ -2,6 +2,7 @@ import ApiError from '../utils/apiError.js';
 import { StatusCodes } from 'http-status-codes';
 import * as postRepo from '../repositories/postRepository.js';
 import * as commentRepo from '../repositories/commentRepository.js';
+import Post from '../models/Post.js';
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
@@ -26,6 +27,10 @@ export const getPosts = async ({ type, limit, page = 1 }) => {
     console.error('Error in getPosts:', err);
     return [];
   }
+};
+
+export const getPost = async (postId) => {
+  return postRepo.findPost(postId);
 };
 
 export const getPostDetail = async (postId, userId) => {
@@ -72,12 +77,14 @@ export const getPostDetail = async (postId, userId) => {
 };
 
 export const toggleLikePost = async (postId, userId) => {
-  const post = await postRepo.findPostById(postId);
+  const post = await Post.findById(postId).populate('likes', 'username avatar');
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
-  const likedIndex = post.likes.findIndex((id) => id.toString() === userId);
+  const likedIndex = post.likes.findIndex(
+    (user) => user.id.toString() === userId
+  );
   let isLiked;
   if (likedIndex >= 0) {
     post.likes.splice(likedIndex, 1);
@@ -88,7 +95,22 @@ export const toggleLikePost = async (postId, userId) => {
   }
 
   await post.save();
-  return { postId: post.id.toString(), isLiked, likeCount: post.likes.length };
+
+  // Populate lại likes sau khi lưu để đảm bảo dữ liệu mới nhất
+  const updatedPost = await Post.findById(postId).populate(
+    'likes',
+    'username avatar'
+  );
+
+  return {
+    postId: post.id.toString(),
+    isLiked,
+    likes: updatedPost.likes.map((user) => ({
+      userId: user.id.toString(),
+      username: user.username,
+      avatar: user.avatar,
+    })),
+  };
 };
 
 export const createComment = async ({ postId, userId, content }) => {

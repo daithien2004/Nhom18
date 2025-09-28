@@ -36,7 +36,8 @@ export interface Post {
   id: string;
   content?: string; // bài gốc mới có content, bài share có thể không có
   caption?: string; // caption khi share bài
-
+  isLikedByCurrentUser: boolean;
+  likeCount: number;
   images: string[];
   author: {
     username: string;

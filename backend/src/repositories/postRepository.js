@@ -13,6 +13,7 @@ export const createPostShare = async ({
 }) => {
   return await Post.create({ author, caption, sharedFrom });
 };
+
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find()
     .populate([
@@ -20,7 +21,6 @@ export const findRecentPosts = async (limit, skip) => {
       {
         path: 'comments',
         populate: { path: 'author', select: 'username avatar' },
-        options: { strictPopulate: false },
       },
       {
         path: 'sharedFrom',
@@ -47,6 +47,24 @@ export const findHotPosts = async (limit, skip) => {
     { $sort: { totalInteractions: -1, createdAt: -1 } },
     { $skip: skip },
     { $limit: limit },
+    {
+      $project: {
+        id: '$_id', // Đổi tên _id thành id
+        _id: 0, // Xóa trường _id
+        author: 1,
+        content: 1,
+        caption: 1,
+        images: 1,
+        likes: 1,
+        comments: 1,
+        views: 1,
+        shares: 1,
+        sharedFrom: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        totalInteractions: 1,
+      },
+    },
   ]);
 
   return await Post.populate(agg, [
@@ -54,7 +72,6 @@ export const findHotPosts = async (limit, skip) => {
     {
       path: 'comments',
       populate: { path: 'author', select: 'username avatar' },
-      options: { strictPopulate: false },
     },
     {
       path: 'sharedFrom',
@@ -70,7 +87,6 @@ export const findPopularPosts = async (limit, skip) => {
       {
         path: 'comments',
         populate: { path: 'author', select: 'username avatar' },
-        options: { strictPopulate: false },
       },
       {
         path: 'sharedFrom',
@@ -104,6 +120,13 @@ export const findPostAndIncreaseView = async (postId) => {
       path: 'comments',
       populate: { path: 'author', select: 'username avatar' },
     });
+};
+
+export const findPost = async (postId) => {
+  return await Post.findByIdAndUpdate(postId).populate(
+    'author',
+    'username avatar isOnline'
+  );
 };
 
 export const findPostDetail = async (id, options = {}) => {

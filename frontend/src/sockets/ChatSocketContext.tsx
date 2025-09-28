@@ -1,11 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { connectSocket } from './socket';
+import { connectChatSocket } from './socket';
 import type { Socket } from 'socket.io-client';
 import { useAppSelector } from '../store/hooks';
 
-const SocketContext = createContext<Socket | null>(null);
+const ChatSocketContext = createContext<Socket | null>(null);
 
-export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+export const ChatSocketProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const token = useAppSelector((state) => state.auth.token);
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -15,7 +19,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    const s = connectSocket(token);
+    const s = connectChatSocket(token);
     setSocket(s);
 
     return () => {
@@ -24,8 +28,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [token]);
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <ChatSocketContext.Provider value={socket}>
+      {children}
+    </ChatSocketContext.Provider>
   );
 };
 
-export const useSocket = () => useContext(SocketContext);
+export const useChatSocket = () => useContext(ChatSocketContext);

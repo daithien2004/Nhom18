@@ -11,13 +11,13 @@ import PostDetail from './pages/PostDetail';
 import ConversationsPage from './pages/ConversationsPage';
 import FriendsPage from './pages/FriendsPage';
 import CategoryPage from './pages/CategoryPage';
-import { SocketProvider } from './sockets/SocketContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // nhớ import css
+import { SocketProviders } from './sockets/SocketProviders';
 
 function App() {
   return (
-    <SocketProvider>
+    <SocketProviders>
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -43,7 +43,7 @@ function App() {
         pauseOnHover
         theme="colored"
       />
-    </SocketProvider>
+    </SocketProviders>
   );
 }
 

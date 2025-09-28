@@ -5,6 +5,7 @@ import conversationReducer from '../store/slices/conversationSlice';
 import friendReducer from '../store/slices/friendSlice';
 import friendSearchReducer from '../store/slices/friendSearchSlice';
 import friendListSearchReducer from '../store/slices/friendListSearchSlice';
+import notidicationReducer from '../store/slices/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     friends: friendReducer,
     friendSearch: friendSearchReducer,
     friendListSearch: friendListSearchReducer,
+    notifications: notidicationReducer,
   },
 });
 

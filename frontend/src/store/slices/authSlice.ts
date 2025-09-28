@@ -11,6 +11,7 @@ import {
 } from '../thunks/authThunks';
 import type { UserProfile } from '../../types/user';
 import { getAccessToken, removeAccessToken } from '../../utils/authHelpers';
+import { disconnectSockets } from '../../sockets/socket';
 
 type AuthError = {
   message: string;
@@ -55,6 +56,7 @@ const authSlice = createSlice({
       state.user = null;
       state.error = null;
       removeAccessToken();
+      disconnectSockets();
     },
     clearError(state) {
       state.error = null;
