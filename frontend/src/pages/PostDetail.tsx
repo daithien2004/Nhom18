@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   fetchPostDetail,
   clearPostDetail,
   toggleLike,
   addComment,
   clearCommentError,
-} from '../store/slices/postSlice';
-import { toast } from 'react-toastify';
+} from "../store/slices/postSlice";
+import { toast } from "react-toastify";
+import { commentAdded } from "../store/slices/activitySlice";
 
 import {
   X,
@@ -18,8 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-} from 'lucide-react';
-import SharePostModal from '../components/SharePostModal';
+} from "lucide-react";
+import SharePostModal from "../components/SharePostModal";
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -33,7 +34,7 @@ const PostDetailPage = () => {
     isCommenting,
     commentError,
   } = useAppSelector((state) => state.posts);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -58,10 +59,33 @@ const PostDetailPage = () => {
   const handleAddComment = async () => {
     if (!postId || !commentText.trim()) return;
     try {
-      await dispatch(
+      const res = await dispatch(
         addComment({ postId, content: commentText.trim() })
       ).unwrap();
-      setCommentText('');
+      if (postDetail) {
+        dispatch(
+          commentAdded({
+            commentId: res.comment.id,
+            post: {
+              id: postDetail.id,
+              content: postDetail.content,
+              caption: postDetail.caption,
+              images: postDetail.images,
+              author: {
+                username: postDetail.author.username,
+                avatar: postDetail.author.avatar,
+              },
+              likes: [] as any,
+              comments: [] as any,
+              shares: [] as any,
+              views: postDetail.views,
+              createdAt: postDetail.createdAt,
+            } as any,
+            content: commentText.trim(),
+          })
+        );
+      }
+      setCommentText("");
     } catch (err) {
       // Lỗi đã được xử lý trong thunk
     }
@@ -102,7 +126,7 @@ const PostDetailPage = () => {
     <div className="fixed inset-0 bg-black/90 flex z-50">
       {/* Nút đóng */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate("/")}
         className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center
           rounded-full bg-white/90 text-gray-700 shadow-lg hover:bg-gray-200 transition"
       >
@@ -144,7 +168,7 @@ const PostDetailPage = () => {
                       key={i}
                       onClick={() => setCurrentImageIndex(i)}
                       className={`w-2.5 h-2.5 rounded-full transition ${
-                        i === currentImageIndex ? 'bg-white' : 'bg-white/40'
+                        i === currentImageIndex ? "bg-white" : "bg-white/40"
                       }`}
                     />
                   ))}
@@ -160,13 +184,13 @@ const PostDetailPage = () => {
         {/* Header */}
         <div className="flex items-center px-4 py-3 border-b border-gray-200">
           <img
-            src={postDetail.author?.avatar || '/default-avatar.png'}
+            src={postDetail.author?.avatar || "/default-avatar.png"}
             alt="avatar"
             className="w-10 h-10 rounded-full"
           />
           <div className="ml-3">
             <p className="font-semibold text-gray-900">
-              {postDetail.author?.username || 'Ẩn danh'}
+              {postDetail.author?.username || "Ẩn danh"}
             </p>
             <p className="text-xs text-gray-500">
               {new Date(postDetail.createdAt).toLocaleString()}
@@ -186,13 +210,13 @@ const PostDetailPage = () => {
           <div className="px-4 py-3 border border-gray-200 bg-gray-50 mx-4 my-3 rounded-lg">
             <div className="flex items-center gap-3 mb-2">
               <img
-                src={sharedFrom.author?.avatar || '/default-avatar.png'}
+                src={sharedFrom.author?.avatar || "/default-avatar.png"}
                 alt="avatar"
                 className="w-8 h-8 rounded-full"
               />
               <div>
                 <p className="font-semibold text-gray-900">
-                  {sharedFrom.author?.username || 'Ẩn danh'}
+                  {sharedFrom.author?.username || "Ẩn danh"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {new Date(sharedFrom.createdAt).toLocaleString()}
@@ -239,12 +263,12 @@ const PostDetailPage = () => {
               size={18}
               className={
                 postDetail.isLikedByCurrentUser
-                  ? 'fill-red-500 text-red-500'
-                  : ''
+                  ? "fill-red-500 text-red-500"
+                  : ""
               }
             />
             <span>
-              {postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}
+              {postDetail.isLikedByCurrentUser ? "Bỏ thích" : "Thích"}
             </span>
           </button>
           <button className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
@@ -271,13 +295,13 @@ const PostDetailPage = () => {
             postDetail.comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
                 <img
-                  src={comment.author?.avatar || '/default-avatar.png'}
+                  src={comment.author?.avatar || "/default-avatar.png"}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />
                 <div className="bg-gray-100 px-3 py-2 rounded-xl max-w-[80%]">
                   <p className="text-sm font-semibold text-gray-800">
-                    {comment.author?.username || 'Ẩn danh'}
+                    {comment.author?.username || "Ẩn danh"}
                   </p>
                   <p className="text-gray-700 text-sm">{comment.content}</p>
                   <p className="text-xs text-gray-400">
@@ -292,7 +316,7 @@ const PostDetailPage = () => {
         {/* Comment Input */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center gap-3">
           <img
-            src={'/default-avatar.png'}
+            src={"/default-avatar.png"}
             alt="avatar"
             className="w-8 h-8 rounded-full"
           />
@@ -303,7 +327,7 @@ const PostDetailPage = () => {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isCommenting && commentText.trim()) {
+                if (e.key === "Enter" && !isCommenting && commentText.trim()) {
                   handleAddComment();
                 }
               }}
