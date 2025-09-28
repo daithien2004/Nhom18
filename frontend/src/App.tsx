@@ -12,6 +12,7 @@ import ConversationsPage from "./pages/ConversationsPage";
 import FriendsPage from "./pages/FriendsPage";
 import CategoryPage from "./pages/CategoryPage";
 import ActionStorePage from "./pages/ActionStorePage";
+import StatisticsPage from "./pages/StatisticsPage";
 import { SocketProvider } from "./sockets/SocketContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // nhớ import css
@@ -30,6 +31,7 @@ function App() {
           <Route path="friends" element={<FriendsPage />} />
           <Route path="categories" element={<CategoryPage />} />
           <Route path="activity" element={<ActionStorePage />} />
+          <Route path="statistics" element={<StatisticsPage />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
       </Routes>

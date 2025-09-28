@@ -6,6 +6,7 @@ import friendReducer from "../store/slices/friendSlice";
 import friendSearchReducer from "../store/slices/friendSearchSlice";
 import friendListSearchReducer from "../store/slices/friendListSearchSlice";
 import activityReducer from "../store/slices/activitySlice";
+import statisticReducer from "../store/slices/statisticSlice";
 
 // Load activity state from localStorage (if available)
 let preloadedState: any = undefined;
@@ -32,6 +33,7 @@ const reducers = {
   friendSearch: friendSearchReducer,
   friendListSearch: friendListSearchReducer,
   activity: activityReducer,
+  statistics: statisticReducer,
 };
 
 export const store = configureStore({

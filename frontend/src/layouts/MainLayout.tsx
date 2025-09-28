@@ -10,6 +10,7 @@ import {
   Home,
   Bookmark,
   History,
+  BarChart3,
 } from "lucide-react";
 
 const MainLayout: React.FC = () => {
@@ -82,6 +83,13 @@ const MainLayout: React.FC = () => {
                 isActive("/categories") ? "text-yellow-300" : "text-white"
               }`}
               onClick={() => navigate("/categories")}
+            />
+            <BarChart3
+              size={32}
+              className={`cursor-pointer transition-transform hover:scale-110 ${
+                isActive("/statistics") ? "text-yellow-300" : "text-white"
+              }`}
+              onClick={() => navigate("/statistics")}
             />
           </div>
         </div>
