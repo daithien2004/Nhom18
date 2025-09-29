@@ -6,6 +6,13 @@ import {
 import instance from '../../api/axiosInstant';
 import type { Comment, Post, PostDetail, Tab } from '../../types/post';
 
+// Định nghĩa interface cho Likes
+interface Like {
+  isLiked: boolean;
+  likeCount: number;
+  likes: { userId: string; username: string; avatar: string }[];
+}
+
 interface PostState {
   posts: Post[];
   page: number;
@@ -20,6 +27,7 @@ interface PostState {
   isCommenting: boolean;
   commentError: string | null;
   error: string | null;
+  likes: { [postId: string]: Like }; // State riêng cho likes
 }
 
 const initialState: PostState = {
@@ -36,6 +44,7 @@ const initialState: PostState = {
   isCommenting: false,
   commentError: null,
   error: null,
+  likes: {}, // Khởi tạo likes rỗng
 };
 
 // Thunk để tạo bài viết
@@ -146,9 +155,16 @@ const postSlice = createSlice({
       state.page = 1;
       state.hasMore = true;
       state.error = null;
+      state.likes = {}; // Reset likes khi reset posts
     },
     addNewPost: (state, action: PayloadAction<Post>) => {
       state.posts = [action.payload, ...state.posts];
+      // Khởi tạo trạng thái like cho post mới
+      state.likes[action.payload.id] = {
+        isLiked: action.payload.isLikedByCurrentUser || false,
+        likeCount: action.payload.likeCount || 0,
+        likes: action.payload.likes || [],
+      };
     },
     clearPostDetail: (state) => {
       state.postDetail = null;
@@ -178,6 +194,14 @@ const postSlice = createSlice({
           : [...state.posts, ...action.payload.posts];
         state.hasMore = action.payload.posts.length === action.meta.arg.limit;
         state.page = action.meta.arg.page;
+        // Cập nhật state.likes từ dữ liệu posts
+        action.payload.posts.forEach((post) => {
+          state.likes[post.id] = {
+            isLiked: post.isLikedByCurrentUser || false,
+            likeCount: post.likeCount || 0,
+            likes: post.likes || [],
+          };
+        });
       })
       .addCase(fetchPostsThunk.rejected, (state, action) => {
         state.initialLoading = false;
@@ -196,6 +220,12 @@ const postSlice = createSlice({
         (state, action: PayloadAction<PostDetail>) => {
           state.isLoadingDetail = false;
           state.postDetail = action.payload;
+          // Cập nhật state.likes cho postDetail
+          state.likes[action.payload.id] = {
+            isLiked: action.payload.isLikedByCurrentUser || false,
+            likeCount: action.payload.likeCount || 0,
+            likes: action.payload.likes || [],
+          };
         }
       )
       .addCase(fetchPostDetail.rejected, (state) => {
@@ -207,69 +237,38 @@ const postSlice = createSlice({
     // Toggle like
     builder
       .addCase(toggleLike.pending, (state, action) => {
-        state.posts = state.posts.map((p) =>
-          p.id === action.meta.arg.postId
-            ? {
-                ...p,
-                isLikedByCurrentUser: !p.isLikedByCurrentUser, // Tạm thời đảo trạng thái like
-                likeCount: p.isLikedByCurrentUser
-                  ? p.likeCount - 1
-                  : p.likeCount + 1,
-              }
-            : p
-        );
-        if (
-          state.postDetail &&
-          state.postDetail.id === action.meta.arg.postId
-        ) {
-          state.postDetail.isLikedByCurrentUser =
-            !state.postDetail.isLikedByCurrentUser;
-          state.postDetail.likeCount = state.postDetail.isLikedByCurrentUser
-            ? state.postDetail.likeCount - 1
-            : state.postDetail.likeCount + 1;
-        }
+        const postId = action.meta.arg.postId;
+        const currentLike = state.likes[postId] || {
+          isLiked: false,
+          likeCount: 0,
+          likes: [],
+        };
+        // Optimistic update
+        state.likes[postId] = {
+          ...currentLike,
+          isLiked: !currentLike.isLiked,
+          likeCount: currentLike.isLiked
+            ? currentLike.likeCount - 1
+            : currentLike.likeCount + 1,
+        };
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        state.posts = state.posts.map((p) =>
-          p.id === action.payload.postId
-            ? {
-                ...p,
-                likeCount: action.payload.likeCount,
-                isLikedByCurrentUser: action.payload.isLiked,
-                likes: action.payload.likes, // Cập nhật mảng likes với userId, username, avatar
-              }
-            : p
-        );
-        if (state.postDetail && state.postDetail.id === action.payload.postId) {
-          state.postDetail.likeCount = action.payload.likeCount;
-          state.postDetail.isLikedByCurrentUser = action.payload.isLiked;
-          state.postDetail.likes = action.payload.likes; // Cập nhật mảng likes cho postDetail
-        }
+        const { postId, isLiked, likeCount, likes } = action.payload;
+        // Cập nhật state.likes
+        state.likes[postId] = { isLiked, likeCount, likes };
       })
       .addCase(toggleLike.rejected, (state, action) => {
+        const postId = action.meta.arg.postId;
+        const currentLike = state.likes[postId];
+        // Rollback nếu lỗi
+        state.likes[postId] = {
+          ...currentLike,
+          isLiked: !currentLike.isLiked,
+          likeCount: currentLike.isLiked
+            ? currentLike.likeCount - 1
+            : currentLike.likeCount + 1,
+        };
         state.error = action.payload as string;
-        // Hoàn nguyên trạng thái nếu lỗi
-        state.posts = state.posts.map((p) =>
-          p.id === action.meta.arg.postId
-            ? {
-                ...p,
-                isLikedByCurrentUser: !p.isLikedByCurrentUser, // Đảo lại trạng thái
-                likeCount: p.isLikedByCurrentUser
-                  ? p.likeCount - 1
-                  : p.likeCount + 1,
-              }
-            : p
-        );
-        if (
-          state.postDetail &&
-          state.postDetail.id === action.meta.arg.postId
-        ) {
-          state.postDetail.isLikedByCurrentUser =
-            !state.postDetail.isLikedByCurrentUser;
-          state.postDetail.likeCount = state.postDetail.isLikedByCurrentUser
-            ? state.postDetail.likeCount - 1
-            : state.postDetail.likeCount + 1;
-        }
       });
 
     // Create post

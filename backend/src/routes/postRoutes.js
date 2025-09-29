@@ -8,6 +8,7 @@ import {
   sharePost,
 } from '../controllers/postController.js';
 import auth from '../middlewares/auth.js';
+import optionalAuth from '../middlewares/optionalAuth.js';
 import {
   validateBody,
   validateQuery,
@@ -24,7 +25,7 @@ import {
 const router = Router();
 
 // Lấy danh sách bài viết (feed)
-router.get('/', validateQuery(postQuerySchema), getPosts);
+router.get('/', optionalAuth, validateQuery(postQuerySchema), getPosts);
 
 // Lấy chi tiết 1 bài viết
 router.get('/:postId', validateParams(postIdSchema), auth, getPostDetail);

@@ -24,16 +24,14 @@ export default function FriendsPage() {
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [searchText, setSearchText] = useState('');
-
   const { results: searchResults = [] } = useAppSelector(
     (state) => state.friendSearch
   );
-
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<ChatUser | null>(null);
 
-  // debounce search
+  // Debounce search
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchText.trim() !== '') {
@@ -48,7 +46,7 @@ export default function FriendsPage() {
     return () => clearTimeout(delayDebounce);
   }, [searchText, dispatch]);
 
-  // click ngoài dropdown để đóng
+  // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -66,13 +64,11 @@ export default function FriendsPage() {
     try {
       const res = await instance.get(`/conversations/1on1/${user.id}`);
       const conversation = res.data;
-
       setActiveChatUser({
         ...user,
         conversationId: conversation.id,
-        chatStatus: conversation.status, // 👈 active / pending
+        chatStatus: conversation.status,
       });
-
       setShowDropdown(false);
       setSearchText('');
       dispatch(clearResults());
@@ -82,44 +78,40 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="h-screen flex">
+    <div className="flex bg-white">
       {/* Sidebar */}
-      <aside className="w-72 bg-white flex-shrink-0 flex flex-col rounded-r-2xl shadow-lg h-screen relative">
+      <aside className="w-64 bg-white fixed h-screen shadow-md p-6 flex flex-col">
         {/* Search */}
-        <div className="p-5 relative">
-          <div className="relative">
-            <Search
-              size={20}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              placeholder="Tìm kiếm bạn bè..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-full rounded-full bg-gray-100 px-14 py-3 text-sm text-gray-700 placeholder-gray-400 
-                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-            />
-          </div>
-
+        <div className="relative mb-6">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+          <input
+            type="text"
+            placeholder="Tìm kiếm bạn bè..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full rounded-lg bg-gray-100 px-12 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+          />
           {/* Dropdown search */}
           {showDropdown && searchResults.length > 0 && (
             <div
               ref={dropdownRef}
-              className="absolute top-16 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-y-auto z-50"
+              className="absolute top-12 left-0 right-0 bg-white rounded-2xl shadow-md border border-gray-200 max-h-96 overflow-y-auto z-50"
             >
               {searchResults.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
+                  className="flex items-center justify-between p-3 hover:bg-gray-100 cursor-pointer transition-all duration-300"
                   onClick={() => handleUserClick(user)}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="relative w-10 h-10 flex-shrink-0">
                       <img
-                        src={user.avatar || '/default-avatar.png'}
+                        src={user.avatar || 'https://via.placeholder.com/48'}
                         alt={user.username}
-                        className="w-full h-full rounded-full object-cover border-2 border-gray-100"
+                        className="w-full h-full rounded-full object-cover border border-gray-100"
                       />
                       <span
                         className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
@@ -141,8 +133,8 @@ export default function FriendsPage() {
                     </div>
                   </div>
                   <MessageCircle
-                    className="text-gray-500 hover:text-blue-500 transition-colors ml-4 flex-shrink-0"
-                    size={20}
+                    className="text-gray-500 hover:text-blue-600 transition-all duration-300 ml-4 flex-shrink-0"
+                    size={16}
                   />
                 </div>
               ))}
@@ -151,52 +143,53 @@ export default function FriendsPage() {
         </div>
 
         {/* Tabs FriendList / FriendRequests */}
-        <nav className="flex flex-col mt-4 px-3 space-y-2">
+        <nav className="flex flex-col space-y-2 flex-1">
           <button
             onClick={() => {
               setActiveTab('friends');
               setActiveChatUser(null);
             }}
-            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition hover:bg-blue-50  ${
+            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
               activeTab === 'friends'
-                ? 'bg-blue-100 font-semibold text-blue-600'
-                : 'text-gray-700'
+                ? 'bg-blue-100 text-blue-600 font-semibold'
+                : 'text-gray-800'
             }`}
           >
-            <Users size={20} />
-            <span>Danh sách bạn bè</span>
+            <Users size={18} />
+            <span className="text-sm font-medium">Danh sách bạn bè</span>
           </button>
-
           <button
             onClick={() => {
               setActiveTab('requests');
               setActiveChatUser(null);
             }}
-            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition hover:bg-blue-50 ${
+            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
               activeTab === 'requests'
-                ? 'bg-blue-100 font-semibold text-blue-600'
-                : 'text-gray-700'
+                ? 'bg-blue-100 text-blue-600 font-semibold'
+                : 'text-gray-800'
             }`}
           >
-            <UserPlus size={20} />
-            <span>Lời mời kết bạn</span>
+            <UserPlus size={18} />
+            <span className="text-sm font-medium">Lời mời kết bạn</span>
           </button>
         </nav>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 bg-gray-50 p-6 overflow-y-auto">
-        {activeChatUser ? (
-          <ChatWindow
-            user={activeChatUser}
-            conversationId={activeChatUser.conversationId}
-            chatStatus={activeChatUser.chatStatus}
-          />
-        ) : activeTab === 'friends' ? (
-          <FriendList />
-        ) : (
-          <FriendRequests />
-        )}
+      <main className="flex-1 ml-64 p-5 overflow-y-auto">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {activeChatUser ? (
+            <ChatWindow
+              user={activeChatUser}
+              conversationId={activeChatUser.conversationId}
+              chatStatus={activeChatUser.chatStatus}
+            />
+          ) : activeTab === 'friends' ? (
+            <FriendList />
+          ) : (
+            <FriendRequests />
+          )}
+        </div>
       </main>
     </div>
   );

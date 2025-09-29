@@ -11,10 +11,10 @@ const postSchema = new Schema(
     },
     caption: { type: String }, // chú thích khi share
     images: [{ type: String }], // mảng URL ảnh
-    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User', default: [] }],
+    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: [] }],
     views: { type: Number, default: 0 }, // thống kê lượt xem
-    shares: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
+    shares: [{ type: Schema.Types.ObjectId, ref: 'Post', default: [] }],
     // thêm field để biết đây là post share
     sharedFrom: { type: Schema.Types.ObjectId, ref: 'Post', default: null },
   },

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import instance from '../api/axiosInstant';
+import { toast } from 'react-toastify';
 
 interface SavePostModalProps {
   postId: string;
@@ -62,7 +63,7 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
     instance
       .post(`/categories/${selected}/posts`, { postId })
       .then(() => {
-        alert('Đã lưu bài viết vào danh mục!');
+        toast.success('Đã lưu bài viết vào danh mục!');
         onClose();
       })
       .catch((err) => console.error('Lỗi khi lưu:', err));

@@ -2,7 +2,12 @@ import Post from '../models/Post.js';
 
 // Tạo post (hỗ trợ sharedFrom và images mặc định)
 export const createPost = async ({ author, content, images = [] }) => {
-  return await Post.create({ author, content, images });
+  const post = await Post.create({ author, content, images });
+  // Populate thông tin author và likes
+  return await Post.populate(post, [
+    { path: 'author', select: 'username avatar' },
+    { path: 'likes', select: 'username avatar' },
+  ]);
 };
 
 // Tạo post (hỗ trợ sharedFrom và images mặc định)
@@ -14,17 +19,22 @@ export const createPostShare = async ({
   return await Post.create({ author, caption, sharedFrom });
 };
 
+// repo/postRepo.ts
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find()
     .populate([
       { path: 'author', select: 'username avatar' },
+      { path: 'likes', select: 'username avatar' },
       {
         path: 'comments',
         populate: { path: 'author', select: 'username avatar' },
       },
       {
         path: 'sharedFrom',
-        populate: { path: 'author', select: 'username avatar' },
+        populate: [
+          { path: 'author', select: 'username avatar' },
+          { path: 'likes', select: 'username avatar' },
+        ],
       },
     ])
     .sort({ createdAt: -1 })
@@ -47,50 +57,43 @@ export const findHotPosts = async (limit, skip) => {
     { $sort: { totalInteractions: -1, createdAt: -1 } },
     { $skip: skip },
     { $limit: limit },
-    {
-      $project: {
-        id: '$_id', // Đổi tên _id thành id
-        _id: 0, // Xóa trường _id
-        author: 1,
-        content: 1,
-        caption: 1,
-        images: 1,
-        likes: 1,
-        comments: 1,
-        views: 1,
-        shares: 1,
-        sharedFrom: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        totalInteractions: 1,
-      },
-    },
   ]);
 
-  return await Post.populate(agg, [
+  const populatedPosts = await Post.populate(agg, [
     { path: 'author', select: 'username avatar' },
+    { path: 'likes', select: 'username avatar' },
     {
       path: 'comments',
       populate: { path: 'author', select: 'username avatar' },
     },
     {
       path: 'sharedFrom',
-      populate: { path: 'author', select: 'username avatar' },
+      populate: [
+        { path: 'author', select: 'username avatar' },
+        { path: 'likes', select: 'username avatar' },
+      ],
     },
   ]);
+
+  // Chuyển đổi thành Mongoose documents
+  return populatedPosts.map((post) => new Post(post));
 };
 
 export const findPopularPosts = async (limit, skip) => {
   return await Post.find()
     .populate([
       { path: 'author', select: 'username avatar' },
+      { path: 'likes', select: 'username avatar' },
       {
         path: 'comments',
         populate: { path: 'author', select: 'username avatar' },
       },
       {
         path: 'sharedFrom',
-        populate: { path: 'author', select: 'username avatar' },
+        populate: [
+          { path: 'author', select: 'username avatar' },
+          { path: 'likes', select: 'username avatar' },
+        ],
       },
     ])
     .sort({ views: -1 })
@@ -102,6 +105,7 @@ export const findPostById = async (id) => {
   return await Post.findById(id);
 };
 
+// repo/postRepo.ts
 export const findPostAndIncreaseView = async (postId) => {
   return await Post.findByIdAndUpdate(
     postId,
@@ -109,12 +113,13 @@ export const findPostAndIncreaseView = async (postId) => {
     { new: true }
   )
     .populate('author', 'username avatar isOnline')
+    .populate('likes', 'username avatar') // populate likes của post
     .populate({
       path: 'sharedFrom',
-      populate: {
-        path: 'author',
-        select: 'username avatar isOnline',
-      },
+      populate: [
+        { path: 'author', select: 'username avatar isOnline' },
+        { path: 'likes', select: 'username avatar' },
+      ],
     })
     .populate({
       path: 'comments',

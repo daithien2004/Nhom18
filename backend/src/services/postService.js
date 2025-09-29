@@ -8,24 +8,80 @@ export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
 };
 
-export const getPosts = async ({ type, limit, page = 1 }) => {
+// Lấy danh sách bài viết
+export const getPosts = async ({ type, limit, page = 1, userId }) => {
   const l = limit ? parseInt(limit) : 20;
   const p = page ? parseInt(page) : 1;
   const skip = (p - 1) * l;
+
   try {
+    let posts;
     switch (type) {
       case 'recent':
-        return await postRepo.findRecentPosts(l, skip);
+        posts = await postRepo.findRecentPosts(l, skip);
+        break;
       case 'hot':
-        return await postRepo.findHotPosts(l, skip);
+        posts = await postRepo.findHotPosts(l, skip);
+        break;
       case 'popular':
-        return await postRepo.findPopularPosts(l, skip);
+        posts = await postRepo.findPopularPosts(l, skip);
+        break;
       default:
-        return await postRepo.findRecentPosts(l, skip);
+        posts = await postRepo.findRecentPosts(l, skip);
     }
+
+    // Normalize dữ liệu trả về (không dùng helper riêng)
+    return posts.map((post) => {
+      // Lấy ra likes, comments, shares từ chính post
+      const likes = post.likes;
+      const comments = post.comments;
+      const shares = post.shares;
+
+      const postData = {
+        ...post.toJSON(),
+        likeCount: likes.length,
+        commentCount: comments.length,
+        shareCount: shares.length,
+        isLikedByCurrentUser: userId
+          ? likes.some((u) => u.id.toString() === userId)
+          : false,
+        likes: likes.map((u) => ({
+          userId: u.id.toString(),
+          username: u.username,
+          avatar: u.avatar,
+        })),
+      };
+
+      // Nếu có sharedFrom thì cũng normalize luôn
+      if (postData.sharedFrom) {
+        const sharedLikes = post.sharedFrom.likes;
+        const sharedComments = post.sharedFrom.comments;
+        const sharedShares = post.sharedFrom.shares;
+
+        postData.sharedFrom = {
+          ...postData.sharedFrom,
+          likeCount: sharedLikes.length,
+          commentCount: sharedComments.length,
+          shareCount: sharedShares.length,
+          isLikedByCurrentUser: userId
+            ? sharedLikes.some((u) => u.id.toString() === userId)
+            : false,
+          likes: sharedLikes.map((u) => ({
+            userId: u.id.toString(),
+            username: u.username,
+            avatar: u.avatar,
+          })),
+        };
+      }
+
+      return postData;
+    });
   } catch (err) {
     console.error('Error in getPosts:', err);
-    return [];
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Lỗi khi lấy danh sách bài viết'
+    );
   }
 };
 
@@ -39,73 +95,70 @@ export const getPostDetail = async (postId, userId) => {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
-  // Đảm bảo các mảng luôn tồn tại
-  post.likes = post.likes || [];
-  post.comments = post.comments || [];
-  post.shares = post.shares || [];
+  // Trực tiếp dùng dữ liệu đã populate
+  const postData = {
+    ...post.toJSON(),
+    likeCount: post.likes.length,
+    commentCount: post.comments.length,
+    shareCount: post.shares.length,
+    isLikedByCurrentUser: userId
+      ? post.likes.some((user) => user.id.toString() === userId)
+      : false,
+    likes: post.likes.map((user) => ({
+      userId: user.id.toString(),
+      username: user.username,
+      avatar: user.avatar,
+    })),
+  };
 
-  // Thêm thống kê
-  post.likeCount = post.likes.length;
-  post.commentCount = post.comments.length;
-  post.shareCount = post.shares.length;
+  // Nếu là bài share thì xử lý tiếp
+  if (postData.sharedFrom) {
+    const sharedFrom = post.sharedFrom;
 
-  // Trạng thái người dùng hiện tại
-  post.isLikedByCurrentUser = post.likes.some((id) => id.toString() === userId);
-  post.isSharedByCurrentUser = post.shares.some(
-    (id) => id.toString() === userId
-  );
-
-  // Nếu là bài share thì cũng normalize sharedFrom
-  if (post.sharedFrom) {
-    post.sharedFrom.likes = post.sharedFrom.likes || [];
-    post.sharedFrom.comments = post.sharedFrom.comments || [];
-    post.sharedFrom.shares = post.sharedFrom.shares || [];
-
-    post.sharedFrom.likeCount = post.sharedFrom.likes.length;
-    post.sharedFrom.commentCount = post.sharedFrom.comments.length;
-    post.sharedFrom.shareCount = post.sharedFrom.shares.length;
-
-    post.sharedFrom.isLikedByCurrentUser = post.sharedFrom.likes.some(
-      (id) => id.toString() === userId
-    );
-    post.sharedFrom.isSharedByCurrentUser = post.sharedFrom.shares.some(
-      (id) => id.toString() === userId
-    );
+    postData.sharedFrom = {
+      ...sharedFrom.toJSON(),
+      likeCount: sharedFrom.likes.length,
+      commentCount: sharedFrom.comments.length,
+      shareCount: sharedFrom.shares.length,
+      isLikedByCurrentUser: userId
+        ? sharedFrom.likes.some((user) => user.id.toString() === userId)
+        : false,
+      likes: sharedFrom.likes.map((user) => ({
+        userId: user.id.toString(),
+        username: user.username,
+        avatar: user.avatar,
+      })),
+    };
   }
 
-  return post;
+  return postData;
 };
 
+// service/postService.ts
 export const toggleLikePost = async (postId, userId) => {
-  const post = await Post.findById(postId).populate('likes', 'username avatar');
+  const post = await Post.findById(postId);
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
-  const likedIndex = post.likes.findIndex(
-    (user) => user.id.toString() === userId
-  );
-  let isLiked;
-  if (likedIndex >= 0) {
-    post.likes.splice(likedIndex, 1);
-    isLiked = false;
+  const isLiked = post.likes.some((id) => id.toString() === userId);
+
+  if (isLiked) {
+    post.likes = post.likes.filter((id) => id.toString() !== userId);
   } else {
     post.likes.push(userId);
-    isLiked = true;
   }
 
   await post.save();
 
-  // Populate lại likes sau khi lưu để đảm bảo dữ liệu mới nhất
-  const updatedPost = await Post.findById(postId).populate(
-    'likes',
-    'username avatar'
-  );
+  // Populate ngay sau khi save
+  await post.populate({ path: 'likes', select: 'username avatar' });
 
   return {
     postId: post.id.toString(),
-    isLiked,
-    likes: updatedPost.likes.map((user) => ({
+    isLiked: !isLiked,
+    likeCount: post.likes.length,
+    likes: post.likes.map((user) => ({
       userId: user.id.toString(),
       username: user.username,
       avatar: user.avatar,

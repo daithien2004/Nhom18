@@ -19,6 +19,7 @@ export const getPosts = asyncHandler(async (req, res) => {
     type: req.query.type,
     limit: req.query.limit,
     page: req.query.page,
+    userId: req.user.id,
   });
   return sendSuccess(res, posts, 'Lấy danh sách bài viết thành công');
 });

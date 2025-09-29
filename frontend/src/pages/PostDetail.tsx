@@ -9,7 +9,6 @@ import {
   clearCommentError,
 } from '../store/slices/postSlice';
 import { toast } from 'react-toastify';
-
 import {
   X,
   Heart,
@@ -32,18 +31,16 @@ const PostDetailPage = () => {
     isErrorDetail,
     isCommenting,
     commentError,
+    likes,
   } = useAppSelector((state) => state.posts);
   const [commentText, setCommentText] = useState('');
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
   const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     if (postId) dispatch(fetchPostDetail(postId));
 
     return () => {
-      // bọc trong function để satisfy EffectCallback
       dispatch(clearPostDetail());
     };
   }, [dispatch, postId]);
@@ -208,6 +205,24 @@ const PostDetailPage = () => {
                   className="mt-2 rounded-lg max-h-60 object-cover"
                 />
               )}
+            {/* Shared post like button */}
+            <button
+              onClick={() =>
+                sharedFrom.id && dispatch(toggleLike({ postId: sharedFrom.id }))
+              }
+              className="flex items-center gap-1 mt-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+              disabled={isCommenting}
+            >
+              <Heart
+                size={18}
+                className={
+                  likes[sharedFrom.id]?.isLiked
+                    ? 'fill-red-500 text-red-500'
+                    : ''
+                }
+              />
+              <span>{likes[sharedFrom.id]?.likeCount || 0} Thích</span>
+            </button>
           </div>
         ) : (
           <div className="px-4 py-3 border-b border-gray-200">
@@ -219,7 +234,7 @@ const PostDetailPage = () => {
 
         {/* Stats */}
         <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 flex justify-between">
-          <span>{postDetail.likeCount} lượt thích</span>
+          <span>{likes[postDetail.id]?.likeCount || 0} lượt thích</span>
           <span>
             {postDetail.commentCount} bình luận • {postDetail.shareCount} chia
             sẻ
@@ -236,14 +251,10 @@ const PostDetailPage = () => {
             <Heart
               size={18}
               className={
-                postDetail.isLikedByCurrentUser
-                  ? 'fill-red-500 text-red-500'
-                  : ''
+                likes[postDetail.id]?.isLiked ? 'fill-red-500 text-red-500' : ''
               }
             />
-            <span>
-              {postDetail.isLikedByCurrentUser ? 'Bỏ thích' : 'Thích'}
-            </span>
+            <span>{likes[postDetail.id]?.isLiked ? 'Bỏ thích' : 'Thích'}</span>
           </button>
           <button className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
             <MessageCircle size={18} />
@@ -290,7 +301,7 @@ const PostDetailPage = () => {
         {/* Comment Input */}
         <div className="px-4 py-3 border-t border-gray-200 flex items-center gap-3">
           <img
-            src={'/default-avatar.png'}
+            src={postDetail.author.avatar}
             alt="avatar"
             className="w-8 h-8 rounded-full"
           />
