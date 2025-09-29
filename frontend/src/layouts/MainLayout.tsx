@@ -9,6 +9,7 @@ import {
   Contact,
   Home,
   Bookmark,
+  BarChart3,
 } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
@@ -52,9 +53,6 @@ const MainLayout: React.FC = () => {
                 }`}
                 onClick={() => navigate('/')}
               />
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Trang chủ
-              </div>
             </div>
             <div className="relative group">
               <MessageCircle
@@ -64,9 +62,6 @@ const MainLayout: React.FC = () => {
                 }`}
                 onClick={() => navigate('/conversations')}
               />
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Tin nhắn
-              </div>
             </div>
             <div className="relative group">
               <Contact
@@ -76,9 +71,6 @@ const MainLayout: React.FC = () => {
                 }`}
                 onClick={() => navigate('/friends')}
               />
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Bạn bè
-              </div>
             </div>
             <div className="relative group">
               <Bookmark
@@ -88,9 +80,15 @@ const MainLayout: React.FC = () => {
                 }`}
                 onClick={() => navigate('/categories')}
               />
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-50 text-gray-800 text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                Danh mục
-              </div>
+            </div>
+            <div className="relative group">
+              <BarChart3
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/statistics') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/statistics')}
+              />
             </div>
           </div>
         </div>

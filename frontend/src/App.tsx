@@ -11,6 +11,7 @@ import PostDetail from './pages/PostDetail';
 import ConversationsPage from './pages/ConversationsPage';
 import FriendsPage from './pages/FriendsPage';
 import CategoryPage from './pages/CategoryPage';
+import StatisticsPage from './pages/StatisticsPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // nhớ import css
 import { SocketProviders } from './sockets/SocketProviders';
@@ -28,6 +29,7 @@ function App() {
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="friends" element={<FriendsPage />} />
           <Route path="categories" element={<CategoryPage />} />
+          <Route path="statistics" element={<StatisticsPage />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
       </Routes>

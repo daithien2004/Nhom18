@@ -13,6 +13,7 @@ import messageRoutes from './routes/messageRoutes.js';
 import conversationRoutes from './routes/conversationRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import statisticRoutes from './routes/statisticRoutes.js';
 
 // Middlewares and Socket handlers
 import { initializeSocket } from './sockets/socket.js';
@@ -38,6 +39,7 @@ app.use('/messages', messageRoutes);
 app.use('/conversations', conversationRoutes);
 app.use('/friends', friendRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/statistics', statisticRoutes);
 
 app.use(errorHandling);
 
