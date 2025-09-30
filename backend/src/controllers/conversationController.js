@@ -23,7 +23,7 @@ export const createConversation = asyncHandler(async (req, res) => {
 });
 
 export const getMessages = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 10 } = req.query;
   const msgs = await conversationService.getMessages({
     conversationId: req.params.conversationId,
     page,
@@ -76,8 +76,8 @@ export const sendMessage = asyncHandler(async (req, res) => {
   const chatIo = req.app.get('chatIo');
   // Emit realtime cho các client trong conversation
   if (chatIo) {
-    chatIo.to(conversationId).emit('newMessage', message);
-    console.log('Message sent to:', req.user.id);
+    chatIo.to(conversationId).emit('sendMessage', message);
+    console.log('Message sent');
   }
 
   return sendSuccess(res, message, 'Gửi tin nhắn thành công');
@@ -117,7 +117,8 @@ export const updateConversationSettings = asyncHandler(async (req, res) => {
 
 export const addMessageReaction = asyncHandler(async (req, res) => {
   const { conversationId, messageId } = req.params;
-  const { userId, emoji } = req.body;
+  const { emoji } = req.body;
+  const userId = req.user.id;
   const message = await conversationService.addMessageReaction(
     conversationId,
     messageId,
@@ -136,4 +137,30 @@ export const addMessageReaction = asyncHandler(async (req, res) => {
   }
 
   return sendSuccess(res, message, 'Thêm reaction thành công');
+});
+
+export const updateMessageStatus = asyncHandler(async (req, res) => {
+  const { conversationId, messageId } = req.params;
+  const { status } = req.body;
+  const userId = req.user.id;
+
+  const message = await messageService.updateMessageStatus(
+    conversationId,
+    messageId,
+    userId,
+    status
+  );
+
+  // Emit sự kiện WebSocket
+  const chatIo = req.app.get('chatIo');
+  if (chatIo) {
+    chatIo.to(conversationId).emit('messageStatusUpdated', {
+      conversationId,
+      messageId,
+      status,
+      readBy: message.readBy,
+    });
+  }
+
+  return sendSuccess(res, message, 'Cập nhật trạng thái tin nhắn thành công');
 });

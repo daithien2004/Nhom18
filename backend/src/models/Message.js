@@ -26,6 +26,11 @@ const MessageSchema = new Schema(
       of: String, // e.g., { "userId1": "👍", "userId2": "❤️" }
       default: {},
     },
+    status: {
+      type: String,
+      enum: ['sent', 'delivered', 'seen'],
+      default: 'sent',
+    },
     readBy: [
       {
         type: Schema.Types.ObjectId,

@@ -9,6 +9,7 @@ import {
   getOrCreateConversation,
   sendMessage,
   updateConversationSettings,
+  updateMessageStatus,
 } from '../controllers/conversationController.js';
 import {
   conversationIdSchema,
@@ -16,6 +17,7 @@ import {
   messageQuerySchema,
   messageReactionParamsSchema,
   messageReactionSchema,
+  messageStatusSchema,
   sendMessageSchema,
 } from '../schemas/messageSchemas.js';
 import {
@@ -77,6 +79,15 @@ router.post(
   validateParams(messageReactionParamsSchema),
   validateBody(messageReactionSchema),
   addMessageReaction
+);
+
+// New endpoint: Cập nhật trạng thái tin nhắn
+router.patch(
+  '/:conversationId/messages/:messageId/status',
+  auth,
+  validateParams(messageReactionParamsSchema), // Re-use for conversationId & messageId
+  validateBody(messageStatusSchema),
+  updateMessageStatus
 );
 
 export default router;

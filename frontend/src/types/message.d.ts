@@ -11,6 +11,8 @@ export interface Message {
   text?: string;
   attachments?: string[];
   reactions: { [userId: string]: string };
+  readBy: string[];
+  status: 'sent' | 'delivered' | 'seen';
   createdAt?: string;
 }
 

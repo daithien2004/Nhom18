@@ -33,3 +33,10 @@ export const getMessages = async (conversationId, limit, skip) => {
     .limit(limit)
     .populate('sender', 'username avatar');
 };
+
+export const findMessageById = async (messageId) => {
+  return await Message.findById(messageId).populate(
+    'sender',
+    'id username avatar'
+  );
+};

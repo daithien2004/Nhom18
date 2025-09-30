@@ -28,3 +28,57 @@ export const sendMessage = async (
 export const markAsRead = async (conversationId, messageId, userId) => {
   return await messageRepo.markAsRead(conversationId, messageId, userId);
 };
+
+export const updateMessageStatus = async (
+  conversationId,
+  messageId,
+  userId,
+  status
+) => {
+  const conv = await conversationRepo.findConversationById(conversationId);
+  if (!conv)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy hội thoại');
+
+  const message = await messageRepo.findMessageById(messageId);
+  if (!message || message.conversationId.toString() !== conversationId)
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      'Không tìm thấy tin nhắn hoặc tin nhắn không thuộc hội thoại'
+    );
+
+  // Kiểm tra user có phải là participant trong conversation
+  if (!conv.participants.map((p) => p.id.toString()).includes(userId))
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Bạn không có quyền cập nhật trạng thái tin nhắn'
+    );
+
+  // Kiểm tra trạng thái hợp lệ
+  if (message.status === 'seen' && status === 'delivered')
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Không thể chuyển từ seen về delivered'
+    );
+
+  // Cập nhật trạng thái
+  if (status === 'delivered' && message.status === 'sent') {
+    message.status = 'delivered';
+  } else if (
+    status === 'seen' &&
+    ['sent', 'delivered'].includes(message.status)
+  ) {
+    message.status = 'seen';
+    // Thêm userId vào readBy nếu chưa có
+    if (!message.readBy.map((id) => id.toString()).includes(userId)) {
+      message.readBy.push(userId);
+    }
+  } else {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Trạng thái cập nhật không hợp lệ'
+    );
+  }
+
+  await message.save();
+  return message.populate('sender', 'id username avatar');
+};

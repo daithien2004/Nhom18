@@ -14,6 +14,7 @@ import {
   addMessageReaction,
   type ConversationSettings,
   updateSettings,
+  updateMessageStatus,
 } from '../store/slices/conversationSlice';
 import { useChatSocket } from '../sockets/ChatSocketContext';
 import { toast } from 'react-toastify';
@@ -52,9 +53,14 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const socket = useChatSocket();
-  const { messages, sendingMessage, error } = useAppSelector(
-    (state) => state.conversations
-  );
+  const {
+    hasMore,
+    isLoadingMore,
+    messages,
+    initialLoading,
+    sendingMessage,
+    error,
+  } = useAppSelector((state) => state.conversations);
   const outgoingRequests = useAppSelector(
     (state) => state.friends.outgoingRequests
   );
@@ -68,6 +74,10 @@ export default function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const settingsMenuRef = useRef<HTMLDivElement>(null);
   const reactionMenuRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null); // Tham chiếu đến phần tử cuối danh sách
+  const messagesContainerRef = useRef<HTMLDivElement>(null); // Tham chiếu đến container tin nhắn
+  const [page, setPage] = useState(1); // Theo dõi số trang hiện tại
+  const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({}); // Lưu ref cho mỗi tin nhắn
 
   const settings = useAppSelector(
     (state) => state.conversations.settings[conversationId]
@@ -200,8 +210,9 @@ export default function ChatWindow({
   useEffect(() => {
     if (conversationId) {
       dispatch(selectConversation(conversationId));
-      dispatch(fetchMessages({ conversationId, limit: 10 }));
+      dispatch(fetchMessages({ conversationId, limit: 10, page: 1 }));
       dispatch(fetchConversationSettings(conversationId)); // Fetch settings từ backend
+      setPage(1);
     }
   }, [conversationId, dispatch]);
 
@@ -212,21 +223,87 @@ export default function ChatWindow({
     }
   }, [error]);
 
+  useEffect(() => {
+    if (!currentUser || !conversationId) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const messageId = entry.target.getAttribute('data-message-id');
+            const message = messages[conversationId]?.find(
+              (m) => m.id === messageId
+            );
+            if (
+              messageId &&
+              message &&
+              message.sender.id !== currentUser.id &&
+              message.status !== 'seen' &&
+              !message.readBy.includes(currentUser.id)
+            ) {
+              dispatch(
+                updateMessageStatus({
+                  conversationId,
+                  messageId,
+                  status: 'seen',
+                })
+              );
+            }
+          }
+        });
+      },
+      {
+        root: messagesContainerRef.current,
+        threshold: 0.5, // Trigger when 50% of the message is visible
+      }
+    );
+
+    Object.values(messageRefs.current).forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      Object.values(messageRefs.current).forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [messages[conversationId], currentUser, conversationId, dispatch, socket]);
+
   // Setup WebSocket
   useEffect(() => {
     if (!socket || !conversationId) return;
 
     socket.emit('joinConversation', conversationId);
 
-    const handleNewMessage = (message: Message) => {
+    const handleSendMessage = (message: Message) => {
       if (settings.notificationsEnabled) {
         dispatch(addMessage({ conversationId, message }));
         if (message.sender.id !== currentUser?.id) {
           toast.info(`Tin nhắn mới từ ${user.username}: ${message.text}`);
+          // Cập nhật trạng thái delivered ngay lập tức
+          if (currentUser && message.status === 'sent') {
+            dispatch(
+              updateMessageStatus({
+                conversationId,
+                messageId: message.id,
+                status: 'delivered',
+              })
+            );
+          }
         }
       }
     };
-
+    const handleMessageStatusUpdated = (data: {
+      conversationId: string;
+      messageId: string;
+      status: string;
+      readBy: string[];
+    }) => {
+      dispatch({
+        type: updateMessageStatus.fulfilled.type,
+        payload: data,
+      });
+    };
     const handleSettingsUpdated = (data: {
       conversationId: string;
       settings: ConversationSettings;
@@ -254,11 +331,13 @@ export default function ChatWindow({
     };
 
     socket.on('reactionAdded', handleReactionAdded);
-    socket.on('newMessage', handleNewMessage);
+    socket.on('messageStatusUpdated', handleMessageStatusUpdated);
+    socket.on('sendMessage', handleSendMessage);
     socket.on('settingsUpdated', handleSettingsUpdated);
 
     return () => {
-      socket.off('newMessage', handleNewMessage);
+      socket.off('sendMessage', handleSendMessage);
+      socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('settingsUpdated', handleSettingsUpdated);
       socket.off('reactionAdded', handleReactionAdded);
     };
@@ -314,6 +393,117 @@ export default function ChatWindow({
   };
 
   const isPending = outgoingRequests.some((r) => r.id === user.id);
+
+  // Cập nhật useEffect cho Intersection Observer:
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        // Kiểm tra khi scroll lên đầu (phần tử quan sát xuất hiện)
+        if (
+          entry.isIntersecting &&
+          hasMore &&
+          !isLoadingMore &&
+          !initialLoading
+        ) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      {
+        threshold: 0.1,
+        root: messagesContainerRef.current,
+        rootMargin: '100px', // Trigger sớm hơn 100px
+      }
+    );
+
+    const currentRef = messagesEndRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasMore, isLoadingMore, initialLoading]);
+
+  // Cập nhật useEffect xử lý fetch:
+  useEffect(() => {
+    if (conversationId && page > 1) {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+
+      // Lưu vị trí cuộn hiện tại
+      const scrollHeightBefore = container.scrollHeight;
+      const scrollTopBefore = container.scrollTop;
+
+      dispatch(fetchMessages({ conversationId, limit: 10, page })).then(() => {
+        // Khôi phục vị trí cuộn sau khi load
+        requestAnimationFrame(() => {
+          if (container) {
+            const scrollHeightAfter = container.scrollHeight;
+            const addedHeight = scrollHeightAfter - scrollHeightBefore;
+            container.scrollTop = scrollTopBefore + addedHeight;
+          }
+        });
+      });
+    }
+  }, [page, conversationId, dispatch]);
+
+  // Scroll xuống cuối khi load lần đầu hoặc có tin nhắn mới:
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Chỉ scroll xuống cuối khi:
+    // 1. Load lần đầu (page === 1)
+    // 2. Không đang load thêm
+    if (page === 1 && !initialLoading && !isLoadingMore) {
+      requestAnimationFrame(() => {
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+  }, [messages[conversationId], page, initialLoading, isLoadingMore]);
+
+  // Hàm hiển thị trạng thái tin nhắn
+  const renderMessageStatus = (message: Message) => {
+    if (message.sender.id !== currentUser?.id) return null;
+
+    if (message.status === 'sent') {
+      return (
+        <span className="absolute -bottom-2 right-2 text-xs text-gray-500">
+          Đã gửi
+        </span>
+      );
+    } else if (message.status === 'delivered') {
+      return (
+        <span className="absolute -bottom-2 right-2 text-xs text-gray-500">
+          Đã nhận
+        </span>
+      );
+    } else if (message.status === 'seen') {
+      return (
+        <div className="absolute -bottom-2 right-2 flex items-center space-x-1">
+          {message.readBy
+            .filter((id) => id !== currentUser?.id)
+            .map((userId, index) => (
+              <img
+                key={index}
+                src={
+                  userId === user.id
+                    ? user.avatar || '/default-avatar.png'
+                    : '/default-avatar.png'
+                }
+                alt="Avatar"
+                className="w-4 h-4 rounded-full object-cover border border-white"
+              />
+            ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="flex flex-col w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md max-h-[calc(100vh-80px)] overflow-hidden">
@@ -418,80 +608,113 @@ export default function ChatWindow({
 
       {/* Messages */}
       <div
+        ref={messagesContainerRef}
         className={`flex-1 p-4 overflow-y-auto space-y-3 ${settings.theme} scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100`}
       >
-        {messages[conversationId]?.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${
-              msg.sender.id === currentUser?.id
-                ? 'justify-end'
-                : 'justify-start'
-            } relative group`}
-            onClick={() => setShowReactionMenu(msg.id)}
-          >
-            <div
-              className={`px-4 py-2 rounded-2xl max-w-xs shadow-sm ${
-                msg.sender.id === currentUser?.id
-                  ? 'bg-blue-600 text-white rounded-br-none'
-                  : 'bg-gray-100 text-gray-800 rounded-bl-none'
-              } transition-all duration-200 group-hover:bg-opacity-80 cursor-pointer`}
-            >
-              {msg.text && <div>{msg.text}</div>}
-              {(msg.attachments ?? []).length > 0 && (
-                <div className="mt-2 space-y-2">
-                  {msg.attachments?.map((attachment, index) => (
-                    <img
-                      key={index}
-                      src={attachment}
-                      alt={`Ảnh đính kèm ${index + 1}`}
-                      className="max-w-full h-auto rounded-lg cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(attachment, '_blank');
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-              {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                <div
-                  className={`absolute -bottom-2 ${
-                    msg.sender.id === currentUser?.id ? 'right-2' : 'left-2'
-                  } text-lg`}
-                >
-                  {Object.values(msg.reactions).join(' ')}
-                </div>
-              )}
-            </div>
-            {showReactionMenu === msg.id && (
-              <div
-                ref={reactionMenuRef}
-                className="absolute -top-10 bg-white rounded-full shadow-md p-2 flex gap-2 z-10"
-              >
-                {reactionEmojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReactionClick(msg.id, emoji);
-                    }}
-                    className="text-lg hover:bg-gray-100 rounded-full p-1 transition-all duration-200"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+        {initialLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+          </div>
+        ) : (
+          <>
+            {/* Phần tử để quan sát ở ĐẦU danh sách */}
+            {hasMore && (
+              <div ref={messagesEndRef} className="h-1">
+                {isLoadingMore && (
+                  <div className="text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-500" />
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        ))}
-        {chatStatus === 'pending' && (
-          <div className="text-center text-sm text-gray-500 mt-5 italic">
-            Tin nhắn này đang chờ cho đến khi {user.username} chấp nhận kết bạn
-          </div>
+
+            {messages[conversationId]?.length > 0 ? (
+              messages[conversationId].map((msg, index) => (
+                <div
+                  key={msg.id}
+                  data-message-id={msg.id}
+                  ref={(el) => {
+                    messageRefs.current[index] = el;
+                  }}
+                  className={`flex ${
+                    msg.sender.id === currentUser?.id
+                      ? 'justify-end'
+                      : 'justify-start'
+                  } relative group`}
+                  onClick={() => setShowReactionMenu(msg.id)}
+                >
+                  <div
+                    className={`px-4 py-2 rounded-2xl max-w-xs shadow-sm ${
+                      msg.sender.id === currentUser?.id
+                        ? 'bg-blue-600 text-white rounded-br-none'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                    } transition-all duration-200 group-hover:bg-opacity-80 cursor-pointer`}
+                  >
+                    {msg.text && <div>{msg.text}</div>}
+                    {(msg.attachments ?? []).length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {msg.attachments?.map((attachment, index) => (
+                          <img
+                            key={index}
+                            src={attachment}
+                            alt={`Ảnh đính kèm ${index + 1}`}
+                            className="max-w-full h-auto rounded-lg cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(attachment, '_blank');
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                      <div
+                        className={`absolute -bottom-2 ${
+                          msg.sender.id === currentUser?.id
+                            ? 'right-2'
+                            : 'left-2'
+                        } text-lg`}
+                      >
+                        {Object.values(msg.reactions).join(' ')}
+                      </div>
+                    )}
+                    {renderMessageStatus(msg)}
+                  </div>
+                  {showReactionMenu === msg.id && (
+                    <div
+                      ref={reactionMenuRef}
+                      className="absolute -top-10 bg-white rounded-full shadow-md p-2 flex gap-2 z-10"
+                    >
+                      {reactionEmojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReactionClick(msg.id, emoji);
+                          }}
+                          className="text-lg hover:bg-gray-100 rounded-full p-1 transition-all duration-200"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-sm text-gray-500 mt-5">
+                Không có tin nhắn nào trong cuộc trò chuyện này.
+              </div>
+            )}
+            {chatStatus === 'pending' && (
+              <div className="text-center text-sm text-gray-500 mt-5 italic">
+                Tin nhắn này đang chờ cho đến khi {user.username} chấp nhận kết
+                bạn
+              </div>
+            )}
+          </>
         )}
       </div>
-
       {/* Input box */}
       <div className="flex p-4 bg-white shadow-sm gap-2 items-center relative">
         {/* Nút chọn file */}

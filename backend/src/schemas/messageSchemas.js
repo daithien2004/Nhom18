@@ -30,7 +30,6 @@ export const conversationSettingsSchema = z
 
 // Schema cho body của addMessageReaction
 export const messageReactionSchema = z.object({
-  userId: z.string().nonempty('Thiếu userId'),
   emoji: z.string().nonempty('Thiếu Emoji'),
 });
 
@@ -38,4 +37,12 @@ export const messageReactionSchema = z.object({
 export const messageReactionParamsSchema = z.object({
   conversationId: z.string().nonempty('Thiếu conversationId'),
   messageId: z.string().nonempty(' Thiếu messageId'),
+});
+
+// New schema for updating message status
+export const messageStatusSchema = z.object({
+  status: z.enum(['delivered', 'seen'], {
+    required_error: 'Yêu cầu key status',
+    invalid_type_error: 'Yêu cầu status phải là "delivered" hoặc "seen"',
+  }),
 });

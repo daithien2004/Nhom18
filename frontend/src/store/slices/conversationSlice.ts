@@ -75,11 +75,43 @@ export const sendMessage = createAsyncThunk(
           text: res.data.text,
           attachments: res.data.attachments || [],
           createdAt: res.data.createdAt,
+          status: res.data.status || 'sent', // Include status
+          readBy: res.data.readBy || [], // Include readBy
         } as Message,
       };
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message || 'Lỗi khi gửi tin nhắn'
+      );
+    }
+  }
+);
+
+export const updateMessageStatus = createAsyncThunk(
+  'conversations/updateMessageStatus',
+  async (
+    payload: {
+      conversationId: string;
+      messageId: string;
+      status: 'delivered' | 'seen';
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { conversationId, messageId, status } = payload;
+      const res = await instance.patch(
+        `/conversations/${conversationId}/messages/${messageId}/status`,
+        { status }
+      );
+      return {
+        conversationId,
+        messageId,
+        status: res.data.status,
+        readBy: res.data.readBy,
+      };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to update message status'
       );
     }
   }
@@ -142,10 +174,9 @@ export const addMessageReaction = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const res = await instance.post(
+      await instance.post(
         `/conversations/${payload.conversationId}/messages/${payload.messageId}/reactions`,
         {
-          userId: payload.userId,
           emoji: payload.emoji,
         }
       );
@@ -177,9 +208,11 @@ interface ConversationsState {
   settings: Record<string, ConversationSettings>;
   selectedConversationId: string | null;
   loadingConversations: boolean;
-  loadingMessages: boolean;
+  initialLoading: boolean;
   sendingMessage: boolean;
   error: string | null;
+  hasMore: boolean;
+  isLoadingMore: boolean;
 }
 
 const initialState: ConversationsState = {
@@ -188,9 +221,11 @@ const initialState: ConversationsState = {
   settings: {},
   selectedConversationId: null,
   loadingConversations: false,
-  loadingMessages: false,
+  initialLoading: false,
   sendingMessage: false,
   error: null,
+  hasMore: true,
+  isLoadingMore: false,
 };
 
 const conversationSlice = createSlice({
@@ -211,7 +246,7 @@ const conversationSlice = createSlice({
         (m) => m.id === message.id
       );
       if (!messageExists) {
-        state.messages[conversationId].push(message);
+        state.messages[conversationId].push({ ...message });
 
         // Update lastMessage in conversations
         const convIndex = state.conversations.findIndex(
@@ -226,7 +261,6 @@ const conversationSlice = createSlice({
         }
       }
     },
-
     selectConversation: (state, action: PayloadAction<string | null>) => {
       state.selectedConversationId = action.payload;
     },
@@ -236,9 +270,10 @@ const conversationSlice = createSlice({
       state.messages = {};
       state.selectedConversationId = null;
       state.loadingConversations = false;
-      state.loadingMessages = false;
+      state.initialLoading = false;
       state.sendingMessage = false;
       state.error = null;
+      state.hasMore = true;
     },
     updateSettings: (
       state,
@@ -252,6 +287,25 @@ const conversationSlice = createSlice({
         ...state.settings[conversationId],
         ...settings,
       };
+    },
+    updateMessageStatus: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        messageId: string;
+        status: 'sent' | 'delivered' | 'seen';
+        readBy: string[];
+      }>
+    ) => {
+      const { conversationId, messageId, status, readBy } = action.payload;
+      const messages = state.messages[conversationId];
+      if (messages) {
+        const messageIndex = messages.findIndex((m) => m.id === messageId);
+        if (messageIndex !== -1) {
+          messages[messageIndex].status = status;
+          messages[messageIndex].readBy = readBy;
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -276,17 +330,36 @@ const conversationSlice = createSlice({
 
     // Fetch messages
     builder
-      .addCase(fetchMessages.pending, (state) => {
-        state.loadingMessages = true;
+      .addCase(fetchMessages.pending, (state, action) => {
+        if (action.meta.arg.page === 1) state.initialLoading = true;
+        else state.isLoadingMore = true;
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loadingMessages = false;
+        state.initialLoading = false;
+        state.isLoadingMore = false;
+
         const { conversationId, messages } = action.payload;
-        state.messages[conversationId] = messages.reverse(); // newest last
+        const limit = action.meta.arg.limit || 10;
+        const page = action.meta.arg.page || 1;
+
+        state.hasMore = messages.length === limit;
+
+        if (page === 1) {
+          // Load lần đầu: thay thế toàn bộ
+          state.messages[conversationId] = messages.reverse();
+        } else {
+          // Load thêm: thêm vào đầu mảng
+          const existingMessages = state.messages[conversationId] || [];
+          state.messages[conversationId] = [
+            ...messages.reverse(),
+            ...existingMessages,
+          ];
+        }
       })
       .addCase(fetchMessages.rejected, (state, action) => {
-        state.loadingMessages = false;
+        state.initialLoading = false;
+        state.isLoadingMore = false;
         state.error = action.payload as string;
       });
 
@@ -312,33 +385,21 @@ const conversationSlice = createSlice({
 
     // Fetch conversation settings
     builder
-      .addCase(fetchConversationSettings.pending, (state) => {
-        state.loadingMessages = true; // Có thể dùng một state riêng như loadingSettings
-        state.error = null;
-      })
       .addCase(fetchConversationSettings.fulfilled, (state, action) => {
-        state.loadingMessages = false;
         const { conversationId, settings } = action.payload;
         state.settings[conversationId] = settings;
       })
       .addCase(fetchConversationSettings.rejected, (state, action) => {
-        state.loadingMessages = false;
         state.error = action.payload as string;
       });
 
     // Update conversation settings
     builder
-      .addCase(updateConversationSettings.pending, (state) => {
-        state.loadingMessages = true;
-        state.error = null;
-      })
       .addCase(updateConversationSettings.fulfilled, (state, action) => {
-        state.loadingMessages = false;
         const { conversationId, settings } = action.payload;
         state.settings[conversationId] = settings;
       })
       .addCase(updateConversationSettings.rejected, (state, action) => {
-        state.loadingMessages = false;
         state.error = action.payload as string;
       });
 
@@ -358,6 +419,22 @@ const conversationSlice = createSlice({
         }
       })
       .addCase(addMessageReaction.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // Update message status
+    builder
+      .addCase(updateMessageStatus.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(updateMessageStatus.fulfilled, (state, action) => {
+        const { conversationId, messageId, status, readBy } = action.payload;
+        conversationSlice.caseReducers.updateMessageStatus(state, {
+          type: 'conversations/updateMessageStatus',
+          payload: { conversationId, messageId, status, readBy },
+        });
+      })
+      .addCase(updateMessageStatus.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },
