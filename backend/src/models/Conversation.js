@@ -24,6 +24,20 @@ const ConversationSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Message',
     },
+    settings: {
+      theme: {
+        type: String,
+        default: 'bg-gray-50',
+      },
+      customEmoji: {
+        type: String,
+        default: '👍',
+      },
+      notificationsEnabled: {
+        type: Boolean,
+        default: true,
+      },
+    },
     status: {
       type: String,
       enum: ['pending', 'active'],

@@ -1,37 +1,45 @@
-import { useEffect, useState, useMemo, type SetStateAction } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { Search, MoreVertical, Users } from 'lucide-react';
 import { fetchFriends } from '../store/slices/friendSlice';
-
 import {
   clearResults,
   searchFriends,
 } from '../store/slices/friendListSearchSlice';
 
-export default function FriendList() {
+// Định nghĩa interface cho Friend
+interface Friend {
+  id: string;
+  username: string;
+  avatar?: string;
+  isOnline?: boolean;
+}
+
+// Thêm prop onFriendClick vào FriendList
+interface FriendListProps {
+  onFriendClick: (friend: Friend) => void;
+}
+
+export default function FriendList({ onFriendClick }: FriendListProps) {
   const dispatch = useAppDispatch();
   const { friends, isLoadingFriends, isError } = useAppSelector(
     (state) => state.friends
   );
-
   const friendListSearchState = useAppSelector(
     (state) => state.friendListSearch
   );
 
   const searchResults = friendListSearchState?.results || [];
   const isSearching = friendListSearchState?.isLoading || false;
-
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    // Load friend list ban đầu
     dispatch(fetchFriends());
     return () => {
-      dispatch(clearResults()); // clear search khi unmount
+      dispatch(clearResults());
     };
   }, [dispatch]);
 
-  // Gọi API search khi user gõ
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchText.trim() !== '') {
@@ -39,18 +47,16 @@ export default function FriendList() {
       } else {
         dispatch(clearResults());
       }
-    }, 300); // debounce 300ms
+    }, 300);
 
     return () => clearTimeout(delayDebounce);
   }, [searchText, dispatch]);
 
-  // Nếu có searchResults thì hiển thị search, nếu không thì hiển thị friends
   const dataToShow =
     searchResults.length > 0 || searchText.trim() !== ''
       ? searchResults
       : friends;
 
-  // Nhóm theo chữ cái đầu
   const groupedFriends = useMemo(() => {
     const groups: Record<string, typeof dataToShow> = {};
     dataToShow.forEach((f) => {
@@ -118,6 +124,8 @@ export default function FriendList() {
             {friends.map((f) => (
               <div
                 key={f.id}
+                // Thêm sự kiện onClick để gọi onFriendClick
+                onClick={() => onFriendClick(f)}
                 className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 cursor-pointer transition rounded-xl"
               >
                 <div className="flex items-center gap-3 flex-1">

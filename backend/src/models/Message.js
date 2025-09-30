@@ -21,6 +21,11 @@ const MessageSchema = new Schema(
         type: String, // link ảnh / file
       },
     ],
+    reactions: {
+      type: Map,
+      of: String, // e.g., { "userId1": "👍", "userId2": "❤️" }
+      default: {},
+    },
     readBy: [
       {
         type: Schema.Types.ObjectId,

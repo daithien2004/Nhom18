@@ -43,3 +43,38 @@ export const getConversationBetweenUsers = async (userId1, userId2) => {
 export const getConversations = async (userId) => {
   return await conversationRepo.findUserConversations(userId);
 };
+
+export const getConversationSettings = async (conversationId) => {
+  return await conversationRepo.getConversationSettings(conversationId);
+};
+
+export const updateConversationSettings = async (conversationId, settings) => {
+  // Chỉ cập nhật các field được gửi
+  const currentSettings = await conversationRepo.getConversationSettings(
+    conversationId
+  );
+  const updatedSettings = {
+    theme: settings.theme ?? currentSettings.theme,
+    customEmoji: settings.customEmoji ?? currentSettings.customEmoji,
+    notificationsEnabled:
+      settings.notificationsEnabled ?? currentSettings.notificationsEnabled,
+  };
+  return await conversationRepo.updateConversationSettings(
+    conversationId,
+    updatedSettings
+  );
+};
+
+export const addMessageReaction = async (
+  conversationId,
+  messageId,
+  userId,
+  emoji
+) => {
+  return await conversationRepo.addMessageReaction(
+    conversationId,
+    messageId,
+    userId,
+    emoji
+  );
+};

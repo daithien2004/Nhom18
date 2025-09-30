@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginThunk } from '../store/thunks/authThunks';
 import { toast } from 'react-toastify';
-import { ClipLoader } from 'react-spinners';
+import { Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.auth); // lấy state từ redux
+  const { loading } = useAppSelector((state) => state.auth);
   const loginLoading = loading.login;
 
   const {
@@ -34,104 +34,120 @@ const LoginPage = () => {
 
       if (payload && typeof payload === 'object') {
         if ('message' in payload && typeof payload.message === 'string') {
-          // Lỗi chung từ backend
-          toast.error(payload.message); // ✅ đã là string
+          toast.error(payload.message);
         }
       } else {
-        // fallback
         toast.error('Đăng nhập thất bại!');
       }
     }
   };
 
   return (
-    <div className="p-20 w-3/4 mx-auto">
-      <div className="grid grid-cols-2 shadow-sm p-10 rounded-2xl gap-5 text-sm">
-        <div className="flex justify-center">
-          <img src="./img/logo.png" />
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-100">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="hidden md:flex justify-center items-center">
+          <img
+            src="./img/logo.png"
+            alt="Logo"
+            className="max-w-full max-h-40 object-contain"
+          />
         </div>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col justify-between gap-2"
-        >
-          <h1 className="font-bold text-2xl">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <h1 className="text-xl font-bold text-gray-800">
             Welcome back! Please Sign in to continue
           </h1>
 
           {/* Email */}
-          <label>Email </label>
-          <input
-            placeholder="Email"
-            {...register('email')}
-            className="rounded-md mb-3 shadow-sm p-3 px-4 outline-0"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email.message}</p>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Email
+            </label>
+            <input
+              placeholder="Enter your email"
+              {...register('email')}
+              className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
 
           {/* Password */}
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Password"
-            {...register('password')}
-            className="border-0 p-3 px-4 rounded-md mb-3 shadow-sm outline-0"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm">{errors.password.message}</p>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              {...register('password')}
+              className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+            />
+            {errors.password && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
 
           {/* Remember + Links */}
-          <div className="flex flex-row justify-between mb-3">
-            <div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-sm">
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="rememberMe"
                 name="rememberMe"
-                className="mr-1 cursor-pointer"
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600 cursor-pointer"
               />
-              <label>Remember me</label>
+              <label
+                htmlFor="rememberMe"
+                className="text-gray-600 cursor-pointer"
+              >
+                Remember me
+              </label>
             </div>
-            <Link
-              to="/forgot-password"
-              className="text-blue-700 hover:text-red-500 underline"
-            >
-              Forgot Password?
-            </Link>
-            <Link
-              to="/register"
-              className="text-blue-700 hover:text-red-500 underline"
-            >
-              Register
-            </Link>
+            <div className="flex flex-col md:flex-row gap-2">
+              <Link
+                to="/forgot-password"
+                className="text-blue-600 hover:text-blue-700 transition-all duration-300"
+              >
+                Forgot Password?
+              </Link>
+              <Link
+                to="/register"
+                className="text-blue-600 hover:text-blue-700 transition-all duration-300"
+              >
+                Register
+              </Link>
+            </div>
           </div>
 
           {/* Submit button */}
           <button
             type="submit"
-            className="cursor-pointer bg-blue-500 rounded-2xl text-white py-2 hover:bg-blue-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loginLoading || !isValid}
           >
-            {loginLoading ? (
-              <>
-                <ClipLoader size={20} color="#fff" className="mr-2" />
-                Signing In...
-              </>
-            ) : (
-              'Sign In'
-            )}
+            {loginLoading && <Loader2 className="animate-spin w-4 h-4" />}
+            {loginLoading ? 'Signing In...' : 'Sign In'}
           </button>
 
-          <label>
-            Don't have an account? Register{' '}
-            <Link to="/register" className="text-blue-700 hover:text-red-500">
-              here
+          <p className="text-sm text-gray-500 text-center">
+            Don't have an account?{' '}
+            <Link
+              to="/register"
+              className="text-blue-600 hover:text-blue-700 transition-all duration-300"
+            >
+              Register here
             </Link>
-          </label>
+          </p>
         </form>
       </div>
     </div>
   );
 };
+
 export default LoginPage;

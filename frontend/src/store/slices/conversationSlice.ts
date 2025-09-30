@@ -85,12 +85,96 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
+// Fetch conversation settings
+export const fetchConversationSettings = createAsyncThunk(
+  'conversations/fetchConversationSettings',
+  async (conversationId: string, { rejectWithValue }) => {
+    try {
+      const res = await instance.get(
+        `/conversations/${conversationId}/settings`
+      );
+      return { conversationId, settings: res.data as ConversationSettings };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to fetch conversation settings'
+      );
+    }
+  }
+);
+
+// Update conversation settings
+export const updateConversationSettings = createAsyncThunk(
+  'conversations/updateConversationSettings',
+  async (
+    payload: {
+      conversationId: string;
+      settings: Partial<ConversationSettings>;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await instance.post(
+        `/conversations/${payload.conversationId}/settings`,
+        payload.settings
+      );
+      return {
+        conversationId: payload.conversationId,
+        settings: res.data as ConversationSettings,
+      };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to update conversation settings'
+      );
+    }
+  }
+);
+
+// Add reaction to a message
+export const addMessageReaction = createAsyncThunk(
+  'conversations/addMessageReaction',
+  async (
+    payload: {
+      conversationId: string;
+      messageId: string;
+      userId: string;
+      emoji: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await instance.post(
+        `/conversations/${payload.conversationId}/messages/${payload.messageId}/reactions`,
+        {
+          userId: payload.userId,
+          emoji: payload.emoji,
+        }
+      );
+      return {
+        conversationId: payload.conversationId,
+        messageId: payload.messageId,
+        reaction: { [payload.userId]: payload.emoji },
+      };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to add reaction'
+      );
+    }
+  }
+);
+
+export interface ConversationSettings {
+  theme: string;
+  customEmoji: string;
+  notificationsEnabled: boolean;
+}
+
 // ------------------------
 // Slice
 // ------------------------
 interface ConversationsState {
   conversations: Conversation[];
   messages: Record<string, Message[]>; // key: conversationId
+  settings: Record<string, ConversationSettings>;
   selectedConversationId: string | null;
   loadingConversations: boolean;
   loadingMessages: boolean;
@@ -101,6 +185,7 @@ interface ConversationsState {
 const initialState: ConversationsState = {
   conversations: [],
   messages: {},
+  settings: {},
   selectedConversationId: null,
   loadingConversations: false,
   loadingMessages: false,
@@ -154,6 +239,19 @@ const conversationSlice = createSlice({
       state.loadingMessages = false;
       state.sendingMessage = false;
       state.error = null;
+    },
+    updateSettings: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        settings: Partial<ConversationSettings>;
+      }>
+    ) => {
+      const { conversationId, settings } = action.payload;
+      state.settings[conversationId] = {
+        ...state.settings[conversationId],
+        ...settings,
+      };
     },
   },
   extraReducers: (builder) => {
@@ -211,9 +309,64 @@ const conversationSlice = createSlice({
         state.sendingMessage = false;
         state.error = action.payload as string;
       });
+
+    // Fetch conversation settings
+    builder
+      .addCase(fetchConversationSettings.pending, (state) => {
+        state.loadingMessages = true; // Có thể dùng một state riêng như loadingSettings
+        state.error = null;
+      })
+      .addCase(fetchConversationSettings.fulfilled, (state, action) => {
+        state.loadingMessages = false;
+        const { conversationId, settings } = action.payload;
+        state.settings[conversationId] = settings;
+      })
+      .addCase(fetchConversationSettings.rejected, (state, action) => {
+        state.loadingMessages = false;
+        state.error = action.payload as string;
+      });
+
+    // Update conversation settings
+    builder
+      .addCase(updateConversationSettings.pending, (state) => {
+        state.loadingMessages = true;
+        state.error = null;
+      })
+      .addCase(updateConversationSettings.fulfilled, (state, action) => {
+        state.loadingMessages = false;
+        const { conversationId, settings } = action.payload;
+        state.settings[conversationId] = settings;
+      })
+      .addCase(updateConversationSettings.rejected, (state, action) => {
+        state.loadingMessages = false;
+        state.error = action.payload as string;
+      });
+
+    // Add message reaction
+    builder
+      .addCase(addMessageReaction.fulfilled, (state, action) => {
+        const { conversationId, messageId, reaction } = action.payload;
+        const messages = state.messages[conversationId];
+        if (messages) {
+          const messageIndex = messages.findIndex((m) => m.id === messageId);
+          if (messageIndex !== -1) {
+            messages[messageIndex].reactions = {
+              ...messages[messageIndex].reactions,
+              ...reaction,
+            };
+          }
+        }
+      })
+      .addCase(addMessageReaction.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
   },
 });
 
-export const { selectConversation, clearMessagesState, addMessage } =
-  conversationSlice.actions;
+export const {
+  selectConversation,
+  clearMessagesState,
+  addMessage,
+  updateSettings,
+} = conversationSlice.actions;
 export default conversationSlice.reducer;

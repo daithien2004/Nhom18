@@ -1,15 +1,21 @@
 import { Router } from 'express';
 import auth from '../middlewares/auth.js';
 import {
+  addMessageReaction,
   createConversation,
   getConversations,
+  getConversationSettings,
   getMessages,
   getOrCreateConversation,
   sendMessage,
+  updateConversationSettings,
 } from '../controllers/conversationController.js';
 import {
   conversationIdSchema,
+  conversationSettingsSchema,
   messageQuerySchema,
+  messageReactionParamsSchema,
+  messageReactionSchema,
   sendMessageSchema,
 } from '../schemas/messageSchemas.js';
 import {
@@ -45,6 +51,32 @@ router.post(
   validateParams(conversationIdSchema),
   validateBody(sendMessageSchema),
   sendMessage
+);
+
+// Lấy cài đặt hội thoại
+router.get(
+  '/:conversationId/settings',
+  auth,
+  validateParams(conversationIdSchema),
+  getConversationSettings
+);
+
+// Cập nhật cài đặt hội thoại
+router.post(
+  '/:conversationId/settings',
+  auth,
+  validateParams(conversationIdSchema),
+  validateBody(conversationSettingsSchema),
+  updateConversationSettings
+);
+
+// Thêm reaction cho tin nhắn
+router.post(
+  '/:conversationId/messages/:messageId/reactions',
+  auth,
+  validateParams(messageReactionParamsSchema),
+  validateBody(messageReactionSchema),
+  addMessageReaction
 );
 
 export default router;

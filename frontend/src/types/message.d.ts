@@ -1,3 +1,5 @@
+import { ChatUser } from '../pages/FriendsPage';
+
 export interface Message {
   id: string;
   sender: {
@@ -8,15 +10,22 @@ export interface Message {
   conversationId: string | null;
   text?: string;
   attachments?: string[];
+  reactions: { [userId: string]: string };
   createdAt?: string;
 }
 
 export interface Conversation {
   id: string;
-  participants: string[];
+  participants: ChatUser[];
   lastMessage?: Message | null;
+  settings: {
+    theme: string; // e.g., 'bg-gray-50'
+    customEmoji: string; // e.g., '👍'
+    notificationsEnabled: boolean;
+  };
   isGroup: boolean;
   groupName?: string;
   groupAvatar?: string;
   updatedAt?: string;
+  status: string;
 }

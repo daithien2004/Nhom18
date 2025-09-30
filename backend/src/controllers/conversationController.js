@@ -82,3 +82,58 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
   return sendSuccess(res, message, 'Gửi tin nhắn thành công');
 });
+
+export const getConversationSettings = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+  const settings = await conversationService.getConversationSettings(
+    conversationId
+  );
+  return sendSuccess(res, settings, 'Lấy cài đặt hội thoại thành công');
+});
+
+export const updateConversationSettings = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+  const settings = req.body;
+  const updatedSettings = await conversationService.updateConversationSettings(
+    conversationId,
+    settings
+  );
+
+  // Emit sự kiện WebSocket
+  const chatIo = req.app.get('chatIo');
+  if (chatIo) {
+    chatIo.to(conversationId).emit('settingsUpdated', {
+      conversationId,
+      settings: updatedSettings,
+    });
+  }
+
+  return sendSuccess(
+    res,
+    updatedSettings,
+    'Cập nhật cài đặt hội thoại thành công'
+  );
+});
+
+export const addMessageReaction = asyncHandler(async (req, res) => {
+  const { conversationId, messageId } = req.params;
+  const { userId, emoji } = req.body;
+  const message = await conversationService.addMessageReaction(
+    conversationId,
+    messageId,
+    userId,
+    emoji
+  );
+
+  // Emit sự kiện WebSocket
+  const chatIo = req.app.get('chatIo');
+  if (chatIo) {
+    chatIo.to(conversationId).emit('reactionAdded', {
+      conversationId,
+      messageId,
+      reaction: { [userId]: emoji },
+    });
+  }
+
+  return sendSuccess(res, message, 'Thêm reaction thành công');
+});

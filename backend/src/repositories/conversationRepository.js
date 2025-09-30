@@ -1,4 +1,5 @@
 import Conversation from '../models/Conversation.js';
+import Message from '../models/Message.js';
 
 export const createConversation = async (
   participants,
@@ -33,7 +34,7 @@ export const findConversationById = async (id) => {
 
 export const findUserConversations = async (userId) => {
   return await Conversation.find({ participants: userId })
-    .populate({ path: 'participants', select: 'username avatar' })
+    .populate({ path: 'participants', select: 'id username avatar status isOnline' })
     .populate({ path: 'lastMessage' })
     .sort({ updatedAt: -1 });
 };
@@ -44,4 +45,37 @@ export const updateLastMessage = async (conversationId, messageId) => {
     { lastMessage: messageId, updatedAt: Date.now() },
     { new: true }
   );
+};
+
+export const getConversationSettings = async (conversationId) => {
+  const conversation = await Conversation.findById(conversationId).select(
+    'settings'
+  );
+  return conversation.settings;
+};
+
+export const updateConversationSettings = async (conversationId, settings) => {
+  const conversation = await Conversation.findByIdAndUpdate(
+    conversationId,
+    { $set: { settings } },
+    { new: true }
+  ).select('settings');
+  return conversation.settings;
+};
+
+export const addMessageReaction = async (
+  conversationId,
+  messageId,
+  userId,
+  emoji
+) => {
+  const message = await Message.findById(messageId);
+  if (!message || message.conversationId.toString() !== conversationId) {
+    throw new Error(
+      'Không tìm thấy tin nhắn hoặc tin nhắn không thuộc hội thoại'
+    );
+  } // xem xét
+  message.reactions.set(userId, emoji);
+  await message.save();
+  return message;
 };

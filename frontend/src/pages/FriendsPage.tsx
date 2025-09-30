@@ -10,7 +10,7 @@ import {
 } from '../store/slices/friendSearchSlice';
 import instance from '../api/axiosInstant';
 
-interface ChatUser {
+export interface ChatUser {
   id: string;
   username: string;
   avatar?: string;
@@ -31,7 +31,6 @@ export default function FriendsPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState<ChatUser | null>(null);
 
-  // Debounce search
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchText.trim() !== '') {
@@ -46,7 +45,6 @@ export default function FriendsPage() {
     return () => clearTimeout(delayDebounce);
   }, [searchText, dispatch]);
 
-  // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -60,7 +58,7 @@ export default function FriendsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleUserClick = async (user: any) => {
+  const handleUserClick = async (user: ChatUser) => {
     try {
       const res = await instance.get(`/conversations/1on1/${user.id}`);
       const conversation = res.data;
@@ -81,7 +79,6 @@ export default function FriendsPage() {
     <div className="flex bg-white">
       {/* Sidebar */}
       <aside className="w-64 bg-white fixed h-screen shadow-md p-6 flex flex-col">
-        {/* Search */}
         <div className="relative mb-6">
           <Search
             size={18}
@@ -94,7 +91,6 @@ export default function FriendsPage() {
             onChange={(e) => setSearchText(e.target.value)}
             className="w-full rounded-lg bg-gray-100 px-12 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
           />
-          {/* Dropdown search */}
           {showDropdown && searchResults.length > 0 && (
             <div
               ref={dropdownRef}
@@ -142,7 +138,6 @@ export default function FriendsPage() {
           )}
         </div>
 
-        {/* Tabs FriendList / FriendRequests */}
         <nav className="flex flex-col space-y-2 flex-1">
           <button
             onClick={() => {
@@ -175,7 +170,6 @@ export default function FriendsPage() {
         </nav>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 ml-64 p-5 overflow-y-auto">
         <div className="max-w-2xl mx-auto space-y-6">
           {activeChatUser ? (
@@ -185,7 +179,17 @@ export default function FriendsPage() {
               chatStatus={activeChatUser.chatStatus}
             />
           ) : activeTab === 'friends' ? (
-            <FriendList />
+            <FriendList
+              onFriendClick={(friend) => {
+                const chatUser: ChatUser = {
+                  ...friend,
+                  status: 'friend', // mặc định là bạn bè
+                  conversationId: '', // sẽ được cập nhật sau khi gọi API
+                  chatStatus: '', // sẽ được cập nhật sau khi gọi API
+                };
+                handleUserClick(chatUser);
+              }}
+            />
           ) : (
             <FriendRequests />
           )}
