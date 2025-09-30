@@ -1,19 +1,41 @@
 import { io, Socket } from 'socket.io-client';
 
-let socket: Socket | null = null;
+let chatSocket: Socket | null = null;
+let notificationSocket: Socket | null = null;
 
-export const connectSocket = (token: string) => {
-  if (!socket) {
-    socket = io(import.meta.env.VITE_BACKEND_URL!, {
+// Kết nối namespace chat
+export const connectChatSocket = (token: string) => {
+  if (!chatSocket) {
+    chatSocket = io(`${import.meta.env.VITE_BACKEND_URL}/chat`, {
       auth: { token },
       transports: ['websocket'],
     });
   }
-  return socket;
+  return chatSocket;
 };
 
-export const getSocket = () => socket;
-export const disconnectSocket = () => {
-  socket?.disconnect();
-  socket = null;
+// Kết nối namespace notification
+export const connectNotificationSocket = (token: string) => {
+  if (!notificationSocket) {
+    notificationSocket = io(
+      `${import.meta.env.VITE_BACKEND_URL}/notifications`,
+      {
+        auth: { token },
+        transports: ['websocket'],
+      }
+    );
+  }
+  return notificationSocket;
+};
+
+// Getter
+export const getChatSocket = () => chatSocket;
+export const getNotificationSocket = () => notificationSocket;
+
+// Disconnect
+export const disconnectSockets = () => {
+  chatSocket?.disconnect();
+  notificationSocket?.disconnect();
+  chatSocket = null;
+  notificationSocket = null;
 };

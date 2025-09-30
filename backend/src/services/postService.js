@@ -2,30 +2,94 @@ import ApiError from "../utils/apiError.js";
 import { StatusCodes } from "http-status-codes";
 import * as postRepo from "../repositories/postRepository.js";
 import * as commentRepo from "../repositories/commentRepository.js";
+// ⭐️ [NEW] import thêm repository
+import * as activityRepo from "../repositories/activityRepository.js";
+
+import Post from "../models/Post.js";
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
 };
 
-export const getPosts = async ({ type, limit, page = 1 }) => {
+// Lấy danh sách bài viết
+export const getPosts = async ({ type, limit, page = 1, userId }) => {
   const l = limit ? parseInt(limit) : 20;
   const p = page ? parseInt(page) : 1;
   const skip = (p - 1) * l;
+
   try {
+    let posts;
     switch (type) {
       case "recent":
-        return await postRepo.findRecentPosts(l, skip);
+        posts = await postRepo.findRecentPosts(l, skip);
+        break;
       case "hot":
-        return await postRepo.findHotPosts(l, skip);
+        posts = await postRepo.findHotPosts(l, skip);
+        break;
       case "popular":
-        return await postRepo.findPopularPosts(l, skip);
+        posts = await postRepo.findPopularPosts(l, skip);
+        break;
       default:
-        return await postRepo.findRecentPosts(l, skip);
+        posts = await postRepo.findRecentPosts(l, skip);
     }
+
+    // Normalize dữ liệu trả về (không dùng helper riêng)
+    return posts.map((post) => {
+      // Lấy ra likes, comments, shares từ chính post
+      const likes = post.likes;
+      const comments = post.comments;
+      const shares = post.shares;
+
+      const postData = {
+        ...post.toJSON(),
+        likeCount: likes.length,
+        commentCount: comments.length,
+        shareCount: shares.length,
+        isLikedByCurrentUser: userId
+          ? likes.some((u) => u.id.toString() === userId)
+          : false,
+        likes: likes.map((u) => ({
+          userId: u.id.toString(),
+          username: u.username,
+          avatar: u.avatar,
+        })),
+      };
+
+      // Nếu có sharedFrom thì cũng normalize luôn
+      if (postData.sharedFrom) {
+        const sharedLikes = post.sharedFrom.likes;
+        const sharedComments = post.sharedFrom.comments;
+        const sharedShares = post.sharedFrom.shares;
+
+        postData.sharedFrom = {
+          ...postData.sharedFrom,
+          likeCount: sharedLikes.length,
+          commentCount: sharedComments.length,
+          shareCount: sharedShares.length,
+          isLikedByCurrentUser: userId
+            ? sharedLikes.some((u) => u.id.toString() === userId)
+            : false,
+          likes: sharedLikes.map((u) => ({
+            userId: u.id.toString(),
+            username: u.username,
+            avatar: u.avatar,
+          })),
+        };
+      }
+
+      return postData;
+    });
   } catch (err) {
     console.error("Error in getPosts:", err);
-    return [];
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Lỗi khi lấy danh sách bài viết"
+    );
   }
+};
+
+export const getPost = async (postId) => {
+  return postRepo.findPost(postId);
 };
 
 export const getPostDetail = async (postId, userId) => {
@@ -34,72 +98,92 @@ export const getPostDetail = async (postId, userId) => {
     throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
   }
 
-  // Đảm bảo các mảng luôn tồn tại
-  post.likes = post.likes || [];
-  post.comments = post.comments || [];
-  post.shares = post.shares || [];
+  // Trực tiếp dùng dữ liệu đã populate
+  const postData = {
+    ...post.toJSON(),
+    likeCount: post.likes.length,
+    commentCount: post.comments.length,
+    shareCount: post.shares.length,
+    isLikedByCurrentUser: userId
+      ? post.likes.some((user) => user.id.toString() === userId)
+      : false,
+    likes: post.likes.map((user) => ({
+      userId: user.id.toString(),
+      username: user.username,
+      avatar: user.avatar,
+    })),
+  };
 
-  // Thêm thống kê
-  post.likeCount = post.likes.length;
-  post.commentCount = post.comments.length;
-  post.shareCount = post.shares.length;
+  // Nếu là bài share thì xử lý tiếp
+  if (postData.sharedFrom) {
+    const sharedFrom = post.sharedFrom;
 
-  // Trạng thái người dùng hiện tại (an toàn với giá trị null/undefined)
-  const userIdStr = String(userId || "");
-  post.isLikedByCurrentUser = (post.likes || []).some(
-    (id) => String(id || "") === userIdStr
-  );
-  post.isSharedByCurrentUser = (post.shares || []).some(
-    (id) => String(id || "") === userIdStr
-  );
-
-  // Nếu là bài share thì cũng normalize sharedFrom
-  if (post.sharedFrom) {
-    post.sharedFrom.likes = post.sharedFrom.likes || [];
-    post.sharedFrom.comments = post.sharedFrom.comments || [];
-    post.sharedFrom.shares = post.sharedFrom.shares || [];
-
-    post.sharedFrom.likeCount = post.sharedFrom.likes.length;
-    post.sharedFrom.commentCount = post.sharedFrom.comments.length;
-    post.sharedFrom.shareCount = post.sharedFrom.shares.length;
-
-    post.sharedFrom.isLikedByCurrentUser = (post.sharedFrom.likes || []).some(
-      (id) => String(id || "") === userIdStr
-    );
-    post.sharedFrom.isSharedByCurrentUser = (post.sharedFrom.shares || []).some(
-      (id) => String(id || "") === userIdStr
-    );
+    postData.sharedFrom = {
+      ...sharedFrom.toJSON(),
+      likeCount: sharedFrom.likes.length,
+      commentCount: sharedFrom.comments.length,
+      shareCount: sharedFrom.shares.length,
+      isLikedByCurrentUser: userId
+        ? sharedFrom.likes.some((user) => user.id.toString() === userId)
+        : false,
+      likes: sharedFrom.likes.map((user) => ({
+        userId: user.id.toString(),
+        username: user.username,
+        avatar: user.avatar,
+      })),
+    };
   }
 
-  return post;
+  return postData;
 };
 
+// service/postService.ts
 export const toggleLikePost = async (postId, userId) => {
-  const post = await postRepo.findPostById(postId);
+  const post = await Post.findById(postId);
   if (!post) {
     throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
   }
 
-  // đảm bảo mảng tồn tại và so sánh an toàn
-  post.likes = Array.isArray(post.likes) ? post.likes : [];
-  const userIdStr = String(userId || "");
-  const likedIndex = post.likes.findIndex(
-    (id) => String(id || "") === userIdStr
-  );
-  let isLiked;
-  if (likedIndex >= 0) {
-    post.likes.splice(likedIndex, 1);
-    isLiked = false;
+  const isLiked = post.likes.some((id) => id.toString() === userId);
+
+  if (isLiked) {
+    post.likes = post.likes.filter((id) => id.toString() !== userId);
+    // ⭐️ [NEW] xóa activity like
+    const existing = await activityRepo.findExistingActivity({
+      actor: userId,
+      post: postId,
+      type: "like",
+    });
+    if (existing) {
+      await activityRepo.deleteActivity(existing.id);
+    }
+    /////////////////////////////////
   } else {
     post.likes.push(userId);
-    isLiked = true;
+    // ⭐️ [NEW] tạo activity like
+    await activityRepo.createActivity({
+      actor: userId,
+      post: postId,
+      postOwner: post.author,
+      type: "like",
+    });
+    /////////////////////////////////
   }
 
   await post.save();
+
+  // Populate ngay sau khi save
+  await post.populate({ path: "likes", select: "username avatar" });
+
   return {
-    postId: String(post.id || post._id || ""),
-    isLiked,
+    postId: post.id.toString(),
+    isLiked: !isLiked,
     likeCount: post.likes.length,
+    likes: post.likes.map((user) => ({
+      userId: user.id.toString(),
+      username: user.username,
+      avatar: user.avatar,
+    })),
   };
 };
 
@@ -117,7 +201,15 @@ export const createComment = async ({ postId, userId, content }) => {
 
   post.comments.push(comment.id);
   await post.save();
-
+  // ⭐️ [NEW] tạo activity comment
+  await activityRepo.createActivity({
+    actor: userId,
+    post: postId,
+    postOwner: post.author,
+    type: "comment",
+    comment: comment.id,
+  });
+  /////////////////////////////////
   return await commentRepo.findCommentById(comment.id);
 };
 
@@ -140,10 +232,7 @@ export const sharePost = async ({ userId, postId, caption }) => {
   });
 
   // thêm vào danh sách share của bài gốc
-  original.shares = Array.isArray(original.shares) ? original.shares : [];
-  if (
-    !original.shares.some((id) => String(id || "") === String(shared.id || ""))
-  ) {
+  if (!original.shares.some((id) => id.toString() === shared.id.toString())) {
     original.shares.push(shared.id);
     await original.save();
   }

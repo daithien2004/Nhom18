@@ -44,19 +44,25 @@ const userSchema = new Schema(
     timestamps: true,
     toJSON: {
       transform: (doc, ret) => {
-        ret.id = ret._id && ret._id.toString ? ret._id.toString() : ret.id; // an toàn
-        delete ret._id; // Xóa trường _id
+        if (ret._id) {
+          // Kiểm tra _id tồn tại
+          ret.id = ret._id.toString();
+          delete ret._id;
+        }
         return ret;
       },
     },
     toObject: {
       transform: (doc, ret) => {
-        ret.id = ret._id && ret._id.toString ? ret._id.toString() : ret.id; // an toàn
-        delete ret._id; // Xóa trường _id
+        if (ret._id) {
+          // Kiểm tra _id tồn tại
+          ret.id = ret._id.toString();
+          delete ret._id;
+        }
         return ret;
       },
     },
   } // tự động có createdAt, updatedAt
 );
 
-export default model("User", userSchema);
+export default model('User', userSchema);

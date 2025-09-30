@@ -8,6 +8,12 @@ export const getProfile = asyncHandler(async (req, res) => {
   return sendSuccess(res, { user }, 'Lấy thông tin profile thành công');
 });
 
+export const getOtherUserProfile = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const user = await userService.getProfile(userId); // dùng userId từ params
+  return sendSuccess(res, { user }, 'Lấy thông tin người dùng thành công');
+});
+
 export const updateProfile = asyncHandler(async (req, res) => {
   const updatedUser = await userService.updateProfile(req.user.id, req.body);
   return sendSuccess(res, { user: updatedUser }, 'Cập nhật profile thành công');

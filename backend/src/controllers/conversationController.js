@@ -73,10 +73,11 @@ export const sendMessage = asyncHandler(async (req, res) => {
   );
 
   // Lấy io từ app
-  const io = req.app.get('io');
+  const chatIo = req.app.get('chatIo');
   // Emit realtime cho các client trong conversation
-  if (io) {
-    io.to(conversationId).emit('newMessage', message);
+  if (chatIo) {
+    chatIo.to(conversationId).emit('newMessage', message);
+    console.log('Message sent to:', req.user.id);
   }
 
   return sendSuccess(res, message, 'Gửi tin nhắn thành công');

@@ -9,7 +9,7 @@ export type PostDetail = {
   caption?: string; // người share viết thêm gì
   content?: string; // nội dung bài gốc
   images: string[];
-  likes: string[];
+  likes: { userId: string; username: string; avatar: string }[];
   comments: Array<{
     id: string;
     content: string;
@@ -28,7 +28,6 @@ export type PostDetail = {
   commentCount: number;
   shareCount: number;
   isLikedByCurrentUser: boolean;
-  isSharedByCurrentUser: boolean;
   sharedFrom?: PostDetail | null; // <--- thêm để hỗ trợ bài share
 };
 
@@ -36,13 +35,15 @@ export interface Post {
   id: string;
   content?: string; // bài gốc mới có content, bài share có thể không có
   caption?: string; // caption khi share bài
-
+  isLikedByCurrentUser: boolean;
+  likeCount: number;
+  commentCount: number;
   images: string[];
   author: {
     username: string;
     avatar: string;
   };
-  likes: string[];
+  likes: { userId: string; username: string; avatar: string }[];
   comments: Comment[];
   shares: string[]; // danh sách id các post share
   views: number;

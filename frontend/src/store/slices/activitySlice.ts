@@ -1,78 +1,116 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Post } from "../../types/post";
+import {
+  createSlice,
+  createAsyncThunk,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import instance from "../../api/axiosInstant";
 
-export type ActivityItem = {
-  id: string; // post id
-  contentPreview: string;
-  image?: string;
-  authorName?: string;
+export type Activity = {
+  id: string;
+  type: "like" | "comment" | "share" | string;
+  actor?: {
+    id?: string;
+    username?: string;
+    avatar?: string;
+  };
+  post?: {
+    id?: string;
+    content?: string;
+    images?: string[];
+    author?: { username?: string };
+  };
+  comment?: {
+    id?: string;
+    content?: string;
+    author?: { id?: string; username?: string; avatar?: string };
+  };
   createdAt?: string;
-  likedAt: string; // time when user liked
+  postOwner?: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
 };
 
-type ActivityState = {
-  liked: Record<string, ActivityItem>;
-  comments: Array<{
-    id: string; // comment id
-    postId: string;
-    content: string;
-    postPreview: string;
-    image?: string;
-    authorName?: string; // post author
-    commentedAt: string;
-  }>;
-};
+interface ActivityState {
+  activities: Activity[];
+  page: number;
+  hasMore: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
 
 const initialState: ActivityState = {
-  liked: {},
-  comments: [],
+  activities: [],
+  page: 1,
+  hasMore: true,
+  isLoading: false,
+  error: null,
 };
 
+// thunk: lấy activities (page + limit)
+export const fetchActivities = createAsyncThunk<
+  { activities: Activity[]; page: number },
+  { page?: number; limit?: number } | undefined,
+  { rejectValue: string }
+>(
+  "activities/fetchActivities",
+  async (payload = { page: 1, limit: 10 }, { rejectWithValue }) => {
+    try {
+      const { page = 1, limit = 10 } = payload;
+      const res = await instance.get("/activities", {
+        params: { page, limit },
+      });
+      // backend trả về mảng activity trong res.data
+      return { activities: res.data as Activity[], page };
+    } catch (err) {
+      return rejectWithValue("Lỗi khi tải activity");
+    }
+  }
+);
+
 const activitySlice = createSlice({
-  name: "activity",
+  name: "activities",
   initialState,
   reducers: {
-    likeAdded(state, action: PayloadAction<{ post: Post }>) {
-      const p = action.payload.post;
-      const preview = (p.content || p.caption || "").slice(0, 140);
-      state.liked[p.id] = {
-        id: p.id,
-        contentPreview: preview,
-        image: p.images?.[0],
-        authorName: p.author?.username,
-        createdAt: p.createdAt,
-        likedAt: new Date().toISOString(),
-      };
+    resetActivities: (state) => {
+      state.activities = [];
+      state.page = 1;
+      state.hasMore = true;
+      state.error = null;
     },
-    likeRemoved(state, action: PayloadAction<{ postId: string }>) {
-      delete state.liked[action.payload.postId];
-    },
-    commentAdded(
-      state,
-      action: PayloadAction<{
-        commentId: string;
-        post: Post;
-        content: string;
-      }>
-    ) {
-      const p = action.payload.post;
-      state.comments.unshift({
-        id: action.payload.commentId,
-        postId: p.id,
-        content: action.payload.content,
-        postPreview: (p.content || p.caption || "").slice(0, 140),
-        image: p.images?.[0],
-        authorName: p.author?.username,
-        commentedAt: new Date().toISOString(),
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchActivities.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchActivities.fulfilled,
+        (
+          state,
+          action: PayloadAction<{ activities: Activity[]; page: number }>
+        ) => {
+          state.isLoading = false;
+          if (action.payload.page === 1) {
+            state.activities = action.payload.activities;
+          } else {
+            state.activities = [
+              ...state.activities,
+              ...action.payload.activities,
+            ];
+          }
+          state.hasMore = action.payload.activities.length > 0;
+          state.page = action.payload.page;
+        }
+      )
+      .addCase(fetchActivities.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Lỗi";
       });
-    },
-    clearAll(state) {
-      state.liked = {};
-      state.comments = [];
-    },
   },
 });
 
-export const { likeAdded, likeRemoved, commentAdded, clearAll } =
-  activitySlice.actions;
+export const { resetActivities } = activitySlice.actions;
 export default activitySlice.reducer;

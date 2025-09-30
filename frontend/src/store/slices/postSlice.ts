@@ -2,9 +2,16 @@ import {
   createSlice,
   createAsyncThunk,
   type PayloadAction,
-} from "@reduxjs/toolkit";
-import instance from "../../api/axiosInstant";
-import type { Comment, Post, PostDetail, Tab } from "../../types/post";
+} from '@reduxjs/toolkit';
+import instance from '../../api/axiosInstant';
+import type { Comment, Post, PostDetail, Tab } from '../../types/post';
+
+// Định nghĩa interface cho Likes
+interface Like {
+  isLiked: boolean;
+  likeCount: number;
+  likes: { userId: string; username: string; avatar: string }[];
+}
 
 interface PostState {
   posts: Post[];
@@ -20,6 +27,7 @@ interface PostState {
   isCommenting: boolean;
   commentError: string | null;
   error: string | null;
+  likes: { [postId: string]: Like }; // State riêng cho likes
 }
 
 const initialState: PostState = {
@@ -36,27 +44,28 @@ const initialState: PostState = {
   isCommenting: false,
   commentError: null,
   error: null,
+  likes: {}, // Khởi tạo likes rỗng
 };
 
 // Thunk để tạo bài viết
 export const createPost = createAsyncThunk(
-  "posts/createPost",
+  'posts/createPost',
   async (
     postData: { content: string; images: string[] },
     { rejectWithValue }
   ) => {
     try {
-      const res = await instance.post("/posts", postData);
+      const res = await instance.post('/posts', postData);
       return res.data as Post;
     } catch (err) {
-      return rejectWithValue("Không thể tạo bài viết");
+      return rejectWithValue('Không thể tạo bài viết');
     }
   }
 );
 
 // Thunk để lấy danh sách bài viết
 export const fetchPostsThunk = createAsyncThunk(
-  "posts/fetchPosts",
+  'posts/fetchPosts',
   async (
     {
       tab,
@@ -70,153 +79,47 @@ export const fetchPostsThunk = createAsyncThunk(
       const res = await instance.get(
         `/posts?type=${tab}&limit=${limit}&page=${page}`
       );
-      const raw = res.data as any[];
-      const posts: Post[] = (raw || []).map((p: any) => ({
-        id: p._id || p.id,
-        content: p.content,
-        caption: p.caption,
-        images: Array.isArray(p.images) ? p.images : [],
-        author: {
-          username: p.author?.username ?? "Ẩn danh",
-          avatar: p.author?.avatar ?? "/default-avatar.png",
-        },
-        likes: Array.isArray(p.likes) ? p.likes : [],
-        comments: Array.isArray(p.comments) ? p.comments : [],
-        shares: Array.isArray(p.shares) ? p.shares : [],
-        views: typeof p.views === "number" ? p.views : 0,
-        sharedFrom: p.sharedFrom
-          ? {
-              id: p.sharedFrom._id || p.sharedFrom.id,
-              content: p.sharedFrom.content,
-              caption: p.sharedFrom.caption,
-              images: Array.isArray(p.sharedFrom.images)
-                ? p.sharedFrom.images
-                : [],
-              author: {
-                username: p.sharedFrom.author?.username ?? "Ẩn danh",
-                avatar: p.sharedFrom.author?.avatar ?? "/default-avatar.png",
-              },
-              likes: [],
-              comments: [],
-              shares: [],
-              views: 0,
-              createdAt: p.sharedFrom.createdAt,
-            }
-          : undefined,
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
-      }));
-      return { posts, replace };
+      return { posts: res.data as Post[], replace };
     } catch (err) {
-      return rejectWithValue("Lỗi khi tải bài viết");
+      return rejectWithValue('Lỗi khi tải bài viết');
     }
   }
 );
 
 // Thunk để lấy chi tiết bài viết
 export const fetchPostDetail = createAsyncThunk(
-  "posts/getPostDetail",
+  'posts/getPostDetail',
   async (postId: string, { rejectWithValue }) => {
     try {
       const res = await instance.get(`/posts/${postId}`);
-      const d = res.data as any;
-      const detail: PostDetail = {
-        id: d._id || d.id,
-        author: {
-          id: d.author?._id || d.author?.id || "",
-          username: d.author?.username ?? "Ẩn danh",
-          avatar: d.author?.avatar ?? "/default-avatar.png",
-          isOnline: !!d.author?.isOnline,
-        },
-        caption: d.caption,
-        content: d.content,
-        images: Array.isArray(d.images) ? d.images : [],
-        likes: Array.isArray(d.likes) ? d.likes : [],
-        comments: (Array.isArray(d.comments) ? d.comments : []).map(
-          (c: any) => ({
-            id: c._id || c.id,
-            content: c.content,
-            author: {
-              id: c.author?._id || c.author?.id || "",
-              username: c.author?.username ?? "Ẩn danh",
-              avatar: c.author?.avatar ?? "/default-avatar.png",
-            },
-            createdAt: c.createdAt,
-          })
-        ),
-        views: typeof d.views === "number" ? d.views : 0,
-        shares: Array.isArray(d.shares) ? d.shares : [],
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt,
-        __v: d.__v ?? 0,
-        likeCount: d.likeCount ?? (Array.isArray(d.likes) ? d.likes.length : 0),
-        commentCount:
-          d.commentCount ?? (Array.isArray(d.comments) ? d.comments.length : 0),
-        shareCount:
-          d.shareCount ?? (Array.isArray(d.shares) ? d.shares.length : 0),
-        isLikedByCurrentUser: !!d.isLikedByCurrentUser,
-        isSharedByCurrentUser: !!d.isSharedByCurrentUser,
-        sharedFrom: d.sharedFrom
-          ? {
-              id: d.sharedFrom._id || d.sharedFrom.id,
-              author: {
-                id: d.sharedFrom.author?._id || d.sharedFrom.author?.id || "",
-                username: d.sharedFrom.author?.username ?? "Ẩn danh",
-                avatar: d.sharedFrom.author?.avatar ?? "/default-avatar.png",
-                isOnline: !!d.sharedFrom.author?.isOnline,
-              },
-              caption: d.sharedFrom.caption,
-              content: d.sharedFrom.content,
-              images: Array.isArray(d.sharedFrom.images)
-                ? d.sharedFrom.images
-                : [],
-              likes: [],
-              comments: [],
-              views: 0,
-              shares: [],
-              createdAt: d.sharedFrom.createdAt,
-              updatedAt: d.sharedFrom.updatedAt,
-              __v: d.sharedFrom.__v ?? 0,
-              likeCount: 0,
-              commentCount: 0,
-              shareCount: 0,
-              isLikedByCurrentUser: false,
-              isSharedByCurrentUser: false,
-              sharedFrom: null,
-            }
-          : undefined,
-      };
-      return detail;
+      return res.data as PostDetail;
     } catch (err) {
-      return rejectWithValue("Lỗi khi tải chi tiết bài viết");
+      return rejectWithValue('Lỗi khi tải chi tiết bài viết');
     }
   }
 );
 
 // Thunk chung để thích bài viết
 export const toggleLike = createAsyncThunk(
-  "posts/toggleLike",
-  async (
-    { postId, isPostList }: { postId: string; isPostList: boolean },
-    { rejectWithValue }
-  ) => {
+  'posts/toggleLike',
+  async ({ postId }: { postId: string }, { rejectWithValue }) => {
     try {
       const res = await instance.post(`/posts/${postId}/like`);
       return {
         postId,
         likeCount: res.data.likeCount,
         isLiked: res.data.isLiked,
-        isPostList,
+        likes: res.data.likes, // Mảng likes chứa userId, username, avatar
       };
     } catch (err) {
-      return rejectWithValue("Lỗi khi thích bài viết");
+      return rejectWithValue('Lỗi khi thích bài viết');
     }
   }
 );
 
 // Thunk để thêm bình luận
 export const addComment = createAsyncThunk(
-  "posts/addComment",
+  'posts/addComment',
   async (
     { postId, content }: { postId: string; content: string },
     { rejectWithValue }
@@ -228,14 +131,14 @@ export const addComment = createAsyncThunk(
         postId,
       };
     } catch (err) {
-      return rejectWithValue("Lỗi khi thêm bình luận");
+      return rejectWithValue('Lỗi khi thêm bình luận');
     }
   }
 );
 
 // Thêm createAsyncThunk cho share post
 export const sharePost = createAsyncThunk(
-  "posts/sharePost",
+  'posts/sharePost',
   async ({ postId, caption }: { postId: string; caption: string }) => {
     const res = await instance.post(`/posts/${postId}/share`, { caption });
     // Giả sử API trả về post mới (shared post)
@@ -244,7 +147,7 @@ export const sharePost = createAsyncThunk(
 );
 
 const postSlice = createSlice({
-  name: "posts",
+  name: 'posts',
   initialState,
   reducers: {
     resetPosts: (state) => {
@@ -252,9 +155,16 @@ const postSlice = createSlice({
       state.page = 1;
       state.hasMore = true;
       state.error = null;
+      state.likes = {}; // Reset likes khi reset posts
     },
     addNewPost: (state, action: PayloadAction<Post>) => {
       state.posts = [action.payload, ...state.posts];
+      // Khởi tạo trạng thái like cho post mới
+      state.likes[action.payload.id] = {
+        isLiked: action.payload.isLikedByCurrentUser || false,
+        likeCount: action.payload.likeCount || 0,
+        likes: action.payload.likes || [],
+      };
     },
     clearPostDetail: (state) => {
       state.postDetail = null;
@@ -284,6 +194,14 @@ const postSlice = createSlice({
           : [...state.posts, ...action.payload.posts];
         state.hasMore = action.payload.posts.length === action.meta.arg.limit;
         state.page = action.meta.arg.page;
+        // Cập nhật state.likes từ dữ liệu posts
+        action.payload.posts.forEach((post) => {
+          state.likes[post.id] = {
+            isLiked: post.isLikedByCurrentUser || false,
+            likeCount: post.likeCount || 0,
+            likes: post.likes || [],
+          };
+        });
       })
       .addCase(fetchPostsThunk.rejected, (state, action) => {
         state.initialLoading = false;
@@ -302,6 +220,12 @@ const postSlice = createSlice({
         (state, action: PayloadAction<PostDetail>) => {
           state.isLoadingDetail = false;
           state.postDetail = action.payload;
+          // Cập nhật state.likes cho postDetail
+          state.likes[action.payload.id] = {
+            isLiked: action.payload.isLikedByCurrentUser || false,
+            likeCount: action.payload.likeCount || 0,
+            likes: action.payload.likes || [],
+          };
         }
       )
       .addCase(fetchPostDetail.rejected, (state) => {
@@ -313,35 +237,37 @@ const postSlice = createSlice({
     // Toggle like
     builder
       .addCase(toggleLike.pending, (state, action) => {
-        if (action.meta.arg.isPostList) {
-          state.posts = state.posts.map((p) =>
-            p.id === action.meta.arg.postId
-              ? {
-                  ...p,
-                  likes: p.likes.includes("me")
-                    ? p.likes.filter((id) => id !== "me")
-                    : [...p.likes, "me"],
-                }
-              : p
-          );
-        }
+        const postId = action.meta.arg.postId;
+        const currentLike = state.likes[postId] || {
+          isLiked: false,
+          likeCount: 0,
+          likes: [],
+        };
+        // Optimistic update
+        state.likes[postId] = {
+          ...currentLike,
+          isLiked: !currentLike.isLiked,
+          likeCount: currentLike.isLiked
+            ? currentLike.likeCount - 1
+            : currentLike.likeCount + 1,
+        };
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        if (action.payload.isPostList) {
-          state.posts = state.posts.map((p) =>
-            p.id === action.payload.postId
-              ? { ...p, likes: new Array(action.payload.likeCount).fill("x") }
-              : p
-          );
-        } else if (
-          state.postDetail &&
-          state.postDetail.id === action.payload.postId
-        ) {
-          state.postDetail.likeCount = action.payload.likeCount;
-          state.postDetail.isLikedByCurrentUser = action.payload.isLiked;
-        }
+        const { postId, isLiked, likeCount, likes } = action.payload;
+        // Cập nhật state.likes
+        state.likes[postId] = { isLiked, likeCount, likes };
       })
       .addCase(toggleLike.rejected, (state, action) => {
+        const postId = action.meta.arg.postId;
+        const currentLike = state.likes[postId];
+        // Rollback nếu lỗi
+        state.likes[postId] = {
+          ...currentLike,
+          isLiked: !currentLike.isLiked,
+          likeCount: currentLike.isLiked
+            ? currentLike.likeCount - 1
+            : currentLike.likeCount + 1,
+        };
         state.error = action.payload as string;
       });
 
@@ -373,9 +299,9 @@ const postSlice = createSlice({
             id: `temp-${Date.now()}`,
             content: action.meta.arg.content,
             author: {
-              id: "temp-user",
-              username: "Đang tải...",
-              avatar: "/default-avatar.png",
+              id: 'temp-user',
+              username: 'Đang tải...',
+              avatar: '/default-avatar.png',
             },
             createdAt: new Date().toISOString(),
           };
@@ -391,7 +317,7 @@ const postSlice = createSlice({
         if (state.postDetail && state.postDetail.id === action.payload.postId) {
           // Thay bình luận tạm thời bằng bình luận thật
           state.postDetail.comments = state.postDetail.comments.map((c) =>
-            c.id.startsWith("temp-") ? action.payload.comment : c
+            c.id.startsWith('temp-') ? action.payload.comment : c
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }
@@ -401,7 +327,7 @@ const postSlice = createSlice({
         state.commentError = action.payload as string;
         if (state.postDetail) {
           state.postDetail.comments = state.postDetail.comments.filter(
-            (c) => !c.id.startsWith("temp-")
+            (c) => !c.id.startsWith('temp-')
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }

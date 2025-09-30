@@ -5,6 +5,7 @@ import {
   updateAvatar,
   updateCoverPhoto,
   getUserStatus,
+  getOtherUserProfile,
 } from '../controllers/userController.js';
 import auth from '../middlewares/auth.js';
 import multer from 'multer';
@@ -16,6 +17,7 @@ const router = express.Router();
 // RESTful user routes
 router.get('/me', auth, getProfile);
 router.put('/me', validateBody(updateUserSchema), auth, updateProfile);
+router.get('/:userId', auth, getOtherUserProfile);
 
 // multer lưu file tạm vào uploads/
 const upload = multer({ dest: 'uploads/' });

@@ -6,7 +6,7 @@ import SavePostModal from "./SavePostModal";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import type { Post, Tab } from "../types/post";
 import SharePostModal from "./SharePostModal";
-import { likeAdded, likeRemoved } from "../store/slices/activitySlice";
+import ImageGallery from "./ImageGallery";
 import {
   addNewPost,
   fetchPostsThunk,
@@ -28,25 +28,21 @@ interface User {
 
 const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
   const dispatch = useAppDispatch();
-  const { posts, page, hasMore, initialLoading, loadingMore, error } =
+  const { posts, page, hasMore, initialLoading, loadingMore, error, likes } =
     useAppSelector((state) => state.posts);
   const observer = useRef<IntersectionObserver | null>(null);
   const navigate = useNavigate();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharePostId, setSharePostId] = useState<string | null>(null);
-
   const [shareUser, setShareUser] = useState<User | null>(null);
 
-  // Reset và fetch bài viết khi thay đổi tab
   useEffect(() => {
     dispatch(resetPosts());
     dispatch(fetchPostsThunk({ tab, page: 1, limit: LIMIT, replace: true }));
   }, [tab, dispatch]);
 
-  // Xử lý bài viết mới
   useEffect(() => {
     if (!newPost) return;
     if (tab === "recent") {
@@ -78,41 +74,9 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
     [loadingMore, hasMore, tab, page, dispatch]
   );
 
-  // Xử lý thích bài viết
-  const toggleLikeHandler = async (e: React.MouseEvent, postId: string) => {
+  const toggleLikeHandler = (e: React.MouseEvent, postId: string) => {
     e.stopPropagation();
-    const target = posts.find((p: Post) => p.id === postId);
-    try {
-      const action = await dispatch(toggleLike({ postId, isPostList: true }));
-      const payload: any = (action as any).payload;
-      if (target && payload && typeof payload.isLiked === "boolean") {
-        if (payload.isLiked) {
-          dispatch(
-            likeAdded({
-              post: {
-                id: target.id,
-                content: target.content,
-                caption: target.caption,
-                images: target.images || [],
-                author: {
-                  username: target.author.username,
-                  avatar: target.author.avatar,
-                },
-                likes: target.likes as any,
-                comments: target.comments as any,
-                shares: target.shares as any,
-                views: target.views,
-                createdAt: target.createdAt,
-              } as any,
-            })
-          );
-        } else {
-          dispatch(likeRemoved({ postId }));
-        }
-      }
-    } catch {
-      // no-op
-    }
+    dispatch(toggleLike({ postId }));
   };
 
   if (initialLoading) return <p>Đang tải bài viết...</p>;
@@ -121,7 +85,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
   return (
     <div className="space-y-6">
-      {posts.map((post: Post, idx: number) => (
+      {posts.map((post, idx) => (
         <div
           key={post.id}
           ref={idx === posts.length - 1 ? lastPostRef : null}
@@ -145,14 +109,10 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
             </div>
             <div className="ml-auto">
               <PostMenu
-                onInterested={() => console.log("Quan tâm")}
-                onNotInterested={() => console.log("Không quan tâm")}
                 onSave={() => {
                   setSelectedPostId(post.id);
                   setShowSaveModal(true);
                 }}
-                onNotify={() => console.log("Thông báo")}
-                onEmbed={() => console.log("Nhúng")}
               />
             </div>
           </div>
@@ -176,60 +136,56 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                     {post.sharedFrom.content}
                   </p>
                 )}
-                {(post.sharedFrom.images || []).length > 0 && (
-                  <div className="flex gap-2 mt-2 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                    {post.sharedFrom.images.map((img: string, idx: number) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt="shared post"
-                        className="w-48 h-32 object-cover rounded-lg flex-shrink-0 snap-start"
-                      />
-                    ))}
-                  </div>
-                )}
+                <ImageGallery images={post.sharedFrom.images || []} />
+                <button
+                  onClick={(e) => toggleLikeHandler(e, post.sharedFrom!.id)}
+                  className="flex items-center gap-2 mt-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <Heart
+                    size={20}
+                    className={`${
+                      likes[post.sharedFrom.id]?.isLiked
+                        ? "text-red-500 fill-red-500"
+                        : "text-gray-600"
+                    } transition-colors duration-200`}
+                  />
+                  <span className="text-sm font-medium">
+                    {likes[post.sharedFrom.id]?.likeCount || 0} Thích
+                  </span>
+                </button>
               </div>
             )}
             {!post.sharedFrom && post.content && (
               <p className="text-gray-800">{post.content}</p>
             )}
           </div>
-
-          {/* Images */}
-          {!post.sharedFrom && post.images && post.images.length > 0 && (
-            <>
-              {post.images.length === 1 ? (
-                <img
-                  src={post.images[0]}
-                  alt="post"
-                  className="w-full h-64 object-cover rounded-lg mt-3"
-                />
-              ) : (
-                <div className="flex gap-2 mt-3 overflow-x-auto rounded-lg scrollbar-hide snap-x snap-mandatory">
-                  {post.images.map((img: string, idx: number) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt="post"
-                      className="w-64 h-48 object-cover rounded-lg flex-shrink-0 snap-start"
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+          {!post.sharedFrom && <ImageGallery images={post.images || []} />}
           {/* Action bar */}
-          <div className="flex justify-around items-center mt-4 border-t border-gray-100 pt-2 text-gray-600 text-sm">
+          <div className="flex justify-around items-center mt-4 border-t border-gray-200 pt-3 text-gray-600">
             <button
               onClick={(e) => toggleLikeHandler(e, post.id)}
-              className="flex items-center gap-1 hover:text-red-500 transition"
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <Heart size={18} />
-              <span>{(post.likes || []).length}</span>
+              <Heart
+                size={20}
+                className={`${
+                  likes[post.id]?.isLiked
+                    ? "text-red-500 fill-red-500"
+                    : "text-gray-600"
+                } transition-colors duration-200`}
+              />
+              <span className="text-sm font-medium">
+                {likes[post.id]?.likeCount || 0} Thích
+              </span>
             </button>
-            <button className="flex items-center gap-1 hover:text-blue-500 transition cursor-pointer">
-              <MessageCircle size={18} />
-              <span>{(post.comments || []).length}</span>
+            <button
+              onClick={() => navigate(`/posts/${post.id}`)}
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            >
+              <MessageCircle size={20} className="text-gray-600" />
+              <span className="text-sm font-medium">
+                {post.commentCount || 0} Bình luận
+              </span>
             </button>
             <button
               onClick={(e) => {
@@ -241,10 +197,10 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                   avatar: post.author.avatar || "/default-avatar.png",
                 });
               }}
-              className="flex items-center gap-1 hover:text-green-500 transition cursor-pointer"
+              className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <Share2 size={18} />
-              <span>Chia sẻ</span>
+              <Share2 size={20} className="text-gray-600" />
+              <span className="text-sm font-medium">Chia sẻ</span>
             </button>
           </div>
         </div>

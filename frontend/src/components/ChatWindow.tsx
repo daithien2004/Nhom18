@@ -10,7 +10,7 @@ import {
   selectConversation,
   addMessage,
 } from '../store/slices/conversationSlice';
-import { useSocket } from '../sockets/SocketContext';
+import { useChatSocket } from '../sockets/ChatSocketContext';
 import { toast } from 'react-toastify';
 import { Loader2 } from 'lucide-react';
 import type { Message } from '../types/message';
@@ -34,7 +34,7 @@ export default function ChatWindow({
   chatStatus,
 }: ChatWindowProps) {
   const dispatch = useAppDispatch();
-  const socket = useSocket();
+  const socket = useChatSocket();
   const { messages, sendingMessage, error } = useAppSelector(
     (state) => state.conversations
   );

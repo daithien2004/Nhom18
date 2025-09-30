@@ -18,3 +18,25 @@ export const sendOtpEmail = async (to, otp) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+export const sendMail = async ({ to, subject, text, html }) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"ZaloUTE" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};

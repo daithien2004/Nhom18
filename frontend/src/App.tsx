@@ -11,14 +11,15 @@ import PostDetail from "./pages/PostDetail";
 import ConversationsPage from "./pages/ConversationsPage";
 import FriendsPage from "./pages/FriendsPage";
 import CategoryPage from "./pages/CategoryPage";
-import ActionStorePage from "./pages/ActionStorePage";
-import { SocketProvider } from "./sockets/SocketContext";
+import StatisticsPage from "./pages/StatisticsPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // nhớ import css
+import { SocketProviders } from "./sockets/SocketProviders";
+import ActivityPage from "./pages/ActivityPage"; // <- import ActivityPage
 
 function App() {
   return (
-    <SocketProvider>
+    <SocketProviders>
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -29,7 +30,9 @@ function App() {
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="friends" element={<FriendsPage />} />
           <Route path="categories" element={<CategoryPage />} />
-          <Route path="activity" element={<ActionStorePage />} />
+          <Route path="statistics" element={<StatisticsPage />} />
+          <Route path="activities" element={<ActivityPage />} />{" "}
+          {/* <- thêm route cho ActivityPage */}
         </Route>
         <Route path="/login" element={<LoginPage />} />
       </Routes>
@@ -45,7 +48,7 @@ function App() {
         pauseOnHover
         theme="colored"
       />
-    </SocketProvider>
+    </SocketProviders>
   );
 }
 
