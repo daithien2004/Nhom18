@@ -53,26 +53,36 @@ export const updateMessageStatus = async (
       'Bạn không có quyền cập nhật trạng thái tin nhắn'
     );
 
-  // Kiểm tra trạng thái hợp lệ
-  if (message.status === 'seen' && status === 'delivered')
-    throw new ApiError(
-      StatusCodes.BAD_REQUEST,
-      'Không thể chuyển từ seen về delivered'
-    );
+  // Kiểm tra user đã đọc tin nhắn này chưa (tránh duplicate)
+  const hasUserRead = message.readBy
+    .map((id) => id.toString())
+    .includes(userId);
 
-  // Cập nhật trạng thái
-  if (status === 'delivered' && message.status === 'sent') {
-    message.status = 'delivered';
+  // Kiểm tra trạng thái hợp lệ
+  if (status === 'delivered') {
+    // Không cho phép chuyển từ seen về delivered
+    if (message.status === 'seen')
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Không thể chuyển từ seen về delivered'
+      );
+
+    // Cập nhật status nếu đang ở sent
+    if (message.status === 'sent') {
+      message.status = 'delivered';
+    }
   } else if (status === 'seen') {
-    // CHO PHÉP CẬP NHẬT readBy BAT KỂ STATUS LÀ GÌ
-    // Chỉ cập nhật status nếu chưa phải 'seen'
-    if (['sent', 'delivered'].includes(message.status)) {
-      message.status = 'seen';
+    // Nếu user đã seen rồi, không cần làm gì (idempotent)
+    if (hasUserRead) {
+      return message.populate('sender', 'id username avatar');
     }
 
-    // Luôn thêm userId vào readBy nếu chưa có (cho chat nhóm)
-    if (!message.readBy.map((id) => id.toString()).includes(userId)) {
-      message.readBy.push(userId);
+    // Thêm userId vào readBy
+    message.readBy.push(userId);
+
+    // Chỉ cập nhật status thành 'seen' nếu chưa phải 'seen'
+    if (message.status !== 'seen') {
+      message.status = 'seen';
     }
   } else {
     throw new ApiError(
