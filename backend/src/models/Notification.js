@@ -24,8 +24,20 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['like', 'comment', 'follow', 'share', 'system'], // tuỳ loại thông báo
-      default: 'system',
+      enum: [
+        'like',
+        'comment',
+        'follow',
+        'share',
+        'system',
+        'tag',
+        'mention',
+        'reaction',
+        'friend_request',
+        'friend_accept',
+        'security',
+      ],
+      required: true,
     },
     metadata: {
       type: Object, // để lưu thêm dữ liệu động (ví dụ: postId, commentId...)

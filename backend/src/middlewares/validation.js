@@ -23,6 +23,8 @@ export const validate = (schema, target = 'body') => {
           code: err.code,
         }));
 
+        console.log(res);
+
         return sendError(res, 'Dữ liệu không hợp lệ', StatusCodes.BAD_REQUEST, {
           validationErrors: formattedErrors,
         });

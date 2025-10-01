@@ -13,3 +13,10 @@ export const notificationQuerySchema = z.object({
   page: z.coerce.number().optional(), // ép string -> number
   limit: z.coerce.number().optional(),
 });
+
+export const notificationIdSchema = z.object({
+  notificationId: z
+    .string()
+    .min(1, 'notificationId không được để trống')
+    .regex(/^[a-f\d]{24}$/i, 'notificationId không hợp lệ'), // nếu là Mongo ObjectId
+});

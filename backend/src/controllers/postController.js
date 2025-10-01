@@ -33,8 +33,40 @@ export const toggleLikePost = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const postId = req.params.postId;
 
-  // Gọi toggleLikePost và lấy thông tin bài viết
+  const post = await postService.getPost(postId);
+  const isLiked = await postService.checkIfLiked(postId, userId); // Kiểm tra like hiện tại
+
   const result = await postService.toggleLikePost(postId, userId);
+
+  if (isLiked === false && post.author.id !== userId) {
+    // Nếu mới like (không phải unlike)
+    const notification = await createNotification({
+      senderId: userId,
+      receiverId: post.author.id,
+      type: 'like',
+      metadata: {
+        postId,
+        postTitle: post.title || post.content.slice(0, 30) + '...', // Preview tiêu đề
+        postThumbnail: post.images?.[0] || null,
+      },
+    });
+
+    // Emit Socket.IO
+    const notiIo = req.app.get('notificationIo');
+    if (notiIo) {
+      notiIo.to(post.author.id).emit('notification', notification);
+      console.log('Notification sent to:', post.author);
+    }
+
+    // Gửi email
+    const authorUser = await User.findById(post.author.id);
+    await sendMail({
+      to: authorUser.email,
+      subject: `${authorUser.username} đã like bài viết của bạn!`,
+      text: notification.message,
+      html: `<p>${notification.message}</p><br/><a href="/posts/${postId}">Xem bài viết</a>`,
+    });
+  }
 
   return sendSuccess(res, result, 'Thao tác like thành công');
 });
@@ -52,13 +84,16 @@ export const createComment = asyncHandler(async (req, res) => {
   // Kiểm tra xem người dùng có phải là tác giả bài viết không
   const post = await postService.getPost(postId);
   if (post.author.id !== userId) {
-    // Chỉ tạo thông báo nếu không phải tự like
     const notification = await createNotification({
-      senderId: userId, // Gửi thông báo cho tác giả bài viết
+      senderId: userId,
       receiverId: post.author.id,
-      message: `${req.user.username} đã bình luận về bài viết của bạn`,
       type: 'comment',
-      metadata: { postId, comment: content },
+      metadata: {
+        postId,
+        postTitle: post.title || post.content.slice(0, 30) + '...',
+        postThumbnail: post.images?.[0] || null,
+        comment: content,
+      },
     });
 
     // Lấy io từ app
@@ -69,13 +104,13 @@ export const createComment = asyncHandler(async (req, res) => {
       console.log('Notification sent to:', post.author);
     }
 
-    const user = await User.findById(post.author.id);
-
+    // Gửi email
+    const authorUser = await User.findById(post.author.id);
     await sendMail({
-      to: user.email, // lấy từ User model theo userId
-      subject: 'Bạn có thông báo mới',
-      text: `Đã bình luận về bài viết của bạn với nội dung ${content}`,
-      html: `<p>Đã bình luận về bài viết của bạn với nội dung ${content}</p>`,
+      to: authorUser.email,
+      subject: `${authorUser.username} đã bình luận về bài viết của bạn!`,
+      text: notification.message,
+      html: `<p>${notification.message}</p><br/><a href="/posts/${postId}">Xem bài viết</a>`,
     });
   }
 
@@ -96,13 +131,15 @@ export const sharePost = asyncHandler(async (req, res) => {
   // Kiểm tra xem người dùng có phải là tác giả bài viết không
   const post = await postService.getPost(postId);
   if (post.author.id !== userId) {
-    // Chỉ tạo thông báo nếu không phải tự like
     const notification = await createNotification({
       senderId: userId, // Gửi thông báo cho tác giả bài viết
       receiverId: post.author.id,
-      message: `${req.user.username} đã chia sẻ bài viết của bạn`,
       type: 'share',
-      metadata: { postId },
+      metadata: {
+        postId,
+        postTitle: post.title || post.content.slice(0, 30) + '...',
+        postThumbnail: post.images?.[0] || null,
+      },
     });
 
     // Lấy io từ app
@@ -113,13 +150,13 @@ export const sharePost = asyncHandler(async (req, res) => {
       console.log('Notification sent to:', post.author);
     }
 
-    const user = await User.findById(post.author.id);
-
+    // Gửi email
+    const authorUser = await User.findById(post.author.id);
     await sendMail({
-      to: user.email, // lấy từ User model theo userId
-      subject: 'Bạn có thông báo mới',
-      text: `Đã chia sẻ bài viết của bạn với nội dung ${caption}`,
-      html: `<p>Đã chia sẻ bài viết của bạn với nội dung ${caption}</p>`,
+      to: authorUser.email,
+      subject: `${authorUser.username} đã chia sẻ bài viết của bạn!`,
+      text: notification.message,
+      html: `<p>${notification.message}</p><br/><a href="/posts/${postId}">Xem bài viết</a>`,
     });
   }
 

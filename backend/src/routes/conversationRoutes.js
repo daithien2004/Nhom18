@@ -7,6 +7,7 @@ import {
   getConversationSettings,
   getMessages,
   getOrCreateConversation,
+  searchConversation,
   sendMessage,
   updateConversationSettings,
   updateMessageStatus,
@@ -33,6 +34,9 @@ router.get('/', auth, getConversations);
 
 // Tạo conversation mới (chat nhóm)
 router.post('/', auth, createConversation);
+
+// Tạo tìm conversation nhóm
+router.get('/search', auth, searchConversation);
 
 // Lấy conversation 1-1 với 1 user
 router.get('/1on1/:userId', auth, getOrCreateConversation);

@@ -1,29 +1,65 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { Bell } from 'lucide-react';
+import { Bell, Loader2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { fetchNotifications } from '../store/slices/notificationSlice';
+import {
+  fetchNotifications,
+  markAllAsRead,
+} from '../store/slices/notificationSlice';
 import NotificationItem from './NotificationItem';
+import { toast } from 'react-toastify';
 
 const NotificationDropdown: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { notifications, total, loadingNotifications, error } = useAppSelector(
-    (state) => state.notifications
-  );
+  const { notifications, total, loadingNotifications, unreadCount, error } =
+    useAppSelector((state) => state.notifications);
   const [page, setPage] = useState(1);
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const containerRef = useRef<HTMLDivElement>(null); // Ref cho container để control scroll
+  const isLoadingMoreRef = useRef(false); // Track loading more để tránh duplicate
 
   // Lấy danh sách thông báo ban đầu
   useEffect(() => {
-    dispatch(fetchNotifications({ page, limit: 10 }));
+    dispatch(fetchNotifications({ page, limit: 5 }));
   }, [dispatch, page]);
 
   // Xử lý lỗi
   useEffect(() => {
     if (error) {
-      console.error('Notification error:', error);
+      toast.error(`Đã có lỗi: ${error}`);
     }
   }, [error]);
+
+  // Giữ scroll position khi load thêm
+  useEffect(() => {
+    if (
+      !loadingNotifications &&
+      isLoadingMoreRef.current &&
+      containerRef.current
+    ) {
+      const container = containerRef.current;
+      const scrollHeightBefore = container.scrollHeight; // Lưu height trước (nhưng vì append cuối, cần adjust sau)
+      // Sau khi Redux update notifications, requestAnimationFrame để scroll adjust
+      requestAnimationFrame(() => {
+        const addedHeight = container.scrollHeight - scrollHeightBefore;
+        container.scrollTop += addedHeight; // Giữ vị trí scroll cũ + height mới
+      });
+      isLoadingMoreRef.current = false;
+    }
+  }, [notifications, loadingNotifications]);
+
+  const handleMarkAllRead = () => {
+    if (unreadCount > 0) {
+      dispatch(markAllAsRead());
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (loadingNotifications || notifications.length >= total) return;
+    isLoadingMoreRef.current = true;
+    setPage((prev) => prev + 1);
+  };
+
+  const hasMore = notifications.length < total;
 
   return (
     <div className="relative">
@@ -44,12 +80,23 @@ const NotificationDropdown: React.FC = () => {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute right-0 top-full mt-2 w-96 bg-white border border-gray-200 rounded-2xl shadow-md focus:outline-none z-[9999]">
-            <div className="py-2">
-              <div className="px-4 py-2 flex justify-between items-center border-b border-gray-200">
+          <Menu.Items
+            className="absolute right-0 top-full mt-2 w-96 bg-white border border-gray-200 rounded-2xl shadow-md focus:outline-none z-[9999] max-h-96 overflow-y-auto"
+            ref={containerRef}
+          >
+            <div className="py-2 min-h-full">
+              <div className="px-4 py-2 flex justify-between items-center border-b border-gray-200 sticky top-0 bg-white z-10">
                 <h2 className="text-lg font-semibold text-gray-800">
                   Thông báo
                 </h2>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Đánh dấu tất cả đã đọc
+                  </button>
+                )}
               </div>
 
               {loadingNotifications && notifications.length === 0 ? (
@@ -68,14 +115,21 @@ const NotificationDropdown: React.FC = () => {
                 ))
               )}
 
-              {notifications.length < total && (
+              {/* Loading more indicator */}
+              {loadingNotifications && isLoadingMoreRef.current && (
+                <div className="px-4 py-2 text-center">
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto text-gray-500" />
+                </div>
+              )}
+
+              {/* Load more button */}
+              {hasMore && !loadingNotifications && (
                 <div className="px-4 py-3 text-center border-t border-gray-200">
                   <button
-                    onClick={() => setPage((prev) => prev + 1)}
+                    onClick={handleLoadMore}
                     className="text-sm text-blue-600 hover:text-blue-700 transition"
-                    disabled={loadingNotifications}
                   >
-                    {loadingNotifications ? 'Đang tải...' : 'Tải thêm'}
+                    Tải thêm
                   </button>
                 </div>
               )}

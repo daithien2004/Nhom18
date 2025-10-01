@@ -10,8 +10,28 @@ export interface Notification {
   }; // id của user
   message: string;
   isRead: boolean;
-  type: 'like' | 'comment' | 'follow' | 'share' | 'system';
-  metadata: Record<string, any>;
+  type:
+    | 'like'
+    | 'comment'
+    | 'follow'
+    | 'share'
+    | 'system'
+    | 'tag'
+    | 'mention'
+    | 'reaction'
+    | 'friend_request'
+    | 'friend_accept'
+    | 'security';
+  metadata: {
+    postId?: string;
+    postTitle?: string;
+    postThumbnail?: string;
+    comment?: string;
+    reactionEmoji?: string;
+    friendAction?: 'request' | 'accept';
+    securityType?: 'suspicious_login' | 'password_change';
+    [key: string]: any; // Linh hoạt cho các trường khác
+  };
   createdAt: string; // ISO date string
   updatedAt: string;
 }

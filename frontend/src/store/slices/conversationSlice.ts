@@ -193,6 +193,22 @@ export const addMessageReaction = createAsyncThunk(
   }
 );
 
+export const searchConversations = createAsyncThunk(
+  'conversations/searchConversations',
+  async (query: string, { rejectWithValue }) => {
+    try {
+      const res = await instance.get('/conversations/search', {
+        params: { q: query },
+      });
+      return res.data as Conversation[];
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Failed to search conversations'
+      );
+    }
+  }
+);
+
 export interface ConversationSettings {
   theme: string;
   customEmoji: string;
@@ -204,10 +220,12 @@ export interface ConversationSettings {
 // ------------------------
 interface ConversationsState {
   conversations: Conversation[];
+  searchConversations: Conversation[];
   messages: Record<string, Message[]>; // key: conversationId
   settings: Record<string, ConversationSettings>;
   selectedConversationId: string | null;
   loadingConversations: boolean;
+  loadingSearchConversations: boolean;
   initialLoading: boolean;
   sendingMessage: boolean;
   error: string | null;
@@ -217,10 +235,12 @@ interface ConversationsState {
 
 const initialState: ConversationsState = {
   conversations: [],
+  searchConversations: [],
   messages: {},
   settings: {},
   selectedConversationId: null,
   loadingConversations: false,
+  loadingSearchConversations: false,
   initialLoading: false,
   sendingMessage: false,
   error: null,
@@ -306,6 +326,9 @@ const conversationSlice = createSlice({
           messages[messageIndex].readBy = readBy;
         }
       }
+    },
+    clearSearchConversations: (state) => {
+      state.searchConversations = [];
     },
   },
   extraReducers: (builder) => {
@@ -437,6 +460,22 @@ const conversationSlice = createSlice({
       .addCase(updateMessageStatus.rejected, (state, action) => {
         state.error = action.payload as string;
       });
+
+    // Search conversations
+    builder
+      .addCase(searchConversations.pending, (state) => {
+        state.loadingSearchConversations = true;
+        state.error = null;
+      })
+      .addCase(searchConversations.fulfilled, (state, action) => {
+        state.loadingSearchConversations = false;
+        state.searchConversations = action.payload;
+      })
+      .addCase(searchConversations.rejected, (state, action) => {
+        state.loadingSearchConversations = false;
+        state.error = action.payload as string;
+        state.searchConversations = [];
+      });
   },
 });
 
@@ -445,5 +484,6 @@ export const {
   clearMessagesState,
   addMessage,
   updateSettings,
+  clearSearchConversations,
 } = conversationSlice.actions;
 export default conversationSlice.reducer;

@@ -11,6 +11,7 @@ import {
   Bookmark,
   BarChart3,
 } from 'lucide-react';
+import { persistor } from '../store/store';
 
 const MainLayout: React.FC = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
@@ -18,8 +19,9 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(logout());
+    await persistor.purge();
     navigate('/login');
   };
 

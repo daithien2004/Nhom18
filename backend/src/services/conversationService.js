@@ -9,6 +9,7 @@ export const createConversation = async ({
   groupAvatar,
   status,
 }) => {
+  console.log(participants);
   participants = participants.map((id) => new mongoose.Types.ObjectId(id));
 
   const conv = await conversationRepo.createConversation(
@@ -77,4 +78,12 @@ export const addMessageReaction = async (
     userId,
     emoji
   );
+};
+
+export const searchConversations = async (userId, query) => {
+  const conversations = await conversationRepo.findConversationsByQuery(
+    userId,
+    query
+  );
+  return conversations;
 };

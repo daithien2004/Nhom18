@@ -34,7 +34,10 @@ export const findConversationById = async (id) => {
 
 export const findUserConversations = async (userId) => {
   return await Conversation.find({ participants: userId })
-    .populate({ path: 'participants', select: 'id username avatar status isOnline' })
+    .populate({
+      path: 'participants',
+      select: 'id username avatar status isOnline',
+    })
     .populate({ path: 'lastMessage' })
     .sort({ updatedAt: -1 });
 };
@@ -78,4 +81,14 @@ export const addMessageReaction = async (
   message.reactions.set(userId, emoji);
   await message.save();
   return message;
+};
+
+export const findConversationsByQuery = async (userId, query) => {
+  return Conversation.find({
+    participants: userId,
+    isGroup: true,
+    groupName: { $regex: query, $options: 'i' }, // tìm theo tên group
+  })
+    .populate('participants', 'username avatar')
+    .populate('lastMessage');
 };

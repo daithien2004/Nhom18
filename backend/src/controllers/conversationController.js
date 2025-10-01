@@ -11,13 +11,15 @@ export const createConversation = asyncHandler(async (req, res) => {
     participants.push(req.user.id);
   }
 
-  const conversation = await conversationService.createConversation(
+  console.log(participants);
+
+  const conversation = await conversationService.createConversation({
     participants,
     isGroup,
     groupName,
     groupAvatar,
-    status
-  );
+    status,
+  });
 
   return sendSuccess(res, conversation, 'Tạo hội thoại thành công');
 });
@@ -163,4 +165,11 @@ export const updateMessageStatus = asyncHandler(async (req, res) => {
   }
 
   return sendSuccess(res, message, 'Cập nhật trạng thái tin nhắn thành công');
+});
+
+export const searchConversation = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const q = req.query.q || '';
+  const results = await conversationService.searchConversations(userId, q);
+  return sendSuccess(res, results);
 });

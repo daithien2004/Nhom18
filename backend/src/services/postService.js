@@ -218,3 +218,28 @@ export const sharePost = async ({ userId, postId, caption }) => {
     ],
   });
 };
+
+export const checkIfLiked = async (postId, userId) => {
+  const post = await Post.findById(postId).populate({
+    path: 'likes',
+    select: 'username avatar',
+  });
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
+  }
+
+  const isLiked = post.likes.some((u) => u.id.toString() === userId);
+
+  return isLiked;
+
+  // return {
+  //   postId: post.id.toString(),
+  //   isLiked,
+  //   likeCount: post.likes.length,
+  //   likes: post.likes.map((user) => ({
+  //     userId: user.id.toString(),
+  //     username: user.username,
+  //     avatar: user.avatar,
+  //   })),
+  // };
+};

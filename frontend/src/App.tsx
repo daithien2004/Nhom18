@@ -15,37 +15,44 @@ import StatisticsPage from './pages/StatisticsPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // nhớ import css
 import { SocketProviders } from './sockets/SocketProviders';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './store/store';
 
 function App() {
   return (
-    <SocketProviders>
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="posts/:postId" element={<PostDetail />} />
-          <Route path="conversations" element={<ConversationsPage />} />
-          <Route path="friends" element={<FriendsPage />} />
-          <Route path="categories" element={<CategoryPage />} />
-          <Route path="statistics" element={<StatisticsPage />} />
-        </Route>
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <SocketProviders>
+          <Routes>
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<HomePage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="posts/:postId" element={<PostDetail />} />
+              <Route path="conversations" element={<ConversationsPage />} />
+              <Route path="friends" element={<FriendsPage />} />
+              <Route path="categories" element={<CategoryPage />} />
+              <Route path="statistics" element={<StatisticsPage />} />
+            </Route>
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
 
-      {/* Container chung cho toàn bộ app */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
-    </SocketProviders>
+          {/* Container chung cho toàn bộ app */}
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
+        </SocketProviders>
+      </PersistGate>
+    </Provider>
   );
 }
 
