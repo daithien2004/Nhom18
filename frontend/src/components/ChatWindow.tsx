@@ -16,7 +16,7 @@ import { useChatSocket } from '../sockets/ChatSocketContext';
 import { toast } from 'react-toastify';
 import { Loader2 } from 'lucide-react';
 import { type EmojiClickData } from 'emoji-picker-react';
-import type { Message } from '../types/message';
+import type { Conversation, Message } from '../types/message';
 import MessageItem from './MessageItem';
 import ChatHeader from './ChatHeader';
 import InputBox from './InputBox';
@@ -25,23 +25,10 @@ import InputBox from './InputBox';
 const reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 interface ChatWindowProps {
-  user: {
-    id: string;
-    username: string;
-    avatar?: string;
-    status: 'friend' | 'pending' | 'none';
-    isOnline?: boolean;
-    isGroup?: boolean;
-  };
-  conversationId: string;
-  chatStatus: string;
+  conversation: Conversation;
 }
 
-export default function ChatWindow({
-  user,
-  conversationId,
-  chatStatus,
-}: ChatWindowProps) {
+export default function ChatWindow({ conversation }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const socket = useChatSocket();
   const { hasMore, isLoadingMore, messages, initialLoading, error } =
@@ -57,19 +44,47 @@ export default function ChatWindow({
   const [page, setPage] = useState(1);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  console.log(conversation);
+
   const settings = useAppSelector(
-    (state) => state.conversations.settings[conversationId]
+    (state) => state.conversations.settings[conversation.id]
   ) || {
     theme: 'bg-gray-50',
     customEmoji: '👍',
     notificationsEnabled: true,
   };
 
+  // Tạo user object cho ChatHeader (thống nhất cho cá nhân và nhóm)
+  const user = conversation.isGroup
+    ? {
+        id: conversation.id,
+        username: conversation.groupName || 'Nhóm chat',
+        avatar: conversation.groupAvatar || '/group.png',
+        status: 'active' as const,
+        isGroup: true,
+      }
+    : {
+        id:
+          conversation.participants.find((p) => p.id !== currentUser?.id)?.id ||
+          '',
+        username:
+          conversation.participants.find((p) => p.id !== currentUser?.id)
+            ?.username || 'Unknown',
+        avatar:
+          conversation.participants.find((p) => p.id !== currentUser?.id)
+            ?.avatar || 'https://via.placeholder.com/48',
+        status: conversation.status || 'none',
+        isOnline: conversation.participants.find(
+          (p) => p.id !== currentUser?.id
+        )?.isOnline,
+        isGroup: false,
+      };
+
   // Xử lý chọn emoji tùy chỉnh
   const handleCustomEmojiClick = (emojiData: EmojiClickData) => {
     dispatch(
       updateConversationSettings({
-        conversationId,
+        conversationId: conversation.id,
         settings: { customEmoji: emojiData.emoji },
       })
     );
@@ -82,7 +97,7 @@ export default function ChatWindow({
   const handleResetEmoji = () => {
     dispatch(
       updateConversationSettings({
-        conversationId,
+        conversationId: conversation.id,
         settings: { customEmoji: '👍' },
       })
     );
@@ -93,7 +108,7 @@ export default function ChatWindow({
   const handleChangeTheme = (themeValue: string) => {
     dispatch(
       updateConversationSettings({
-        conversationId,
+        conversationId: conversation.id,
         settings: { theme: themeValue },
       })
     );
@@ -104,7 +119,7 @@ export default function ChatWindow({
   const handleToggleNotifications = () => {
     dispatch(
       updateConversationSettings({
-        conversationId,
+        conversationId: conversation.id,
         settings: { notificationsEnabled: !settings.notificationsEnabled },
       })
     );
@@ -116,7 +131,7 @@ export default function ChatWindow({
     if (currentUser) {
       dispatch(
         addMessageReaction({
-          conversationId,
+          conversationId: conversation.id,
           messageId,
           userId: currentUser.id,
           emoji,
@@ -127,7 +142,7 @@ export default function ChatWindow({
   };
 
   // Xử lý click vào tin nhắn
-  const handleMessageClick = (messageId: string) => {
+  const handleMessageClick = (messageId: string | null) => {
     setShowReactionMenu(messageId);
   };
 
@@ -159,13 +174,15 @@ export default function ChatWindow({
 
   // Fetch messages when conversation changes
   useEffect(() => {
-    if (conversationId) {
-      dispatch(selectConversation(conversationId));
-      dispatch(fetchMessages({ conversationId, limit: 10, page: 1 }));
-      dispatch(fetchConversationSettings(conversationId));
+    if (conversation.id) {
+      dispatch(selectConversation(conversation.id));
+      dispatch(
+        fetchMessages({ conversationId: conversation.id, limit: 10, page: 1 })
+      );
+      dispatch(fetchConversationSettings(conversation.id));
       setPage(1);
     }
-  }, [conversationId, dispatch]);
+  }, [conversation.id, dispatch]);
 
   // Handle errors
   useEffect(() => {
@@ -175,26 +192,25 @@ export default function ChatWindow({
   }, [error]);
 
   useEffect(() => {
-    if (!currentUser || !conversationId) return;
+    if (!currentUser || !conversation.id) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const messageId = entry.target.getAttribute('data-message-id');
-            const message = messages[conversationId]?.find(
+            const message = messages[conversation.id]?.find(
               (m) => m.id === messageId
             );
             if (
               messageId &&
               message &&
               message.sender.id !== currentUser.id &&
-              message.status !== 'seen' &&
               !message.readBy.includes(currentUser.id)
             ) {
               dispatch(
                 updateMessageStatus({
-                  conversationId,
+                  conversationId: conversation.id,
                   messageId,
                   status: 'seen',
                 })
@@ -218,23 +234,29 @@ export default function ChatWindow({
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [messages[conversationId], currentUser, conversationId, dispatch, socket]);
+  }, [
+    messages[conversation.id],
+    currentUser,
+    conversation.id,
+    dispatch,
+    socket,
+  ]);
 
   // Setup WebSocket
   useEffect(() => {
-    if (!socket || !conversationId) return;
+    if (!socket || !conversation.id) return;
 
-    socket.emit('joinConversation', conversationId);
+    socket.emit('joinConversation', conversation.id);
 
     const handleSendMessage = (message: Message) => {
       if (settings.notificationsEnabled) {
-        dispatch(addMessage({ conversationId, message }));
+        dispatch(addMessage({ conversationId: conversation.id, message }));
         if (message.sender.id !== currentUser?.id) {
           toast.info(`Tin nhắn mới từ ${user.username}: ${message.text}`);
           if (currentUser && message.status === 'sent') {
             dispatch(
               updateMessageStatus({
-                conversationId,
+                conversationId: conversation.id,
                 messageId: message.id,
                 status: 'delivered',
               })
@@ -265,6 +287,7 @@ export default function ChatWindow({
         })
       );
     };
+
     const handleReactionAdded = (data: {
       conversationId: string;
       messageId: string;
@@ -280,7 +303,25 @@ export default function ChatWindow({
       });
     };
 
+    const handleReactionRemoved = (data: {
+      conversationId: string;
+      messageId: string;
+      reaction: { [userId: string]: string };
+      remove: boolean;
+    }) => {
+      dispatch({
+        type: addMessageReaction.fulfilled.type,
+        payload: {
+          conversationId: data.conversationId,
+          messageId: data.messageId,
+          reaction: data.reaction,
+          remove: data.remove,
+        },
+      });
+    };
+
     socket.on('reactionAdded', handleReactionAdded);
+    socket.on('reactionRemoved', handleReactionRemoved);
     socket.on('messageStatusUpdated', handleMessageStatusUpdated);
     socket.on('sendMessage', handleSendMessage);
     socket.on('settingsUpdated', handleSettingsUpdated);
@@ -290,10 +331,11 @@ export default function ChatWindow({
       socket.off('messageStatusUpdated', handleMessageStatusUpdated);
       socket.off('settingsUpdated', handleSettingsUpdated);
       socket.off('reactionAdded', handleReactionAdded);
+      socket.off('reactionRemoved', handleReactionRemoved);
     };
   }, [
     socket,
-    conversationId,
+    conversation.id,
     dispatch,
     settings.notificationsEnabled,
     user.username,
@@ -335,14 +377,16 @@ export default function ChatWindow({
 
   // Cập nhật useEffect xử lý fetch:
   useEffect(() => {
-    if (conversationId && page > 1) {
+    if (conversation.id && page > 1) {
       const container = messagesContainerRef.current;
       if (!container) return;
 
       const scrollHeightBefore = container.scrollHeight;
       const scrollTopBefore = container.scrollTop;
 
-      dispatch(fetchMessages({ conversationId, limit: 10, page })).then(() => {
+      dispatch(
+        fetchMessages({ conversationId: conversation.id, limit: 10, page })
+      ).then(() => {
         requestAnimationFrame(() => {
           if (container) {
             const scrollHeightAfter = container.scrollHeight;
@@ -352,7 +396,7 @@ export default function ChatWindow({
         });
       });
     }
-  }, [page, conversationId, dispatch]);
+  }, [page, conversation.id, dispatch]);
 
   // Scroll xuống cuối khi load lần đầu hoặc có tin nhắn mới:
   useEffect(() => {
@@ -364,14 +408,14 @@ export default function ChatWindow({
         container.scrollTop = container.scrollHeight;
       });
     }
-  }, [messages[conversationId], page, initialLoading, isLoadingMore]);
+  }, [messages[conversation.id], page, initialLoading, isLoadingMore]);
 
   return (
     <div className="flex flex-col w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md max-h-[calc(100vh-80px)] overflow-hidden">
       {/* Header */}
       <ChatHeader
         user={user}
-        conversationId={conversationId}
+        conversationId={conversation.id}
         settings={settings}
         showSettingsMenu={showSettingsMenu}
         setShowSettingsMenu={setShowSettingsMenu}
@@ -403,13 +447,13 @@ export default function ChatWindow({
               </div>
             )}
 
-            {messages[conversationId]?.length > 0 ? (
-              messages[conversationId].map((msg, index) => {
-                const nextMsg = messages[conversationId][index + 1];
+            {messages[conversation.id]?.length > 0 ? (
+              messages[conversation.id].map((msg, index) => {
+                const nextMsg = messages[conversation.id][index + 1];
                 const showAvatar =
                   !nextMsg || nextMsg.sender.id !== msg.sender.id;
 
-                const myMessages = messages[conversationId].filter(
+                const myMessages = messages[conversation.id].filter(
                   (m) => m.sender.id === currentUser?.id
                 );
                 const latestSeenMessage = myMessages
@@ -428,8 +472,6 @@ export default function ChatWindow({
                     <MessageItem
                       message={msg}
                       currentUserId={currentUser?.id}
-                      userAvatar={user.avatar}
-                      senderAvatar={msg.sender.avatar}
                       showReactionMenu={showReactionMenu}
                       reactionEmojis={reactionEmojis}
                       onMessageClick={handleMessageClick}
@@ -437,6 +479,7 @@ export default function ChatWindow({
                       onAttachmentClick={handleAttachmentClick}
                       showAvatar={showAvatar}
                       showSeenStatus={showSeenStatus}
+                      participants={conversation.participants}
                     />
                   </div>
                 );
@@ -446,7 +489,7 @@ export default function ChatWindow({
                 Không có tin nhắn nào trong cuộc trò chuyện này.
               </div>
             )}
-            {chatStatus === 'pending' && (
+            {!conversation.isGroup && conversation.status === 'pending' && (
               <div className="text-center text-sm text-gray-500 mt-5 italic">
                 Tin nhắn này đang chờ cho đến khi {user.username} chấp nhận kết
                 bạn
@@ -458,7 +501,7 @@ export default function ChatWindow({
 
       {/* Input box */}
       <InputBox
-        conversationId={conversationId}
+        conversationId={conversation.id}
         settings={settings}
         currentUser={currentUser}
         showEmojiPicker={showEmojiPicker}

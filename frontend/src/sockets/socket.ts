@@ -9,6 +9,7 @@ export const connectChatSocket = (token: string) => {
     chatSocket = io(`${import.meta.env.VITE_BACKEND_URL}/chat`, {
       auth: { token },
       transports: ['websocket'],
+      reconnection: true,
     });
   }
   return chatSocket;
@@ -22,6 +23,7 @@ export const connectNotificationSocket = (token: string) => {
       {
         auth: { token },
         transports: ['websocket'],
+        reconnection: true,
       }
     );
   }

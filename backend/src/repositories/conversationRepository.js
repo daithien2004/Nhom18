@@ -22,13 +22,13 @@ export const findConversationBetweenUsers = async (userId1, userId2) => {
     isGroup: false, // chỉ chat 1-1
     participants: { $all: [userId1, userId2], $size: 2 },
   })
-    .populate({ path: 'participants', select: 'username avatar' })
+    .populate({ path: 'participants', select: 'username avatar isOnline' })
     .populate({ path: 'lastMessage' });
 };
 
 export const findConversationById = async (id) => {
   return await Conversation.findById(id)
-    .populate({ path: 'participants', select: 'username avatar' })
+    .populate({ path: 'participants', select: 'username avatar isOnline' })
     .populate({ path: 'lastMessage' });
 };
 
@@ -50,11 +50,19 @@ export const updateLastMessage = async (conversationId, messageId) => {
   );
 };
 
+export const updateStatus = async (conversationId, status) => {
+  return await Conversation.findByIdAndUpdate(
+    conversationId,
+    { status: status, updatedAt: Date.now() },
+    { new: true }
+  );
+};
+
 export const getConversationSettings = async (conversationId) => {
   const conversation = await Conversation.findById(conversationId).select(
     'settings'
   );
-  return conversation.settings;
+  return conversation?.settings || {};
 };
 
 export const updateConversationSettings = async (conversationId, settings) => {
@@ -79,6 +87,22 @@ export const addMessageReaction = async (
     );
   } // xem xét
   message.reactions.set(userId, emoji);
+  await message.save();
+  return message;
+};
+
+export const removeMessageReaction = async (
+  conversationId,
+  messageId,
+  userId
+) => {
+  const message = await Message.findById(messageId);
+  if (!message || message.conversationId.toString() !== conversationId) {
+    throw new Error(
+      'Không tìm thấy tin nhắn hoặc tin nhắn không thuộc hội thoại'
+    );
+  } // xem xét
+  message.reactions.delete(userId);
   await message.save();
   return message;
 };

@@ -92,8 +92,6 @@ const notificationSlice = createSlice({
       state.notifications = [];
       state.total = 0;
       state.loadingNotifications = false;
-      //   state.loadingMarkAsRead = false;
-      //   state.loadingMarkAllAsRead = false;
       state.error = null;
     },
   },

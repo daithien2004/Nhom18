@@ -171,9 +171,29 @@ export const addMessageReaction = createAsyncThunk(
       userId: string;
       emoji: string;
     },
-    { rejectWithValue }
+    { rejectWithValue, getState }
   ) => {
     try {
+      const state = getState() as { conversations: ConversationsState };
+      const message = state.conversations.messages[
+        payload.conversationId
+      ]?.find((m) => m.id === payload.messageId);
+
+      // Nếu đã có reaction với cùng emoji, xóa reaction
+      if (message?.reactions?.[payload.userId] === payload.emoji) {
+        await instance.delete(
+          `/conversations/${payload.conversationId}/messages/${payload.messageId}/reactions`
+        );
+        return {
+          conversationId: payload.conversationId,
+          messageId: payload.messageId,
+          userId: payload.userId,
+          reaction: {},
+          remove: true,
+        };
+      }
+
+      // Thêm hoặc thay thế reaction
       await instance.post(
         `/conversations/${payload.conversationId}/messages/${payload.messageId}/reactions`,
         {
@@ -184,10 +204,11 @@ export const addMessageReaction = createAsyncThunk(
         conversationId: payload.conversationId,
         messageId: payload.messageId,
         reaction: { [payload.userId]: payload.emoji },
+        remove: false,
       };
     } catch (err: any) {
       return rejectWithValue(
-        err.response?.data?.message || 'Failed to add reaction'
+        err.response?.data?.message || 'Failed to update reaction'
       );
     }
   }
@@ -429,15 +450,16 @@ const conversationSlice = createSlice({
     // Add message reaction
     builder
       .addCase(addMessageReaction.fulfilled, (state, action) => {
-        const { conversationId, messageId, reaction } = action.payload;
-        const messages = state.messages[conversationId];
-        if (messages) {
-          const messageIndex = messages.findIndex((m) => m.id === messageId);
-          if (messageIndex !== -1) {
-            messages[messageIndex].reactions = {
-              ...messages[messageIndex].reactions,
-              ...reaction,
-            };
+        const { conversationId, messageId, reaction, remove, userId } =
+          action.payload;
+        const messages = state.messages[conversationId] || [];
+        const message = messages.find((m) => m.id === messageId);
+        if (message) {
+          message.reactions = message.reactions || {};
+          if (userId && remove) {
+            delete message.reactions[userId];
+          } else {
+            message.reactions = { ...message.reactions, ...reaction };
           }
         }
       })

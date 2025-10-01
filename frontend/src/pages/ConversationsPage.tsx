@@ -72,7 +72,7 @@ const ConversationsPage: React.FC = () => {
                 <img
                   src={
                     conv.isGroup
-                      ? conv.groupAvatar || 'https://via.placeholder.com/48'
+                      ? conv.groupAvatar || '/group.png'
                       : conv.participants[0].avatar ||
                         'https://via.placeholder.com/48'
                   }
@@ -103,18 +103,7 @@ const ConversationsPage: React.FC = () => {
           {selectedConversation ? (
             <>
               <div ref={scrollRef}>
-                <ChatWindow
-                  user={{
-                    id: selectedConversation.participants[0].id,
-                    username: selectedConversation.participants[0].username,
-                    avatar: selectedConversation.participants[0].avatar,
-                    status:
-                      selectedConversation.participants[0].status || 'none',
-                    isOnline: selectedConversation.participants[0].isOnline,
-                  }}
-                  conversationId={selectedConversation.id}
-                  chatStatus={selectedConversation.status || 'active'} // Adjust based on your conversation status logic
-                />
+                <ChatWindow conversation={selectedConversation} />
               </div>
             </>
           ) : (

@@ -1,91 +1,145 @@
-import { useRef } from 'react';
-import type { Message } from '../types/message';
+import { useEffect, useRef } from 'react';
+import type { ChatUser, Message } from '../types/message';
 
 interface MessageItemProps {
   message: Message;
   currentUserId: string | undefined;
-  userAvatar: string | undefined;
-  senderAvatar: string | undefined;
   showReactionMenu: string | null;
   reactionEmojis: string[];
-  onMessageClick: (messageId: string) => void;
+  onMessageClick: (messageId: string | null) => void;
   onReactionClick: (messageId: string, emoji: string) => void;
   onAttachmentClick: (attachment: string) => void;
   showAvatar?: boolean;
   showSeenStatus?: boolean;
-  isLatestMessage?: boolean; // Thêm prop để xác định tin nhắn mới nhất
+  participants?: ChatUser[];
 }
 
 export default function MessageItem({
   message,
   currentUserId,
-  userAvatar,
-  senderAvatar,
   showReactionMenu,
   reactionEmojis,
   onMessageClick,
   onReactionClick,
   onAttachmentClick,
   showAvatar = true,
-  showSeenStatus = false,
+  showSeenStatus,
+  participants,
 }: MessageItemProps) {
   const reactionMenuRef = useRef<HTMLDivElement>(null);
   const isOwnMessage = message.sender.id === currentUserId;
 
-  const renderMessageStatus = () => {
-    if (!isOwnMessage) return null;
+  // Hàm tính toán số lượng mỗi emoji
+  const getReactionCounts = () => {
+    const counts: { [emoji: string]: number } = {};
+    Object.values(message.reactions || {}).forEach((emoji) => {
+      counts[emoji] = (counts[emoji] || 0) + 1;
+    });
+    return counts;
+  };
 
-    if (message.status === 'sent') {
+  const renderSentStatus = () => (
+    <div className="flex items-center justify-end mt-0.5 text-xs text-gray-400">
+      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+      </svg>
+      Đã gửi
+    </div>
+  );
+
+  const renderDeliveredStatus = () => (
+    <div className="flex items-center justify-end mt-0.5 text-xs text-gray-400">
+      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+        <path d="M15 16.2L10.8 12l-1.4 1.4L15 19 27 7l-1.4-1.4L15 16.2z" />
+      </svg>
+      Đã nhận
+    </div>
+  );
+
+  const renderSeenStatus = (
+    participants: ChatUser[] | undefined,
+    message: Message,
+    currentUserId: string | undefined
+  ) => {
+    if (!participants) {
+      // Chat 1-1
       return (
-        <div className="flex items-center justify-end mt-0.5 text-xs text-gray-400">
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
-          </svg>
-          Đã gửi
-        </div>
-      );
-    } else if (message.status === 'delivered') {
-      return (
-        <div className="flex items-center justify-end mt-0.5 text-xs text-gray-400">
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
-            <path d="M15 16.2L10.8 12l-1.4 1.4L15 19 27 7l-1.4-1.4L15 16.2z" />
-          </svg>
-          Đã nhận
-        </div>
-      );
-    } else if (message.status === 'seen' && showSeenStatus) {
-      return (
-        <div className="flex items-center justify-end mt-0.5 space-x-0.5">
-          {message.readBy
-            .filter((id) => id !== currentUserId)
-            .map((userId, index) => (
-              <img
-                key={index}
-                src={userAvatar || '/default-avatar.png'}
-                alt="Avatar"
-                className="w-3.5 h-3.5 rounded-full object-cover border border-white"
-              />
-            ))}
+        <div className="flex items-center justify-end mt-0.5">
+          <img
+            src={message.sender.avatar || '/default-avatar.png'}
+            alt={message.sender.username}
+            className="w-3.5 h-3.5 rounded-full object-cover border border-white"
+          />
         </div>
       );
     }
+
+    // Chat nhóm
+    const seenParticipants = participants.filter(
+      (p) => message.readBy.includes(p.id) && p.id !== currentUserId
+    );
+
+    return (
+      <div className="flex items-center justify-end mt-0.5 space-x-0.5">
+        {seenParticipants.map((user, index) => (
+          <img
+            key={index}
+            src={user.avatar || '/default-avatar.png'}
+            alt={user.username}
+            className="w-3.5 h-3.5 rounded-full object-cover border border-white"
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderMessageStatus = (
+    message: Message,
+    isOwnMessage: boolean,
+    showSeenStatus: boolean,
+    participants: ChatUser[] | undefined,
+    currentUserId: string | undefined
+  ) => {
+    if (!isOwnMessage) return null;
+
+    if (message.status === 'sent') return renderSentStatus();
+    if (message.status === 'delivered') return renderDeliveredStatus();
+    if (message.status === 'seen' && showSeenStatus)
+      return renderSeenStatus(participants, message, currentUserId);
+
     return null;
   };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Nếu menu đang mở và click KHÔNG nằm trong menu
+      if (
+        reactionMenuRef.current &&
+        !reactionMenuRef.current.contains(event.target as Node)
+      ) {
+        onMessageClick(null); // ẩn menu
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onMessageClick]);
 
   return (
     <div
       className={`flex ${
         isOwnMessage ? 'justify-end' : 'justify-start'
       } relative group items-end gap-1.5 py-1 px-3`}
-      onClick={() => onMessageClick(message.id)}
     >
       {/* Avatar cho tin nhắn từ người khác */}
       <div className="w-6 h-6 flex-shrink-0 mt-auto">
         {
           !isOwnMessage && showAvatar ? (
             <img
-              src={senderAvatar || '/default-avatar.png'}
+              src={message.sender.avatar || '/default-avatar.png'}
               alt={message.sender.username}
               className="w-6 h-6 rounded-full object-cover"
             />
@@ -107,7 +161,12 @@ export default function MessageItem({
           } transition-all duration-200 cursor-pointer`}
         >
           {message.text && (
-            <div className="text-sm leading-relaxed">{message.text}</div>
+            <div
+              className="text-sm leading-relaxed"
+              onClick={() => onMessageClick(message.id)}
+            >
+              {message.text}
+            </div>
           )}
 
           {(message.attachments ?? []).length > 0 && (
@@ -131,16 +190,29 @@ export default function MessageItem({
         {/* Hiển thị phản ứng */}
         {message.reactions && Object.keys(message.reactions).length > 0 && (
           <div
-            className={`mt-0.5 bg-white rounded-full px-2 py-0.5 text-sm shadow-sm border border-gray-200 ${
+            className={`flex flex-row mt-0.5 bg-white rounded-full px-2 py-0.5 text-sm shadow-sm border border-gray-200 ${
               isOwnMessage ? 'mr-1' : 'ml-1'
             }`}
           >
-            {Object.values(message.reactions).join('')}
+            {Object.entries(getReactionCounts()).map(([emoji, count]) => (
+              <span key={emoji} className="flex items-center gap-1">
+                {emoji}
+                {count > 1 && (
+                  <span className="text-xs text-gray-600">{count}</span>
+                )}
+              </span>
+            ))}
           </div>
         )}
 
         {/* Hiển thị trạng thái tin nhắn */}
-        {renderMessageStatus()}
+        {renderMessageStatus(
+          message,
+          isOwnMessage,
+          showSeenStatus ?? false,
+          participants,
+          currentUserId
+        )}
       </div>
 
       {/* Menu phản ứng */}

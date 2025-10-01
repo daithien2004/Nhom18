@@ -7,6 +7,7 @@ import {
   getConversationSettings,
   getMessages,
   getOrCreateConversation,
+  removeMessageReaction,
   searchConversation,
   sendMessage,
   updateConversationSettings,
@@ -26,7 +27,6 @@ import {
   validateQuery,
   validateBody,
 } from '../middlewares/validation.js';
-
 const router = Router();
 
 // Lấy danh sách tất cả conversation của user
@@ -83,6 +83,14 @@ router.post(
   validateParams(messageReactionParamsSchema),
   validateBody(messageReactionSchema),
   addMessageReaction
+);
+
+// Xóa reaction đã thêm
+router.delete(
+  '/:conversationId/messages/:messageId/reactions',
+  auth,
+  validateParams(messageReactionParamsSchema),
+  removeMessageReaction
 );
 
 // New endpoint: Cập nhật trạng thái tin nhắn

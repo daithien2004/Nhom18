@@ -5,7 +5,7 @@ import conversationReducer from '../store/slices/conversationSlice';
 import friendReducer from '../store/slices/friendSlice';
 import friendSearchReducer from '../store/slices/friendSearchSlice';
 import friendListSearchReducer from '../store/slices/friendListSearchSlice';
-import notidicationReducer from '../store/slices/notificationSlice';
+import notificationReducer from '../store/slices/notificationSlice';
 import storage from 'redux-persist/lib/storage';
 import {
   persistStore,
@@ -33,11 +33,20 @@ const rootReducer = combineReducers({
   friends: friendReducer,
   friendSearch: friendSearchReducer,
   friendListSearch: friendListSearchReducer,
-  notifications: notidicationReducer,
+  notifications: notificationReducer,
 });
 
+// Thêm logic reset toàn bộ store
+const resettableRootReducer = (state: any, action: any) => {
+  if (action.type === 'auth/logout') {
+    // Reset tất cả state về undefined, Redux sẽ dùng initialState
+    state = undefined;
+  }
+  return rootReducer(state, action);
+};
+
 // Wrap rootReducer với persistReducer
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(persistConfig, resettableRootReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,

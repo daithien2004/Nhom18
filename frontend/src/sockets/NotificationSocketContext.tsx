@@ -30,7 +30,10 @@ export const NotificationSocketProvider = ({
     });
 
     return () => {
-      s.disconnect();
+      // Chỉ xóa listener, không ngắt kết nối ngay
+      if (s) {
+        s.off('notification'); // Xóa listener để tránh rò rỉ bộ nhớ
+      }
     };
   }, [token]);
 

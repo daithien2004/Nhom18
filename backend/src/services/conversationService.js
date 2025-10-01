@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import * as conversationRepo from '../repositories/conversationRepository.js';
 import * as messageRepo from '../repositories/messageRepository.js';
+import ApiError from '../utils/apiError.js';
+import { StatusCodes } from 'http-status-codes';
 
 export const createConversation = async ({
   participants,
@@ -80,10 +82,30 @@ export const addMessageReaction = async (
   );
 };
 
+export const removeMessageReaction = async (
+  conversationId,
+  messageId,
+  userId
+) => {
+  return await conversationRepo.removeMessageReaction(
+    conversationId,
+    messageId,
+    userId
+  );
+};
+
 export const searchConversations = async (userId, query) => {
   const conversations = await conversationRepo.findConversationsByQuery(
     userId,
     query
+  );
+  return conversations;
+};
+
+export const updateConversationStatus = async (conversationId, status) => {
+  const conversations = await conversationRepo.updateStatus(
+    conversationId,
+    status
   );
   return conversations;
 };

@@ -1,5 +1,13 @@
 import { ChatUser } from '../pages/FriendsPage';
 
+export interface ChatUser {
+  id: string;
+  username: string;
+  avatar?: string;
+  status: 'active' | 'pending' | 'none';
+  isOnline?: boolean;
+}
+
 export interface Message {
   id: string;
   sender: {
@@ -29,5 +37,5 @@ export interface Conversation {
   groupName?: string;
   groupAvatar?: string;
   updatedAt?: string;
-  status: string;
+  status: 'active' | 'pending' | 'none';
 }

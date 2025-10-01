@@ -3,7 +3,6 @@ import { sendError } from '../utils/response.js';
 
 // Middleware xử lý lỗi tập trung trong ứng dụng Back-end NodeJS (ExpressJS)
 export const errorHandling = (err, req, res, next) => {
-  console.log(err);
   // Nếu dev không cẩn thận thiếu statusCode thì mặc định sẽ để code 500 INTERNAL_SERVER_ERROR
   if (!err.statusCode) err.statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 

@@ -23,7 +23,10 @@ export const ChatSocketProvider = ({
     setSocket(s);
 
     return () => {
-      s.disconnect();
+      // Chỉ xóa listener, để reconnection xử lý kết nối
+      if (s) {
+        s.off(); // Xóa tất cả listener để tránh rò rỉ bộ nhớ
+      }
     };
   }, [token]);
 

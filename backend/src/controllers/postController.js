@@ -46,7 +46,9 @@ export const toggleLikePost = asyncHandler(async (req, res) => {
       type: 'like',
       metadata: {
         postId,
-        postTitle: post.title || post.content.slice(0, 30) + '...', // Preview tiêu đề
+        postTitle:
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
+          '...',
         postThumbnail: post.images?.[0] || null,
       },
     });
@@ -90,7 +92,9 @@ export const createComment = asyncHandler(async (req, res) => {
       type: 'comment',
       metadata: {
         postId,
-        postTitle: post.title || post.content.slice(0, 30) + '...',
+        postTitle:
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
+          '...',
         postThumbnail: post.images?.[0] || null,
         comment: content,
       },
@@ -137,7 +141,9 @@ export const sharePost = asyncHandler(async (req, res) => {
       type: 'share',
       metadata: {
         postId,
-        postTitle: post.title || post.content.slice(0, 30) + '...',
+        postTitle:
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
+          '...',
         postThumbnail: post.images?.[0] || null,
       },
     });

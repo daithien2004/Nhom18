@@ -63,12 +63,14 @@ export const updateMessageStatus = async (
   // Cập nhật trạng thái
   if (status === 'delivered' && message.status === 'sent') {
     message.status = 'delivered';
-  } else if (
-    status === 'seen' &&
-    ['sent', 'delivered'].includes(message.status)
-  ) {
-    message.status = 'seen';
-    // Thêm userId vào readBy nếu chưa có
+  } else if (status === 'seen') {
+    // CHO PHÉP CẬP NHẬT readBy BAT KỂ STATUS LÀ GÌ
+    // Chỉ cập nhật status nếu chưa phải 'seen'
+    if (['sent', 'delivered'].includes(message.status)) {
+      message.status = 'seen';
+    }
+
+    // Luôn thêm userId vào readBy nếu chưa có (cho chat nhóm)
     if (!message.readBy.map((id) => id.toString()).includes(userId)) {
       message.readBy.push(userId);
     }

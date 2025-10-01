@@ -9,7 +9,7 @@ interface ChatHeaderProps {
     id: string;
     username: string;
     avatar?: string;
-    status: 'friend' | 'pending' | 'none';
+    status: 'active' | 'pending' | 'none';
     isOnline?: boolean;
     isGroup?: boolean;
   };
@@ -89,7 +89,7 @@ export default function ChatHeader({
           <span className="text-xs text-gray-500">
             {user.isGroup
               ? 'Nhóm'
-              : user.status === 'friend'
+              : user.status === 'active'
               ? 'Bạn bè'
               : 'Người lạ'}
           </span>
@@ -150,7 +150,7 @@ export default function ChatHeader({
         )}
       </div>
 
-      {user.status === 'none' && (
+      {user.status === 'pending' && (
         <button
           onClick={handleAddFriend}
           disabled={isPending}

@@ -11,8 +11,6 @@ export const createConversation = asyncHandler(async (req, res) => {
     participants.push(req.user.id);
   }
 
-  console.log(participants);
-
   const conversation = await conversationService.createConversation({
     participants,
     isGroup,
@@ -135,10 +133,34 @@ export const addMessageReaction = asyncHandler(async (req, res) => {
       conversationId,
       messageId,
       reaction: { [userId]: emoji },
+      remove: false,
     });
   }
 
   return sendSuccess(res, message, 'Thêm reaction thành công');
+});
+
+export const removeMessageReaction = asyncHandler(async (req, res) => {
+  const { conversationId, messageId } = req.params;
+  const userId = req.user.id;
+  const message = await conversationService.removeMessageReaction(
+    conversationId,
+    messageId,
+    userId
+  );
+
+  // Emit sự kiện WebSocket
+  const chatIo = req.app.get('chatIo');
+  if (chatIo) {
+    chatIo.to(conversationId).emit('reactionRemoved', {
+      conversationId,
+      messageId,
+      reaction: {},
+      remove: true,
+    });
+  }
+
+  return sendSuccess(res, message, 'Xóa reaction thành công');
 });
 
 export const updateMessageStatus = asyncHandler(async (req, res) => {

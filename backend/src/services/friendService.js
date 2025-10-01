@@ -157,7 +157,7 @@ export const searchAllUsers = async (userId, query) => {
   const users = await friendRepo.findAllUsersByQuery(userId, query);
   return users.map((u) => {
     let status = 'none';
-    if (me.friends.includes(u.id)) status = 'friend';
+    if (me.friends.includes(u.id)) status = 'active';
     else if (
       me.friendRequests.some(
         (r) => r.from.equals(u.id) && r.status === 'pending'
@@ -188,6 +188,6 @@ export const searchFriends = async (userId, query) => {
     username: u.username,
     avatar: u.avatar,
     isOnline: u.isOnline,
-    status: 'friend',
+    status: 'active',
   }));
 };

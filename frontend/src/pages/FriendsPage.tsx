@@ -21,20 +21,8 @@ import {
 } from '../store/slices/conversationSlice';
 import instance from '../api/axiosInstant';
 import { Dialog, Transition } from '@headlessui/react';
-import type { Conversation } from '../types/message';
-
-export interface ChatUser {
-  id: string;
-  username: string;
-  avatar?: string;
-  groupName?: string;
-  groupAvatar?: string;
-  status: 'friend' | 'pending' | 'none';
-  isOnline?: boolean;
-  conversationId: string;
-  chatStatus: string;
-  isGroup?: boolean;
-}
+import type { ChatUser, Conversation } from '../types/message';
+import { toast } from 'react-toastify';
 
 export default function FriendsPage() {
   const dispatch = useAppDispatch();
@@ -48,7 +36,8 @@ export default function FriendsPage() {
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [activeChatUser, setActiveChatUser] = useState<ChatUser | null>(null);
+  const [activeConversation, setActiveConversation] =
+    useState<Conversation | null>(null);
 
   // State cho modal tạo nhóm chat
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
@@ -93,30 +82,15 @@ export default function FriendsPage() {
   // Handle click on user or group
   const handleUserOrGroupClick = async (item: ChatUser | Conversation) => {
     try {
-      let chatUser: ChatUser;
-      if ('isGroup' in item) {
-        // Group conversation
-        chatUser = {
-          id: item.id,
-          username: item.groupName || 'Nhóm chat',
-          avatar: item.groupAvatar,
-          status: 'friend',
-          conversationId: item.id,
-          chatStatus: item.status || 'active',
-          isGroup: true,
-        };
+      let conversation: Conversation;
+      if ('isGroup' in item && item.isGroup) {
+        conversation = item as Conversation;
       } else {
-        // User
-        const res = await instance.get(`/conversations/1on1/${item.id}`);
-        const conversation = res.data;
-        chatUser = {
-          ...item,
-          conversationId: conversation.id,
-          chatStatus: conversation.status,
-          isGroup: false,
-        };
+        const user = item as ChatUser;
+        const res = await instance.get(`/conversations/1on1/${user.id}`);
+        conversation = res.data;
       }
-      setActiveChatUser(chatUser);
+      setActiveConversation(conversation);
       setShowDropdown(false);
       setSearchText('');
       dispatch(clearResults());
@@ -167,15 +141,7 @@ export default function FriendsPage() {
       });
 
       const newConversation = res.data;
-      setActiveChatUser({
-        id: `group-${newConversation.id}`,
-        username: newConversation.groupName,
-        avatar: newConversation.groupAvatar,
-        status: 'friend' as const,
-        conversationId: newConversation.id,
-        chatStatus: newConversation.status,
-        isGroup: true,
-      });
+      setActiveConversation(newConversation);
 
       // Reset modal
       setGroupName('');
@@ -185,10 +151,9 @@ export default function FriendsPage() {
       dispatch(clearResults());
       setShowCreateGroupModal(false);
 
-      alert('Tạo nhóm chat thành công!');
+      toast.success('Tạo nhóm chat thành công!');
     } catch (err) {
-      console.error('Lỗi khi tạo nhóm chat:', err);
-      alert('Lỗi khi tạo nhóm chat');
+      toast.error('Lỗi khi tạo nhóm chat');
     }
   };
 
@@ -270,7 +235,7 @@ export default function FriendsPage() {
                           {user.username}
                         </span>
                         <span className="text-xs text-gray-500 truncate">
-                          {user.status === 'friend'
+                          {user.status === 'active'
                             ? 'Bạn bè'
                             : user.status === 'pending'
                             ? 'Đang chờ'
@@ -292,7 +257,7 @@ export default function FriendsPage() {
           <button
             onClick={() => {
               setActiveTab('friends');
-              setActiveChatUser(null);
+              setActiveConversation(null);
             }}
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
               activeTab === 'friends'
@@ -306,7 +271,7 @@ export default function FriendsPage() {
           <button
             onClick={() => {
               setActiveTab('requests');
-              setActiveChatUser(null);
+              setActiveConversation(null);
             }}
             className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
               activeTab === 'requests'
@@ -329,24 +294,11 @@ export default function FriendsPage() {
 
       <main className="flex-1 ml-64 p-5 overflow-y-auto">
         <div className="max-w-2xl mx-auto space-y-6">
-          {activeChatUser ? (
-            <ChatWindow
-              user={activeChatUser}
-              conversationId={activeChatUser.conversationId}
-              chatStatus={activeChatUser.chatStatus}
-            />
+          {activeConversation ? (
+            <ChatWindow conversation={activeConversation} />
           ) : activeTab === 'friends' ? (
             <FriendList
-              onFriendClick={(friend) => {
-                const chatUser: ChatUser = {
-                  ...friend,
-                  status: 'friend',
-                  conversationId: '',
-                  chatStatus: '',
-                  isGroup: false,
-                };
-                handleUserOrGroupClick(chatUser);
-              }}
+              onFriendClick={(friend) => handleUserOrGroupClick(friend)}
             />
           ) : (
             <FriendRequests />

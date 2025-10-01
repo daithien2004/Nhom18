@@ -2,6 +2,7 @@ import * as friendService from '../services/friendService.js';
 import { sendSuccess } from '../utils/response.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { createNotification } from '../services/notificationService.js';
+import * as conversationService from '../services/conversationService.js';
 
 export const getFriends = asyncHandler(async (req, res) => {
   const friends = await friendService.getFriends(req.user.id);
@@ -59,6 +60,13 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
   const currentUserId = req.user.id;
   const { fromUserId } = req.body;
   await friendService.acceptFriendRequest(currentUserId, fromUserId);
+
+  const conversation = await conversationService.getConversationBetweenUsers(
+    currentUserId,
+    fromUserId
+  );
+
+  await conversationService.updateConversationStatus(conversation.id, 'active');
 
   const notification = await createNotification({
     senderId: req.user.id, // Người chấp nhận gửi thông báo cho người gửi request

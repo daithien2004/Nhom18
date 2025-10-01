@@ -6,18 +6,11 @@ import {
   clearResults,
   searchFriends,
 } from '../store/slices/friendListSearchSlice';
-
-// Định nghĩa interface cho Friend
-interface Friend {
-  id: string;
-  username: string;
-  avatar?: string;
-  isOnline?: boolean;
-}
+import type { ChatUser } from '../types/message';
 
 // Thêm prop onFriendClick vào FriendList
 interface FriendListProps {
-  onFriendClick: (friend: Friend) => void;
+  onFriendClick: (friend: ChatUser) => void;
 }
 
 export default function FriendList({ onFriendClick }: FriendListProps) {
