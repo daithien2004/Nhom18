@@ -44,8 +44,6 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
   const [page, setPage] = useState(1);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  console.log(conversation);
-
   const settings = useAppSelector(
     (state) => state.conversations.settings[conversation.id]
   ) || {

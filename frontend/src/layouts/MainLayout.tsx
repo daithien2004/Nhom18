@@ -10,6 +10,7 @@ import {
   Home,
   Bookmark,
   BarChart3,
+  History,
 } from 'lucide-react';
 import { persistor } from '../store/store';
 
@@ -90,6 +91,15 @@ const MainLayout: React.FC = () => {
                   isActive('/statistics') ? 'text-blue-600' : 'text-gray-800'
                 }`}
                 onClick={() => navigate('/statistics')}
+              />
+            </div>
+            <div className="relative group">
+              <History
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/activities') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => navigate('/activities')}
               />
             </div>
           </div>

@@ -8,12 +8,18 @@ export const createConversation = async (
   groupAvatar,
   status = 'pending'
 ) => {
-  return await Conversation.create({
+  const conversation = await Conversation.create({
     participants,
     isGroup,
     groupName,
     groupAvatar,
     status,
+  });
+
+  // Populate participants sau khi tạo
+  return await Conversation.findById(conversation.id).populate({
+    path: 'participants',
+    select: 'username avatar isOnline',
   });
 };
 

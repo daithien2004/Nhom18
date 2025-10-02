@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import * as postRepo from '../repositories/postRepository.js';
 import * as commentRepo from '../repositories/commentRepository.js';
 import Post from '../models/Post.js';
+import * as activityRepo from '../repositories/activityRepository.js';
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
@@ -145,8 +146,23 @@ export const toggleLikePost = async (postId, userId) => {
 
   if (isLiked) {
     post.likes = post.likes.filter((id) => id.toString() !== userId);
+    // xóa activity like
+    const existing = await activityRepo.findExistingActivity({
+      actor: userId,
+      post: postId,
+      type: 'like',
+    });
+    if (existing) {
+      await activityRepo.deleteActivity(existing.id);
+    }
   } else {
     post.likes.push(userId);
+    await activityRepo.createActivity({
+      actor: userId,
+      post: postId,
+      postOwner: post.author,
+      type: 'like',
+    });
   }
 
   await post.save();
@@ -180,6 +196,14 @@ export const createComment = async ({ postId, userId, content }) => {
 
   post.comments.push(comment.id);
   await post.save();
+
+  await activityRepo.createActivity({
+    actor: userId,
+    post: postId,
+    postOwner: post.author,
+    type: 'comment',
+    comment: comment.id,
+  });
 
   return await commentRepo.findCommentById(comment.id);
 };
@@ -231,15 +255,4 @@ export const checkIfLiked = async (postId, userId) => {
   const isLiked = post.likes.some((u) => u.id.toString() === userId);
 
   return isLiked;
-
-  // return {
-  //   postId: post.id.toString(),
-  //   isLiked,
-  //   likeCount: post.likes.length,
-  //   likes: post.likes.map((user) => ({
-  //     userId: user.id.toString(),
-  //     username: user.username,
-  //     avatar: user.avatar,
-  //   })),
-  // };
 };

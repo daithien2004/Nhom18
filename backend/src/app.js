@@ -14,6 +14,7 @@ import conversationRoutes from './routes/conversationRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import statisticRoutes from './routes/statisticRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
 
 // Middlewares and Socket handlers
 import { initializeSocket } from './sockets/socket.js';
@@ -40,6 +41,7 @@ app.use('/conversations', conversationRoutes);
 app.use('/friends', friendRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/statistics', statisticRoutes);
+app.use('/activities', activityRoutes);
 
 app.use(errorHandling);
 

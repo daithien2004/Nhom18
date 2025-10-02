@@ -11,6 +11,7 @@ import ChatWindow from '../components/ChatWindow';
 
 const ConversationsPage: React.FC = () => {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { conversations, selectedConversationId, loadingConversations } =
     useAppSelector((state) => state.conversations);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -73,8 +74,8 @@ const ConversationsPage: React.FC = () => {
                   src={
                     conv.isGroup
                       ? conv.groupAvatar || '/group.png'
-                      : conv.participants[0].avatar ||
-                        'https://via.placeholder.com/48'
+                      : conv.participants.find((p) => p.id !== currentUser!.id)
+                          ?.avatar || 'https://via.placeholder.com/48'
                   }
                   alt=""
                   className="w-10 h-10 rounded-full object-cover mr-3"

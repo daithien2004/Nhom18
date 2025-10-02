@@ -6,6 +6,7 @@ import friendReducer from '../store/slices/friendSlice';
 import friendSearchReducer from '../store/slices/friendSearchSlice';
 import friendListSearchReducer from '../store/slices/friendListSearchSlice';
 import notificationReducer from '../store/slices/notificationSlice';
+import activitiesReducer from '../store/slices/activitySlice';
 import storage from 'redux-persist/lib/storage';
 import {
   persistStore,
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   friendSearch: friendSearchReducer,
   friendListSearch: friendListSearchReducer,
   notifications: notificationReducer,
+  activities: activitiesReducer,
 });
 
 // Thêm logic reset toàn bộ store
