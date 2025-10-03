@@ -79,6 +79,7 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
       });
   };
 
+  // Click ra ngoài icon hoặc menu → propagation xảy ra → handleClickOutside gọi → menu đóng.
   useEffect(() => {
     const handleClickOutside = () => setMenuOpenId(null);
     window.addEventListener("click", handleClickOutside);

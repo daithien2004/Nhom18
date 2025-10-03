@@ -196,12 +196,6 @@ const friendSlice = createSlice({
       .addCase(unFriend.fulfilled, (state, action) => {
         const targetId = action.payload;
         state.friends = state.friends.filter((f) => f.id !== targetId);
-        state.outgoingRequests = state.outgoingRequests.filter(
-          (r) => r.id !== targetId
-        );
-        state.incomingRequests = state.incomingRequests.filter(
-          (r) => r.id !== targetId
-        );
       });
   },
 });
