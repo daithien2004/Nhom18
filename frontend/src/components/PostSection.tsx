@@ -1,32 +1,39 @@
-import React, { useEffect, useCallback, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
-import PostMenu from './PostMenu';
-import SavePostModal from './SavePostModal';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import type { Post, Tab } from '../types/post';
-import SharePostModal from './SharePostModal';
-import ImageGallery from './ImageGallery';
+import React, { useEffect, useCallback, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
+import PostMenu from "./PostMenu";
+import SavePostModal from "./SavePostModal";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import type { Post, Tab } from "../types/post";
+import SharePostModal from "./SharePostModal";
+import ImageGallery from "./ImageGallery";
 import {
   addNewPost,
   fetchPostsThunk,
   resetPosts,
   toggleLike,
-} from '../store/slices/postSlice';
+} from "../store/slices/postSlice";
 
 interface PostSectionProps {
-  tab: Tab;
+  tab?: Tab;
   newPost?: Post | null;
+  isMyPosts?: boolean;
+  showTabs?: boolean;
 }
 
-const LIMIT = 3;
+const LIMIT = 20;
 
 interface User {
   username: string;
   avatar: string;
 }
 
-const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
+const PostSection: React.FC<PostSectionProps> = ({
+  tab,
+  newPost,
+  isMyPosts = false,
+  showTabs = true,
+}) => {
   const dispatch = useAppDispatch();
   const { posts, page, hasMore, initialLoading, loadingMore, error, likes } =
     useAppSelector((state) => state.posts);
@@ -40,17 +47,29 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
   useEffect(() => {
     dispatch(resetPosts());
-    dispatch(fetchPostsThunk({ tab, page: 1, limit: LIMIT, replace: true }));
-  }, [tab, dispatch]);
+    const fetchArgs = {
+      page: 1,
+      limit: LIMIT,
+      replace: true,
+      ...(isMyPosts ? { isMyPosts: true } : { tab }),
+    };
+    dispatch(fetchPostsThunk(fetchArgs));
+  }, [tab, dispatch, isMyPosts]);
 
   useEffect(() => {
     if (!newPost) return;
-    if (tab === 'recent') {
+    if (!isMyPosts && tab === "recent") {
       dispatch(addNewPost(newPost));
     } else {
-      dispatch(fetchPostsThunk({ tab, page: 1, limit: LIMIT, replace: true }));
+      const fetchArgs = {
+        page: 1,
+        limit: LIMIT,
+        replace: true,
+        ...(isMyPosts ? { isMyPosts: true } : { tab }),
+      };
+      dispatch(fetchPostsThunk(fetchArgs));
     }
-  }, [newPost, tab, dispatch]);
+  }, [newPost, tab, dispatch, isMyPosts]);
 
   const lastPostRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -59,19 +78,18 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
 
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
-          dispatch(
-            fetchPostsThunk({
-              tab,
-              page: page + 1,
-              limit: LIMIT,
-              replace: false,
-            })
-          );
+          const fetchArgs = {
+            page: page + 1,
+            limit: LIMIT,
+            replace: false,
+            ...(isMyPosts ? { isMyPosts: true } : { tab }),
+          };
+          dispatch(fetchPostsThunk(fetchArgs));
         }
       });
       observer.current.observe(node);
     },
-    [loadingMore, hasMore, tab, page, dispatch]
+    [loadingMore, hasMore, tab, page, dispatch, isMyPosts]
   );
 
   const toggleLikeHandler = (e: React.MouseEvent, postId: string) => {
@@ -95,7 +113,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
           {/* Header */}
           <div className="flex items-center gap-3">
             <img
-              src={post.author.avatar || '/default-avatar.png'}
+              src={post.author.avatar || "/default-avatar.png"}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -123,7 +141,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
               <div className="mt-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
                 <div className="flex items-center gap-2 mb-2">
                   <img
-                    src={post.sharedFrom.author.avatar || '/default-avatar.png'}
+                    src={post.sharedFrom.author.avatar || "/default-avatar.png"}
                     alt="avatar"
                     className="w-6 h-6 rounded-full object-cover"
                   />
@@ -145,8 +163,8 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                     size={20}
                     className={`${
                       likes[post.sharedFrom.id]?.isLiked
-                        ? 'text-red-500 fill-red-500'
-                        : 'text-gray-600'
+                        ? "text-red-500 fill-red-500"
+                        : "text-gray-600"
                     } transition-colors duration-200`}
                   />
                   <span className="text-sm font-medium">
@@ -170,8 +188,8 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 size={20}
                 className={`${
                   likes[post.id]?.isLiked
-                    ? 'text-red-500 fill-red-500'
-                    : 'text-gray-600'
+                    ? "text-red-500 fill-red-500"
+                    : "text-gray-600"
                 } transition-colors duration-200`}
               />
               <span className="text-sm font-medium">
@@ -194,7 +212,7 @@ const PostSection: React.FC<PostSectionProps> = ({ tab, newPost }) => {
                 setShowShareModal(true);
                 setShareUser({
                   username: post.author.username,
-                  avatar: post.author.avatar || '/default-avatar.png',
+                  avatar: post.author.avatar || "/default-avatar.png",
                 });
               }}
               className="flex-1 flex justify-center items-center gap-2 py-2 px-4 hover:bg-gray-100 rounded-lg transition-colors duration-200"

@@ -1,18 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import React, { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   fetchProfile,
   updateProfileThunk,
   updateAvatarThunk,
   updateCoverPhotoThunk,
-} from '../store/thunks/authThunks';
-import { Edit, Loader2 } from 'lucide-react';
+} from "../store/thunks/authThunks";
+import { Edit, Loader2, ImageIcon } from "lucide-react";
+import PostSection from "../components/PostSection";
+import {
+  resetPosts,
+  fetchPostsThunk,
+  createPost,
+} from "../store/slices/postSlice";
+import instance from "../api/axiosInstant";
+import type { Post } from "../types/post";
+import { toast } from "react-toastify";
 
 const ProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state) => state.auth);
+  const { isCreating, createError } = useAppSelector((state) => state.posts);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<any>({ gender: 'Other' });
+  const [formData, setFormData] = useState<any>({ gender: "Other" });
+  const [content, setContent] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+  const [newPost, setNewPost] = useState<Post | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -20,7 +35,11 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (user) setFormData(user);
-  }, [user]);
+    dispatch(resetPosts());
+    dispatch(
+      fetchPostsThunk({ page: 1, limit: 20, replace: true, isMyPosts: true })
+    );
+  }, [user, dispatch]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -33,294 +52,354 @@ const ProfilePage: React.FC = () => {
     });
   };
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const uploadedUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const fd = new FormData();
+      fd.append("image", file);
+      try {
+        const res = await instance.post("/upload", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        uploadedUrls.push(res.data.url);
+      } catch (err) {
+        toast.error("Tải ảnh lên thất bại!");
+      }
+    }
+    if (uploadedUrls.length > 0) {
+      setImages((prev) => [...prev, ...uploadedUrls]);
+      toast.success(`Tải lên ${uploadedUrls.length} ảnh thành công!`);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!content && images.length === 0) return;
+    try {
+      const result = await dispatch(createPost({ content, images })).unwrap();
+      setContent("");
+      setImages([]);
+      setNewPost(result);
+      setIsModalOpen(false);
+      toast.success("Đăng bài thành công!");
+      dispatch(resetPosts());
+      dispatch(
+        fetchPostsThunk({ page: 1, limit: 20, replace: true, isMyPosts: true })
+      );
+    } catch {
+      toast.error("Đăng bài thất bại!");
+    }
+  };
+
   if (loading.fetchProfile) {
     return (
       <div className="flex items-center justify-center py-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Loader2 className="animate-spin w-4 h-4" />
-          Loading...
-        </div>
+        <Loader2 className="animate-spin w-5 h-5 mr-2 text-gray-500" />
+        Loading...
       </div>
     );
   }
 
   return (
     <div className="flex-1 ml-20 p-5 overflow-y-auto">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-white rounded-2xl shadow-md p-6">
-          {/* Header profile */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">Profile</h2>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="flex items-center gap-2 text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-1 transition-all duration-300"
-            >
-              <Edit size={16} />
-              {isEditing ? 'Cancel' : 'Edit'}
-            </button>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Cover + Avatar */}
+        <div className="relative bg-white rounded-lg shadow">
+          <div className="h-56 w-full">
+            <img
+              src={
+                user?.coverPhoto ||
+                "https://cdn.xtmobile.vn/vnt_upload/news/06_2024/hinh-nen-may-tinh-de-thuong-cho-nu-8-xtmobile.jpg"
+              }
+              alt="Cover"
+              className="w-full h-full object-cover rounded-t-lg"
+            />
+            {isEditing && (
+              <label className="absolute bottom-3 right-3 bg-white px-3 py-1 rounded-lg shadow cursor-pointer text-sm text-gray-600 hover:bg-gray-100">
+                Đổi ảnh bìa
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      dispatch(updateCoverPhotoThunk(e.target.files[0]));
+                    }
+                  }}
+                />
+              </label>
+            )}
           </div>
 
-          {/* Cover + Avatar */}
-          <div className="relative w-full">
-            {/* Cover */}
-            <div className="h-40 w-full bg-gray-100 overflow-hidden relative rounded-2xl shadow-md">
-              {user?.coverPhoto ? (
-                <img
-                  src={user.coverPhoto}
-                  alt="Cover"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src="https://cdn.xtmobile.vn/vnt_upload/news/06_2024/hinh-nen-may-tinh-de-thuong-cho-nu-8-xtmobile.jpg"
-                  alt="Default Cover"
-                  className="w-full h-full object-cover"
-                />
-              )}
+          <div className="absolute left-6 -bottom-16">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full border-4 border-white shadow overflow-hidden">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="flex items-center justify-center w-full h-full text-4xl bg-gray-100 text-gray-600">
+                    {user?.username?.charAt(0)?.toUpperCase()}
+                  </span>
+                )}
+              </div>
               {isEditing && (
-                <label className="absolute bottom-2 right-2 bg-white px-3 py-1 rounded-lg shadow-md cursor-pointer hover:bg-gray-100 text-sm text-gray-600 transition-all duration-300">
-                  Change Cover
+                <label className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100">
                   <input
                     type="file"
                     className="hidden"
                     accept="image/*"
                     onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        dispatch(updateCoverPhotoThunk(e.target.files[0]));
+                      if (e.target.files?.[0]) {
+                        dispatch(updateAvatarThunk(e.target.files[0]));
                       }
                     }}
                   />
+                  <ImageIcon size={16} />
                 </label>
               )}
             </div>
-
-            {/* Avatar */}
-            <div className="absolute left-6 -bottom-12">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full shadow-md overflow-hidden">
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt="Avatar"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex items-center justify-center w-full h-full text-3xl text-gray-600 bg-gray-100">
-                      {user?.username?.charAt(0)?.toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                {isEditing && (
-                  <label className="absolute bottom-0 right-0 translate-x-2 translate-y-2 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100 transition-all duration-300">
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          dispatch(updateAvatarThunk(e.target.files[0]));
-                        }
-                      }}
-                    />
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 7h2l2-3h10l2 3h2a1 1 0 011 1v11a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 11a3 3 0 100 6 3 3 0 000-6z"
-                      />
-                    </svg>
-                  </label>
-                )}
-              </div>
-            </div>
           </div>
+        </div>
 
-          <div className="mt-16 ml-6" />
+        {/* Header */}
+        <div className="mt-20 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">{user?.username}</h1>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="flex items-center gap-2 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-50"
+          >
+            <Edit size={16} />
+            {isEditing ? "Hủy" : "Chỉnh sửa"}
+          </button>
+        </div>
 
-          {/* Profile Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Layout 2 cột */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          {/* Cột trái: Thông tin cá nhân */}
+          <div className="bg-white rounded-lg shadow p-4 space-y-3">
+            <h2 className="font-semibold mb-2 text-lg text-center">
+              Thông tin cá nhân
+            </h2>
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Username
-              </label>
+              <span className="font-medium">Username: </span>
               {isEditing ? (
                 <input
                   type="text"
                   name="username"
-                  value={formData.username || ''}
+                  value={formData.username || ""}
                   onChange={handleChange}
-                  className="p-3 bg-gray-100 border-none rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+                  className="mt-1 w-full p-2 border rounded-lg"
                 />
               ) : (
-                <p className="p-3 bg-gray-100 rounded-lg text-gray-800">
-                  {user?.username}
-                </p>
+                <span>{user?.username}</span>
               )}
             </div>
-
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Email
-              </label>
-              <p className="p-3 bg-gray-100 rounded-lg text-gray-800">
-                {user?.email}
-              </p>
+              <span className="font-medium">Email: </span>
+              <span>{user?.email}</span>
             </div>
-
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Phone
-              </label>
-              <p className="p-3 bg-gray-100 rounded-lg text-gray-800">
-                {user?.phone || 'Not provided'}
-              </p>
+              <span className="font-medium">Phone: </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone || ""}
+                  onChange={handleChange}
+                  className="mt-1 w-full p-2 border rounded-lg"
+                />
+              ) : (
+                <span>{user?.phone || "Chưa có"}</span>
+              )}
             </div>
-
             {/* Gender */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Gender
-              </label>
+              <span className="font-medium">Gender: </span>
               {isEditing ? (
                 <select
                   name="gender"
-                  value={formData.gender}
+                  value={formData.gender || "Other"}
                   onChange={handleChange}
-                  className="p-3 bg-gray-100 border-none rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+                  className="mt-1 w-full p-2 border rounded-lg"
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="Male">Nam</option>
+                  <option value="Female">Nữ</option>
+                  <option value="Other">Khác</option>
                 </select>
               ) : (
-                <p className="p-3 bg-gray-100 rounded-lg text-gray-800 capitalize">
-                  {user?.gender || 'Not specified'}
-                </p>
+                <span>{user?.gender || "Other"}</span>
               )}
             </div>
-
             {/* Birthday */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Birthday
-              </label>
+              <span className="font-medium">Birthday: </span>
               {isEditing ? (
                 <input
                   type="date"
                   name="birthday"
-                  value={formData.birthday || ''}
+                  value={formData.birthday || ""}
                   onChange={handleChange}
-                  className="p-3 bg-gray-100 border-none rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+                  className="mt-1 w-full p-2 border rounded-lg"
                 />
               ) : (
-                <p className="p-3 bg-gray-100 rounded-lg text-gray-800">
+                <span>
                   {user?.birthday
                     ? new Date(user.birthday).toLocaleDateString()
-                    : 'Not provided'}
-                </p>
+                    : "Chưa có"}
+                </span>
+              )}
+            </div>
+            {/* Bio */}
+            <div>
+              <span className="font-medium">Bio: </span>
+              {isEditing ? (
+                <textarea
+                  name="bio"
+                  value={formData.bio || ""}
+                  onChange={handleChange}
+                  className="mt-1 w-full p-2 border rounded-lg resize-none"
+                  rows={3}
+                />
+              ) : (
+                <p>{user?.bio || "Chưa có tiểu sử"}</p>
               )}
             </div>
 
-            {/* Verification Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Verification Status
-              </label>
-              <p className="p-3 bg-gray-100 rounded-lg">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    user?.isVerified
-                      ? 'bg-green-50 text-green-600'
-                      : 'bg-red-50 text-red-600'
-                  }`}
+            {/* Save buttons */}
+            {isEditing && (
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                 >
-                  {user?.isVerified ? 'Verified' : 'Not Verified'}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-600 mb-1">
-              Bio
-            </label>
-            {isEditing ? (
-              <textarea
-                name="bio"
-                value={formData.bio || ''}
-                onChange={handleChange}
-                className="p-3 bg-gray-100 border-none rounded-lg w-full min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
-              />
-            ) : (
-              <p className="p-3 bg-gray-100 rounded-lg text-gray-800 min-h-[100px]">
-                {user?.bio || 'No bio provided'}
-              </p>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    dispatch(updateProfileThunk(formData));
+                    setIsEditing(false);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Account Info */}
-          <div className="mt-8 pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Account Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Member since:</span>
-                <span className="ml-2 text-gray-800">
-                  {user?.createdAt
-                    ? new Date(user.createdAt).toLocaleDateString()
-                    : 'N/A'}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-600">Last updated:</span>
-                <span className="ml-2 text-gray-800">
-                  {user?.updatedAt
-                    ? new Date(user.updatedAt).toLocaleDateString()
-                    : 'N/A'}
-                </span>
+          {/* Cột phải: tạo bài viết + bài viết */}
+          <div className="md:col-span-2 space-y-4">
+            {/* Tạo post */}
+            <div className="bg-white p-4 rounded-lg shadow">
+              <div className="flex gap-3">
+                <img
+                  src={user?.avatar || "https://via.placeholder.com/48"}
+                  alt="avatar"
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div
+                  className="flex-1 bg-gray-100 rounded-full px-4 py-2 cursor-pointer hover:bg-gray-200"
+                  onClick={() => setIsModalOpen(true)}
+                >
+                  Bạn đang nghĩ gì?
+                </div>
               </div>
             </div>
-          </div>
 
-          {isEditing && (
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100 transition-all duration-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  dispatch(updateProfileThunk(formData));
-                  setIsEditing(false);
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300"
-              >
-                Save
-              </button>
-            </div>
-          )}
+            {/* Bài viết */}
+            <PostSection isMyPosts newPost={newPost} showTabs={false} />
+          </div>
         </div>
       </div>
+
+      {/* Modal tạo post */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/70 z-50"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-4">Tạo bài viết</h2>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full p-2 border rounded-lg resize-none bg-gray-100"
+              placeholder="Bạn đang nghĩ gì thế?"
+              rows={4}
+            />
+            <div className="flex justify-between mt-2">
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100"
+              >
+                <ImageIcon size={18} /> Thêm ảnh
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {images.map((img, i) => (
+                  <div key={i} className="relative group">
+                    <img
+                      src={img}
+                      alt="preview"
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() =>
+                        setImages((prev) => prev.filter((_, idx) => idx !== i))
+                      }
+                      className="absolute top-1 right-1 bg-black bg-opacity-60 text-white w-6 h-6 rounded-full hidden group-hover:flex items-center justify-center"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {createError && (
+              <div className="text-red-500 text-sm mt-2">{createError}</div>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleCreatePost}
+                disabled={isCreating || (!content && images.length === 0)}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isCreating ? (
+                  <Loader2 className="animate-spin w-4 h-4 inline mr-1" />
+                ) : null}
+                {isCreating ? "Đang đăng..." : "Đăng bài"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

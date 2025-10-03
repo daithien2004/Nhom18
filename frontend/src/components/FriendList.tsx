@@ -1,14 +1,13 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { Search, MoreVertical, Users } from 'lucide-react';
-import { fetchFriends } from '../store/slices/friendSlice';
+import { useEffect, useState, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { Search, MoreVertical, Users, UserX } from "lucide-react";
+import { fetchFriends, unFriend } from "../store/slices/friendSlice";
 import {
   clearResults,
   searchFriends,
-} from '../store/slices/friendListSearchSlice';
-import type { ChatUser } from '../types/message';
+} from "../store/slices/friendListSearchSlice";
+import type { ChatUser } from "../types/message";
 
-// Thêm prop onFriendClick vào FriendList
 interface FriendListProps {
   onFriendClick: (friend: ChatUser) => void;
 }
@@ -24,7 +23,10 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
 
   const searchResults = friendListSearchState?.results || [];
   const isSearching = friendListSearchState?.isLoading || false;
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
+
+  // quản lý hiển thị menu khi bấm MoreVertical
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchFriends());
@@ -35,18 +37,17 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (searchText.trim() !== '') {
+      if (searchText.trim() !== "") {
         dispatch(searchFriends(searchText));
       } else {
         dispatch(clearResults());
       }
     }, 300);
-
     return () => clearTimeout(delayDebounce);
   }, [searchText, dispatch]);
 
   const dataToShow =
-    searchResults.length > 0 || searchText.trim() !== ''
+    searchResults.length > 0 || searchText.trim() !== ""
       ? searchResults
       : friends;
 
@@ -64,6 +65,25 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
         return acc;
       }, {} as Record<string, typeof dataToShow>);
   }, [dataToShow]);
+
+  // Hàm xử lý hủy kết bạn
+  const handleUnfriend = (friendId: string) => {
+    dispatch(unFriend(friendId))
+      .unwrap()
+      .then(() => {
+        setMenuOpenId(null);
+      })
+      .catch((err) => {
+        console.error("Hủy kết bạn thất bại:", err);
+        setMenuOpenId(null);
+      });
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setMenuOpenId(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-sm overflow-hidden border">
@@ -96,7 +116,7 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
       </div>
 
       {/* Friend list */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
         {(isLoadingFriends || isSearching) && (
           <p className="text-center text-gray-500 mt-6">Đang tải...</p>
         )}
@@ -117,20 +137,21 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
             {friends.map((f) => (
               <div
                 key={f.id}
-                // Thêm sự kiện onClick để gọi onFriendClick
-                onClick={() => onFriendClick(f)}
-                className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 cursor-pointer transition rounded-xl"
+                className="relative flex items-center justify-between px-5 py-3 hover:bg-gray-50 cursor-pointer transition rounded-xl"
               >
-                <div className="flex items-center gap-3 flex-1">
+                <div
+                  onClick={() => onFriendClick(f)}
+                  className="flex items-center gap-3 flex-1"
+                >
                   <div className="relative w-12 h-12 flex-shrink-0">
                     <img
-                      src={f.avatar || '/default-avatar.png'}
+                      src={f.avatar || "/default-avatar.png"}
                       alt={f.username}
                       className="w-full h-full rounded-full object-cover border-2 border-gray-100"
                     />
                     <span
                       className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                        f.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                        f.isOnline ? "bg-green-500" : "bg-gray-400"
                       }`}
                     ></span>
                   </div>
@@ -144,10 +165,29 @@ export default function FriendList({ onFriendClick }: FriendListProps) {
                   </div>
                 </div>
 
-                <MoreVertical
-                  size={18}
-                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
-                />
+                {/* Nút menu More */}
+                <div className="relative">
+                  <MoreVertical
+                    size={18}
+                    className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuOpenId(menuOpenId === f.id ? null : f.id);
+                    }}
+                  />
+                  {menuOpenId === f.id && (
+                    <div className="absolute right-0 mb-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <button
+                        onClick={() => handleUnfriend(f.id)}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 
+             hover:bg-red-50 rounded-md transition-colors"
+                      >
+                        <UserX size={16} />
+                        <span>Hủy kết bạn</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

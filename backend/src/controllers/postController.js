@@ -1,9 +1,9 @@
-import * as postService from '../services/postService.js';
-import { sendSuccess } from '../utils/response.js';
-import { asyncHandler } from '../middlewares/asyncHandler.js';
-import { createNotification } from '../services/notificationService.js';
-import { sendMail } from '../services/emailService.js';
-import User from '../models/User.js';
+import * as postService from "../services/postService.js";
+import { sendSuccess } from "../utils/response.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { createNotification } from "../services/notificationService.js";
+import { sendMail } from "../services/emailService.js";
+import User from "../models/User.js";
 
 export const createPost = asyncHandler(async (req, res) => {
   const post = await postService.createPost({
@@ -11,7 +11,7 @@ export const createPost = asyncHandler(async (req, res) => {
     content: req.body.content,
     images: req.body.images,
   });
-  return sendSuccess(res, post, 'Tạo bài viết thành công', 201);
+  return sendSuccess(res, post, "Tạo bài viết thành công", 201);
 });
 
 export const getPosts = asyncHandler(async (req, res) => {
@@ -21,12 +21,12 @@ export const getPosts = asyncHandler(async (req, res) => {
     page: req.query.page,
     userId: req.user.id,
   });
-  return sendSuccess(res, posts, 'Lấy danh sách bài viết thành công');
+  return sendSuccess(res, posts, "Lấy danh sách bài viết thành công");
 });
 
 export const getPostDetail = asyncHandler(async (req, res) => {
   const post = await postService.getPostDetail(req.params.postId, req.user.id);
-  return sendSuccess(res, post, 'Lấy chi tiết bài viết thành công');
+  return sendSuccess(res, post, "Lấy chi tiết bài viết thành công");
 });
 
 export const toggleLikePost = asyncHandler(async (req, res) => {
@@ -43,21 +43,21 @@ export const toggleLikePost = asyncHandler(async (req, res) => {
     const notification = await createNotification({
       senderId: userId,
       receiverId: post.author.id,
-      type: 'like',
+      type: "like",
       metadata: {
         postId,
         postTitle:
-          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
-          '...',
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || "") +
+          "...",
         postThumbnail: post.images?.[0] || null,
       },
     });
 
     // Emit Socket.IO
-    const notiIo = req.app.get('notificationIo');
+    const notiIo = req.app.get("notificationIo");
     if (notiIo) {
-      notiIo.to(post.author.id).emit('notification', notification);
-      console.log('Notification sent to:', post.author);
+      notiIo.to(post.author.id).emit("notification", notification);
+      console.log("Notification sent to:", post.author);
     }
 
     // Gửi email
@@ -70,7 +70,7 @@ export const toggleLikePost = asyncHandler(async (req, res) => {
     });
   }
 
-  return sendSuccess(res, result, 'Thao tác like thành công');
+  return sendSuccess(res, result, "Thao tác like thành công");
 });
 
 export const createComment = asyncHandler(async (req, res) => {
@@ -89,23 +89,23 @@ export const createComment = asyncHandler(async (req, res) => {
     const notification = await createNotification({
       senderId: userId,
       receiverId: post.author.id,
-      type: 'comment',
+      type: "comment",
       metadata: {
         postId,
         postTitle:
-          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
-          '...',
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || "") +
+          "...",
         postThumbnail: post.images?.[0] || null,
         comment: content,
       },
     });
 
     // Lấy io từ app
-    const notiIo = req.app.get('notificationIo');
+    const notiIo = req.app.get("notificationIo");
     // Emit realtime cho client của tác giả
     if (notiIo) {
-      notiIo.to(post.author.id).emit('notification', notification);
-      console.log('Notification sent to:', post.author);
+      notiIo.to(post.author.id).emit("notification", notification);
+      console.log("Notification sent to:", post.author);
     }
 
     // Gửi email
@@ -118,7 +118,7 @@ export const createComment = asyncHandler(async (req, res) => {
     });
   }
 
-  return sendSuccess(res, comment, 'Tạo bình luận thành công', 201);
+  return sendSuccess(res, comment, "Tạo bình luận thành công", 201);
 });
 
 // Share post
@@ -138,22 +138,22 @@ export const sharePost = asyncHandler(async (req, res) => {
     const notification = await createNotification({
       senderId: userId, // Gửi thông báo cho tác giả bài viết
       receiverId: post.author.id,
-      type: 'share',
+      type: "share",
       metadata: {
         postId,
         postTitle:
-          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || '') +
-          '...',
+          (post.content?.slice(0, 30) || post.caption?.slice(0, 30) || "") +
+          "...",
         postThumbnail: post.images?.[0] || null,
       },
     });
 
     // Lấy io từ app
-    const notiIo = req.app.get('notificationIo');
+    const notiIo = req.app.get("notificationIo");
     // Emit realtime cho client của tác giả
     if (notiIo) {
-      notiIo.to(post.author.id).emit('notification', notification);
-      console.log('Notification sent to:', post.author);
+      notiIo.to(post.author.id).emit("notification", notification);
+      console.log("Notification sent to:", post.author);
     }
 
     // Gửi email
@@ -166,5 +166,18 @@ export const sharePost = asyncHandler(async (req, res) => {
     });
   }
 
-  return sendSuccess(res, shared, 'Chia sẻ bài viết thành công', 201);
+  return sendSuccess(res, shared, "Chia sẻ bài viết thành công", 201);
+});
+
+// Lấy danh sách post của user
+export const getUserPosts = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const posts = await postService.getUserPosts({
+    userId: userId,
+    limit: req.query.limit,
+    page: req.query.page,
+    currentUserId: req.user.id,
+  });
+  return sendSuccess(res, posts, "Lấy danh sách bài viết thành công");
 });

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import React, { useState, useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   Search,
   MessageCircle,
@@ -7,27 +7,27 @@ import {
   UserPlus,
   Plus,
   Group,
-} from 'lucide-react';
-import FriendList from '../components/FriendList';
-import FriendRequests from '../components/FriendRequests';
-import ChatWindow from '../components/ChatWindow';
+} from "lucide-react";
+import FriendList from "../components/FriendList";
+import FriendRequests from "../components/FriendRequests";
+import ChatWindow from "../components/ChatWindow";
 import {
   searchAllUsers,
   clearResults,
-} from '../store/slices/friendSearchSlice';
+} from "../store/slices/friendSearchSlice";
 import {
   searchConversations,
   clearSearchConversations,
-} from '../store/slices/conversationSlice';
-import instance from '../api/axiosInstant';
-import { Dialog, Transition } from '@headlessui/react';
-import type { ChatUser, Conversation } from '../types/message';
-import { toast } from 'react-toastify';
+} from "../store/slices/conversationSlice";
+import instance from "../api/axiosInstant";
+import { Dialog, Transition } from "@headlessui/react";
+import type { ChatUser, Conversation } from "../types/message";
+import { toast } from "react-toastify";
 
 export default function FriendsPage() {
   const dispatch = useAppDispatch();
-  const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
-  const [searchText, setSearchText] = useState('');
+  const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
+  const [searchText, setSearchText] = useState("");
   const { results: userSearchResults = [] } = useAppSelector(
     (state) => state.friendSearch
   );
@@ -41,10 +41,10 @@ export default function FriendsPage() {
 
   // State cho modal tạo nhóm chat
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
-  const [groupName, setGroupName] = useState('');
-  const [groupAvatar, setGroupAvatar] = useState('');
+  const [groupName, setGroupName] = useState("");
+  const [groupAvatar, setGroupAvatar] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [searchGroupText, setSearchGroupText] = useState('');
+  const [searchGroupText, setSearchGroupText] = useState("");
   const { results: groupMemberSearchResults = [] } = useAppSelector(
     (state) => state.friendSearch
   );
@@ -52,7 +52,7 @@ export default function FriendsPage() {
   // Unified search for users and groups
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (searchText.trim() !== '') {
+      if (searchText.trim() !== "") {
         dispatch(searchAllUsers(searchText));
         dispatch(searchConversations(searchText));
         setShowDropdown(true);
@@ -75,15 +75,15 @@ export default function FriendsPage() {
         setShowDropdown(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Handle click on user or group
   const handleUserOrGroupClick = async (item: ChatUser | Conversation) => {
     try {
       let conversation: Conversation;
-      if ('isGroup' in item && item.isGroup) {
+      if ("isGroup" in item && item.isGroup) {
         conversation = item as Conversation;
       } else {
         const user = item as ChatUser;
@@ -92,18 +92,18 @@ export default function FriendsPage() {
       }
       setActiveConversation(conversation);
       setShowDropdown(false);
-      setSearchText('');
+      setSearchText("");
       dispatch(clearResults());
       dispatch(clearSearchConversations());
     } catch (err) {
-      console.error('Lỗi khi lấy conversation:', err);
+      console.error("Lỗi khi lấy conversation:", err);
     }
   };
 
   // Search for users to add to group
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      if (searchGroupText.trim() !== '' && showCreateGroupModal) {
+      if (searchGroupText.trim() !== "" && showCreateGroupModal) {
         dispatch(searchAllUsers(searchGroupText));
       } else {
         dispatch(clearResults());
@@ -128,12 +128,12 @@ export default function FriendsPage() {
   // Create group chat
   const handleCreateGroup = async () => {
     if (selectedUsers.length === 0 || !groupName.trim()) {
-      alert('Vui lòng chọn ít nhất 1 người và đặt tên nhóm');
+      alert("Vui lòng chọn ít nhất 1 người và đặt tên nhóm");
       return;
     }
 
     try {
-      const res = await instance.post('/conversations', {
+      const res = await instance.post("/conversations", {
         participants: selectedUsers,
         isGroup: true,
         groupName: groupName.trim(),
@@ -144,16 +144,16 @@ export default function FriendsPage() {
       setActiveConversation(newConversation);
 
       // Reset modal
-      setGroupName('');
-      setGroupAvatar('');
+      setGroupName("");
+      setGroupAvatar("");
       setSelectedUsers([]);
-      setSearchGroupText('');
+      setSearchGroupText("");
       dispatch(clearResults());
       setShowCreateGroupModal(false);
 
-      toast.success('Tạo nhóm chat thành công!');
+      toast.success("Tạo nhóm chat thành công!");
     } catch (err) {
-      toast.error('Lỗi khi tạo nhóm chat');
+      toast.error("Lỗi khi tạo nhóm chat");
     }
   };
 
@@ -189,7 +189,7 @@ export default function FriendsPage() {
                     <div className="flex items-center gap-3 flex-1">
                       <div className="relative w-10 h-10 flex-shrink-0">
                         <img
-                          src={group.groupAvatar || '/group.png'}
+                          src={group.groupAvatar || "/group.png"}
                           alt={group.groupName}
                           className="w-full h-full rounded-full object-cover border border-gray-100"
                         />
@@ -197,7 +197,7 @@ export default function FriendsPage() {
                       </div>
                       <div className="flex flex-col truncate">
                         <span className="text-sm font-semibold text-gray-800 truncate">
-                          {group.groupName || 'Nhóm chat'}
+                          {group.groupName || "Nhóm chat"}
                         </span>
                         <span className="text-xs text-gray-500 truncate">
                           {`${group.participants.length} thành viên`}
@@ -220,13 +220,13 @@ export default function FriendsPage() {
                     <div className="flex items-center gap-3 flex-1">
                       <div className="relative w-10 h-10 flex-shrink-0">
                         <img
-                          src={user.avatar || 'https://via.placeholder.com/48'}
+                          src={user.avatar || "https://via.placeholder.com/48"}
                           alt={user.username}
                           className="w-full h-full rounded-full object-cover border border-gray-100"
                         />
                         <span
                           className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-                            user.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                            user.isOnline ? "bg-green-500" : "bg-gray-400"
                           }`}
                         ></span>
                       </div>
@@ -235,11 +235,11 @@ export default function FriendsPage() {
                           {user.username}
                         </span>
                         <span className="text-xs text-gray-500 truncate">
-                          {user.status === 'active'
-                            ? 'Bạn bè'
-                            : user.status === 'pending'
-                            ? 'Đang chờ'
-                            : 'Người lạ'}
+                          {user.status === "active"
+                            ? "Bạn bè"
+                            : user.status === "pending"
+                            ? "Đang chờ"
+                            : "Người lạ"}
                         </span>
                       </div>
                     </div>
@@ -256,13 +256,13 @@ export default function FriendsPage() {
         <nav className="flex flex-col space-y-2 flex-1">
           <button
             onClick={() => {
-              setActiveTab('friends');
+              setActiveTab("friends");
               setActiveConversation(null);
             }}
-            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
-              activeTab === 'friends'
-                ? 'bg-blue-100 text-blue-600 font-semibold'
-                : 'text-gray-800'
+            className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-blue-50 ${
+              activeTab === "friends"
+                ? "bg-blue-100 text-blue-600 font-semibold"
+                : "text-gray-800"
             }`}
           >
             <Users size={18} />
@@ -270,13 +270,13 @@ export default function FriendsPage() {
           </button>
           <button
             onClick={() => {
-              setActiveTab('requests');
+              setActiveTab("requests");
               setActiveConversation(null);
             }}
-            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 ${
-              activeTab === 'requests'
-                ? 'bg-blue-100 text-blue-600 font-semibold'
-                : 'text-gray-800'
+            className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-blue-50 ${
+              activeTab === "requests"
+                ? "bg-blue-100 text-blue-600 font-semibold"
+                : "text-gray-800"
             }`}
           >
             <UserPlus size={18} />
@@ -284,7 +284,7 @@ export default function FriendsPage() {
           </button>
           <button
             onClick={() => setShowCreateGroupModal(true)}
-            className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-blue-50 text-gray-800"
+            className="flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-blue-50 text-gray-800"
           >
             <Group size={18} />
             <span className="text-sm font-medium">Tạo nhóm chat</span>
@@ -296,7 +296,7 @@ export default function FriendsPage() {
         <div className="max-w-2xl mx-auto space-y-6">
           {activeConversation ? (
             <ChatWindow conversation={activeConversation} />
-          ) : activeTab === 'friends' ? (
+          ) : activeTab === "friends" ? (
             <FriendList
               onFriendClick={(friend) => handleUserOrGroupClick(friend)}
             />
@@ -402,7 +402,7 @@ export default function FriendsPage() {
                               <img
                                 src={
                                   user.avatar ||
-                                  'https://via.placeholder.com/32'
+                                  "https://via.placeholder.com/32"
                                 }
                                 alt={user.username}
                                 className="w-8 h-8 rounded-full"
@@ -428,7 +428,7 @@ export default function FriendsPage() {
                         {selectedUsers.map((userId) => {
                           const user = groupMemberSearchResults.find(
                             (u) => u.id === userId
-                          ) || { username: 'Unknown' };
+                          ) || { username: "Unknown" };
                           return (
                             <div
                               key={userId}

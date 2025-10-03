@@ -60,6 +60,18 @@ export const postQuerySchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
+export const myPostQuerySchema = z.object({
+  page: z.coerce
+    .number()
+    .min(1, { message: "Trang phải lớn hơn 0" })
+    .default(1),
+  limit: z.coerce
+    .number()
+    .min(1, { message: "Giới hạn tối thiểu là 1" })
+    .max(100, { message: "Giới hạn tối đa là 100" })
+    .default(10),
+});
+
 // Schema cho ID parameters
 export const postIdSchema = z.object({
   postId: z

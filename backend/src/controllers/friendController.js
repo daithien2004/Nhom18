@@ -112,9 +112,7 @@ export const searchFriends = asyncHandler(async (req, res) => {
 // Hủy kết bạn
 export const cancelFriend = asyncHandler(async (req, res) => {
   const currentUserId = req.user.id;
-  console.log(">>> currentUserId", currentUserId);
   const { targetUserId } = req.body;
-  console.log(">>> targetUserId", targetUserId);
   await friendService.cancelFriend(currentUserId, targetUserId);
   return sendSuccess(res, "Đã hủy kết bạn thành công");
 });

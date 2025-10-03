@@ -32,6 +32,6 @@ router.get("/search-all", auth, validateQuery(searchSchema), searchAllUsers);
 
 router.get("/search-friends", auth, validateQuery(searchSchema), searchFriends);
 
-router.post("/requests/cancel", auth, cancelFriend);
+router.post("/cancel", auth, cancelFriend);
 
 export default router;
