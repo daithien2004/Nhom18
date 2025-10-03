@@ -2,6 +2,7 @@ import express from "express";
 import auth from "../middlewares/auth.js";
 import {
   acceptFriendRequest,
+  cancelFriend,
   getFriends,
   getReceivedFriendRequests,
   getSentFriendRequests,
@@ -30,5 +31,7 @@ router.post("/requests/reject", auth, rejectFriendRequest);
 router.get("/search-all", auth, validateQuery(searchSchema), searchAllUsers);
 
 router.get("/search-friends", auth, validateQuery(searchSchema), searchFriends);
+
+router.post("/requests/cancel", auth, cancelFriend);
 
 export default router;
