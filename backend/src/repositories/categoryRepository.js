@@ -13,7 +13,13 @@ export const createCategory = async ({ owner, name, isDefault = false }) => {
 export const findCategoriesByUser = async (userId) => {
   return await Category.find({ owner: userId }).populate({
     path: "posts",
-    populate: { path: "author", select: "username avatar" },
+    populate: [
+      { path: "author", select: "username avatar" },
+      {
+        path: "sharedFrom", // populate bài gốc được chia sẻ
+        populate: { path: "author", select: "username avatar" }, // có thể lấy luôn tác giả của bài gốc
+      },
+    ],
     options: { strictPopulate: false },
   });
 };
@@ -85,4 +91,19 @@ export const removePostFromCategory = async (categoryId, ownerId, postId) => {
   category.posts = category.posts.filter((p) => p.toString() !== postId);
   await category.save();
   return category.populate("posts");
+};
+
+/**
+ * Xóa tất cả bài viết khỏi danh mục
+ */
+export const removeAllPostFromCategory = async (categoryId, ownerId) => {
+  const category = await Category.findOne({
+    _id: categoryId,
+    owner: ownerId,
+  });
+  if (!category) return null;
+
+  category.posts = [];
+  await category.save();
+  return category;
 };

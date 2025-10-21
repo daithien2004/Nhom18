@@ -1,5 +1,6 @@
 // repo/activityRepository.js
-import Activity from '../models/Activity.js';
+import Activity from "../models/Activity.js";
+import Post from "../models/Post.js";
 
 /**
  * Tạo activity mới (like hoặc comment)
@@ -19,12 +20,12 @@ export const createActivity = async ({
     comment,
   });
   return await Activity.populate(activity, [
-    { path: 'actor', select: 'username avatar' },
-    { path: 'post', select: 'content images' },
-    { path: 'postOwner', select: 'username avatar' },
+    { path: "actor", select: "username avatar" },
+    { path: "post", select: "content images" },
+    { path: "postOwner", select: "username avatar" },
     {
-      path: 'comment',
-      populate: { path: 'author', select: 'username avatar' },
+      path: "comment",
+      populate: { path: "author", select: "username avatar" },
     },
   ]);
 };
@@ -35,11 +36,25 @@ export const createActivity = async ({
 export const findActivitiesByActor = async (actorId, limit = 20, skip = 0) => {
   return await Activity.find({ actor: actorId })
     .populate([
-      { path: 'post', select: 'content images' },
-      { path: 'postOwner', select: 'username avatar' },
       {
-        path: 'comment',
-        populate: { path: 'author', select: 'username avatar' },
+        path: "post",
+        select: "content images caption sharedFrom author",
+        populate: [
+          {
+            path: "sharedFrom",
+            select: "content images author",
+            populate: { path: "author", select: "username avatar" },
+          },
+          {
+            path: "author",
+            select: "username avatar",
+          },
+        ],
+      },
+      { path: "postOwner", select: "username avatar" },
+      {
+        path: "comment",
+        populate: { path: "author", select: "username avatar" },
       },
     ])
     .sort({ createdAt: -1 })

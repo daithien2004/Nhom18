@@ -1,15 +1,15 @@
-import { useRef } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { sendFriendRequest } from '../store/slices/friendSlice';
-import { Settings } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { useRef } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { sendFriendRequest } from "../store/slices/friendSlice";
+import { Settings } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface ChatHeaderProps {
   user: {
     id: string;
     username: string;
     avatar?: string;
-    status: 'active' | 'pending' | 'none';
+    status: "active" | "pending" | "none";
     isOnline?: boolean;
     isGroup?: boolean;
   };
@@ -29,10 +29,10 @@ interface ChatHeaderProps {
 }
 
 const themes = [
-  { name: 'Mặc định', value: 'bg-gray-50' },
-  { name: 'Xanh lam', value: 'bg-blue-100' },
-  { name: 'Xanh lá', value: 'bg-green-100' },
-  { name: 'Hồng', value: 'bg-pink-100' },
+  { name: "Mặc định", value: "bg-gray-50" },
+  { name: "Xanh lam", value: "bg-blue-100" },
+  { name: "Xanh lá", value: "bg-green-100" },
+  { name: "Hồng", value: "bg-pink-100" },
 ];
 
 export default function ChatHeader({
@@ -58,7 +58,7 @@ export default function ChatHeader({
       await dispatch(sendFriendRequest(user.id)).unwrap();
       toast.success(`Đã gửi lời mời kết bạn tới ${user.username}`);
     } catch (err) {
-      toast.error('Gửi lời mời kết bạn thất bại. Vui lòng thử lại.');
+      toast.error("Gửi lời mời kết bạn thất bại. Vui lòng thử lại.");
     }
   };
 
@@ -71,14 +71,14 @@ export default function ChatHeader({
         <div className="relative w-10 h-10">
           <img
             src={
-              user.isGroup ? '/group.png' : user.avatar || '/default-avatar.png'
+              user.isGroup ? "/group.png" : user.avatar || "/default-avatar.png"
             }
             alt={user.username}
             className="w-full h-full rounded-full object-cover shadow-sm"
           />
           <span
             className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
-              user.isGroup ? '' : user.isOnline ? 'bg-green-500' : 'bg-gray-400'
+              user.isGroup ? "" : user.isOnline ? "bg-green-500" : "bg-gray-400"
             }`}
           ></span>
         </div>
@@ -88,10 +88,10 @@ export default function ChatHeader({
           </span>
           <span className="text-xs text-gray-500">
             {user.isGroup
-              ? 'Nhóm'
-              : user.status === 'active'
-              ? 'Bạn bè'
-              : 'Người lạ'}
+              ? "Nhóm"
+              : user.status === "active"
+              ? "Bạn bè"
+              : "Người lạ"}
           </span>
         </div>
         <Settings
@@ -102,7 +102,7 @@ export default function ChatHeader({
         {showSettingsMenu && (
           <div
             ref={settingsMenuRef}
-            className="absolute top-12 left-0 bg-white rounded-lg shadow-md p-4 z-10 w-64 transition-all duration-300"
+            className="absolute top-12 left-0 bg-white rounded-lg shadow-md p-4 z-10 w-64 max-h-64 overflow-y-auto transition-all duration-300 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
           >
             <h3 className="text-sm font-semibold text-gray-800 mb-2">
               Cài đặt
@@ -116,7 +116,7 @@ export default function ChatHeader({
             >
               Đổi emoji tùy chỉnh
             </button>
-            {settings.customEmoji !== '👍' && (
+            {settings.customEmoji !== "👍" && (
               <button
                 onClick={handleResetEmoji}
                 className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300"
@@ -131,7 +131,7 @@ export default function ChatHeader({
                   key={t.value}
                   onClick={() => handleChangeTheme(t.value)}
                   className={`w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 ${
-                    settings.theme === t.value ? 'bg-blue-50' : ''
+                    settings.theme === t.value ? "bg-blue-50" : ""
                   }`}
                 >
                   {t.name}
@@ -143,24 +143,24 @@ export default function ChatHeader({
               className="w-full text-left px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-300 mt-2"
             >
               {settings.notificationsEnabled
-                ? 'Tắt thông báo'
-                : 'Bật thông báo'}
+                ? "Tắt thông báo"
+                : "Bật thông báo"}
             </button>
           </div>
         )}
       </div>
 
-      {user.status === 'pending' && (
+      {user.status === "pending" && (
         <button
           onClick={handleAddFriend}
           disabled={isPending}
           className={`text-sm px-3 py-1 rounded-lg transition-all duration-300 ${
             isPending
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : 'text-blue-600 hover:bg-blue-50'
+              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+              : "text-blue-600 hover:bg-blue-50"
           }`}
         >
-          {isPending ? 'Đã gửi lời mời' : 'Kết bạn'}
+          {isPending ? "Đã gửi lời mời" : "Kết bạn"}
         </button>
       )}
     </div>

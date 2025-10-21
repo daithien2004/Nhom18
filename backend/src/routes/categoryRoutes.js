@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   createCategory,
   getUserCategories,
@@ -6,27 +6,28 @@ import {
   deleteCategory,
   savePostToCategory,
   removePostFromCategory,
-} from '../controllers/postCategoryController.js';
-import auth from '../middlewares/auth.js';
-import { validateBody, validateParams } from '../middlewares/validation.js';
+  removeAllPostFromCategory,
+} from "../controllers/postCategoryController.js";
+import auth from "../middlewares/auth.js";
+import { validateBody, validateParams } from "../middlewares/validation.js";
 import {
   createCategorySchema,
   updateCategorySchema,
   categoryIdSchema,
   addPostToCategorySchema,
-} from '../schemas/categorySchemas.js';
+} from "../schemas/categorySchemas.js";
 
 const router = Router();
 
 // Lấy danh sách danh mục của user (cần đăng nhập)
-router.get('/', auth, getUserCategories);
+router.get("/", auth, getUserCategories);
 
 // Tạo danh mục (cần đăng nhập)
-router.post('/', validateBody(createCategorySchema), auth, createCategory);
+router.post("/", validateBody(createCategorySchema), auth, createCategory);
 
 // Đổi tên danh mục
 router.patch(
-  '/:categoryId',
+  "/:categoryId",
   validateParams(categoryIdSchema),
   validateBody(updateCategorySchema),
   auth,
@@ -35,7 +36,7 @@ router.patch(
 
 // Xóa danh mục
 router.delete(
-  '/:categoryId',
+  "/:categoryId",
   validateParams(categoryIdSchema),
   auth,
   deleteCategory
@@ -43,7 +44,7 @@ router.delete(
 
 // Lưu bài viết vào danh mục
 router.post(
-  '/:categoryId/posts',
+  "/:categoryId/posts",
   validateParams(categoryIdSchema),
   validateBody(addPostToCategorySchema),
   auth,
@@ -52,10 +53,18 @@ router.post(
 
 // Xóa bài viết khỏi danh mục
 router.delete(
-  '/:categoryId/posts/:postId',
+  "/:categoryId/posts/:postId",
   validateParams(categoryIdSchema.merge(addPostToCategorySchema)),
   auth,
   removePostFromCategory
+);
+
+// Xóa tất cả bài viết khỏi danh mục
+router.delete(
+  "/:categoryId/posts",
+  validateParams(categoryIdSchema),
+  auth,
+  removeAllPostFromCategory
 );
 
 export default router;

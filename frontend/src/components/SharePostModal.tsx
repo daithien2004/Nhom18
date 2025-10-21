@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useAppDispatch } from '../store/hooks';
-import { sharePost } from '../store/slices/postSlice';
+import React, { useState } from "react";
+import { useAppDispatch } from "../store/hooks";
+import { sharePost } from "../store/slices/postSlice";
+import { toast } from "react-toastify";
 
 interface SharePostModalProps {
   postId: string;
@@ -15,20 +16,20 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
   avatar,
   onClose,
 }) => {
-  const [caption, setCaption] = useState('');
+  const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
 
   const handleShare = async () => {
-    if (!caption.trim()) return alert('Nhập caption trước khi chia sẻ!');
+    if (!caption.trim()) return toast.error("Nhập caption trước khi chia sẻ!");
     setLoading(true);
     try {
       await dispatch(sharePost({ postId, caption })).unwrap();
-      alert('Chia sẻ thành công!');
+      toast.success("Chia sẻ thành công!");
       onClose();
     } catch (err) {
       console.error(err);
-      alert('Chia sẻ thất bại!');
+      toast.error("Chia sẻ thất bại!");
     } finally {
       setLoading(false);
     }
@@ -55,11 +56,11 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
         {/* User info */}
         <div className="flex items-center gap-3 mb-4">
           <img
-            src={avatar || '/default-avatar.png'}
+            src={avatar || "/default-avatar.png"}
             alt="avatar"
             className="w-10 h-10 rounded-full object-cover"
           />
-          <p className="font-semibold text-gray-800">{username || 'Bạn'}</p>
+          <p className="font-semibold text-gray-800">{username || "Bạn"}</p>
         </div>
 
         {/* Caption input */}
@@ -85,7 +86,7 @@ const SharePostModal: React.FC<SharePostModalProps> = ({
             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow transition flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            {loading ? 'Đang chia sẻ...' : 'Chia sẻ'}
+            {loading ? "Đang chia sẻ..." : "Chia sẻ"}
           </button>
         </div>
       </div>

@@ -1,35 +1,34 @@
-import { useEffect, useState } from 'react';
-import instance from '../api/axiosInstant';
-import { toast } from 'react-toastify';
+import { useEffect, useState } from "react";
+import instance from "../api/axiosInstant";
+import { toast } from "react-toastify";
+import { Plus, X } from "lucide-react";
 
 interface SavePostModalProps {
   postId: string;
   onClose: () => void;
+  onSaved?: () => void; // 👈 thêm callback tùy chọn
 }
 
-const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
+const SavePostModal = ({ postId, onClose, onSaved }: SavePostModalProps) => {
   const [categories, setCategories] = useState<any[]>([]);
-  const [selected, setSelected] = useState<string>('');
+  const [selected, setSelected] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    // reset state mỗi khi postId thay đổi
-    setSelected('');
-  }, [postId]);
+  useEffect(() => setSelected(""), [postId]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await instance.get('/categories/');
+        const { data } = await instance.get("/categories/");
         setCategories(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError('Không thể tải danh mục. Hãy đăng nhập.');
+      } catch {
+        setError("Không thể tải danh mục. Hãy đăng nhập.");
       } finally {
         setLoading(false);
       }
@@ -41,60 +40,59 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      const { data: created } = await instance.post('/categories/', {
+      const { data: created } = await instance.post("/categories/", {
         name: newName.trim(),
       });
-      // refresh list and preselect newly created
-      const { data } = await instance.get('/categories/');
-      const list = Array.isArray(data) ? data : [];
-      setCategories(list);
-      if (created && created.id) setSelected(created.id);
+      const { data } = await instance.get("/categories/");
+      setCategories(Array.isArray(data) ? data : []);
+      if (created?.id) setSelected(created.id);
       setShowCreate(false);
-      setNewName('');
-    } catch (err) {
-      // no-op
+      setNewName("");
+      toast.success("Tạo bộ sưu tập mới thành công!");
+    } catch {
+      toast.error("Không thể tạo bộ sưu tập");
     } finally {
       setCreating(false);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selected) return;
-    instance
-      .post(`/categories/${selected}/posts`, { postId })
-      .then(() => {
-        toast.success('Đã lưu bài viết vào danh mục!');
-        onClose();
-      })
-      .catch((err) => console.error('Lỗi khi lưu:', err));
-  };
-  const handleClose = () => {
-    onClose();
+    try {
+      await instance.post(`/categories/${selected}/posts`, { postId });
+      toast.success("Đã lưu bài viết vào danh mục!");
+      if (onSaved) onSaved(); // 👈 reload ngay sau khi lưu
+      onClose();
+    } catch {
+      toast.error("Lưu thất bại, vui lòng thử lại!");
+    }
   };
 
   return (
     <>
+      {/* Overlay */}
       <div
-        className="fixed inset-0 flex items-center justify-center bg-black/30 z-50"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn"
+        onClick={onClose}
       >
+        {/* Modal chính */}
         <div
-          className="bg-white w-96 rounded-lg shadow-lg p-4"
+          className="bg-white w-[420px] rounded-2xl shadow-xl p-6 relative transition-all duration-300 animate-slideUp"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center border-b pb-2">
-            <h2 className="text-lg font-bold">Lưu vào</h2>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Lưu vào</h2>
             <button
-              onClick={handleClose}
-              className="text-gray-500 hover:text-black"
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-700 transition-colors"
             >
-              ✕
+              <X size={20} />
             </button>
           </div>
 
-          <div className="mt-3 space-y-2">
+          {/* Body */}
+          <div className="max-h-[280px] overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {loading && (
               <p className="text-sm text-gray-500 px-2">Đang tải danh mục...</p>
             )}
@@ -103,87 +101,100 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
             {categories.map((cat) => (
               <div
                 key={cat.id}
-                className="flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer"
                 onClick={() => setSelected(cat.id)}
+                className={`flex items-center justify-between p-2 rounded-xl border cursor-pointer transition-all duration-200 ${
+                  selected === cat.id
+                    ? "border-blue-500 bg-blue-50 shadow-sm"
+                    : "border-gray-100 hover:bg-gray-50"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <img
                     src={
                       cat.posts?.[0]?.images?.[0] ||
-                      'https://via.placeholder.com/48'
+                      "https://cdn-icons-png.flaticon.com/512/833/833281.png"
                     }
                     alt={cat.name}
-                    className="w-10 h-10 rounded object-cover"
+                    className="w-10 h-10 rounded-lg object-cover"
                   />
                   <div>
-                    <p className="font-medium">{cat.name}</p>
+                    <p className="font-medium text-gray-800">{cat.name}</p>
                     <p className="text-xs text-gray-500">Chỉ mình tôi</p>
                   </div>
                 </div>
                 <input
                   type="radio"
                   name="category"
-                  className="accent-blue-600"
                   checked={selected === cat.id}
                   onChange={() => setSelected(cat.id)}
+                  className="accent-blue-600"
                 />
               </div>
             ))}
 
-            <hr className="my-2" />
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 cursor-pointer w-full text-left"
+              className="flex items-center gap-2 p-2 w-full text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
             >
-              <span className="text-xl leading-none">＋</span> Bộ sưu tập mới
+              <Plus size={18} /> <span>Tạo bộ sưu tập mới</span>
             </button>
           </div>
 
-          <div className="mt-4 flex justify-end">
+          {/* Footer */}
+          <div className="mt-5 flex justify-end">
             <button
               onClick={handleSave}
               disabled={!selected}
-              className={`px-4 py-2 rounded text-white ${
-                !selected ? 'bg-gray-300' : 'bg-blue-600 hover:bg-blue-700'
+              className={`px-5 py-2 rounded-lg font-medium text-white transition-all duration-300 ${
+                !selected
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 shadow-sm"
               }`}
             >
-              Xong
+              Lưu
             </button>
           </div>
         </div>
       </div>
 
+      {/* Modal tạo mới */}
       {showCreate && (
         <div
-          className="fixed inset-0 flex items-center justify-center bg-black/30 z-[60]"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowCreate(false)}
         >
           <div
-            className="bg-white w-[520px] rounded-lg shadow-lg"
+            className="bg-white w-[460px] rounded-2xl shadow-xl animate-slideUp overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 py-4 border-b flex items-center justify-between">
-              <h3 className="text-xl font-bold">Tạo bộ sưu tập</h3>
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Tạo bộ sưu tập
+              </h3>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-gray-500 hover:text-black"
+                className="text-gray-400 hover:text-gray-700 transition-colors"
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
-            <div className="px-5 py-4">
-              <label className="block text-sm text-gray-600 mb-1">Tên</label>
+
+            <div className="p-5">
+              <label className="block text-sm text-gray-600 mb-2">
+                Tên bộ sưu tập
+              </label>
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Đặt tên cho bộ sưu tập của bạn..."
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nhập tên bộ sưu tập..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <div className="px-5 py-3 border-t flex justify-end gap-3">
+
+            <div className="flex justify-end gap-3 p-5 border-t border-gray-100">
               <button
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-blue-600 rounded hover:bg-blue-50"
+                className="px-4 py-2 text-blue-600 rounded-lg hover:bg-blue-50 transition"
                 disabled={creating}
               >
                 Hủy
@@ -191,13 +202,13 @@ const SavePostModal = ({ postId, onClose }: SavePostModalProps) => {
               <button
                 onClick={handleCreate}
                 disabled={!newName.trim() || creating}
-                className={`px-4 py-2 rounded text-white ${
+                className={`px-4 py-2 rounded-lg font-medium text-white transition-all duration-300 ${
                   !newName.trim() || creating
-                    ? 'bg-gray-300'
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
-                {creating ? 'Đang tạo...' : 'Tạo'}
+                {creating ? "Đang tạo..." : "Tạo"}
               </button>
             </div>
           </div>

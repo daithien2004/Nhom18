@@ -64,3 +64,19 @@ export const removePostFromCategory = asyncHandler(async (req, res) => {
   );
   return sendSuccess(res, category, "Xóa bài viết khỏi danh mục thành công");
 });
+
+/**
+ * Xóa tất cả bài viết khỏi danh mục
+ */
+export const removeAllPostFromCategory = asyncHandler(async (req, res) => {
+  const category = await categoryService.removeAllPostFromCategory(
+    req.params.categoryId,
+    req.user.id
+  );
+
+  return sendSuccess(
+    res,
+    category,
+    "Xóa tất cả bài viết khỏi danh mục thành công"
+  );
+});

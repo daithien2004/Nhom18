@@ -92,3 +92,17 @@ export const removePostFromCategory = async (categoryId, ownerId, postId) => {
   }
   return category;
 };
+
+/**
+ * Xóa tất cả bài viết khỏi danh mục
+ */
+export const removeAllPostFromCategory = async (categoryId, ownerId) => {
+  const category = await categoryRepo.removeAllPostFromCategory(
+    categoryId,
+    ownerId
+  );
+  if (!category) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy danh mục");
+  }
+  return category;
+};

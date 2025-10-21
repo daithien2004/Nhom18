@@ -2,34 +2,45 @@ import {
   createSlice,
   createAsyncThunk,
   type PayloadAction,
-} from '@reduxjs/toolkit';
-import instance from '../../api/axiosInstant';
+} from "@reduxjs/toolkit";
+import instance from "../../api/axiosInstant";
 
 export type Activity = {
   id: string;
-  type: 'like' | 'comment' | 'share' | string;
-  actor?: {
-    id?: string;
-    username?: string;
-    avatar?: string;
-  };
+  type: string;
+  createdAt: string;
   post?: {
     id?: string;
     content?: string;
+    caption?: string;
     images?: string[];
-    author?: { username?: string };
-  };
+    author?: {
+      id?: string;
+      username?: string;
+      avatar?: string;
+    };
+    sharedFrom?: {
+      id?: string;
+      content?: string;
+      caption?: string;
+      images?: string[];
+      author?: {
+        id?: string;
+        username?: string;
+        avatar?: string;
+      };
+    } | null;
+  } | null;
+  postOwner?: {
+    id?: string;
+    username?: string;
+    avatar?: string;
+  } | null;
   comment?: {
     id?: string;
     content?: string;
     author?: { id?: string; username?: string; avatar?: string };
-  };
-  createdAt?: string;
-  postOwner?: {
-    id: string;
-    username: string;
-    avatar?: string;
-  };
+  } | null;
 };
 
 interface ActivityState {
@@ -54,23 +65,23 @@ export const fetchActivities = createAsyncThunk<
   { page?: number; limit?: number } | undefined,
   { rejectValue: string }
 >(
-  'activities/fetchActivities',
+  "activities/fetchActivities",
   async (payload = { page: 1, limit: 10 }, { rejectWithValue }) => {
     try {
       const { page = 1, limit = 10 } = payload;
-      const res = await instance.get('/activities', {
+      const res = await instance.get("/activities", {
         params: { page, limit },
       });
       // backend trả về mảng activity trong res.data
       return { activities: res.data as Activity[], page };
     } catch (err) {
-      return rejectWithValue('Lỗi khi tải activity');
+      return rejectWithValue("Lỗi khi tải activity");
     }
   }
 );
 
 const activitySlice = createSlice({
-  name: 'activities',
+  name: "activities",
   initialState,
   reducers: {
     resetActivities: (state) => {
@@ -107,7 +118,7 @@ const activitySlice = createSlice({
       )
       .addCase(fetchActivities.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload ?? 'Lỗi';
+        state.error = action.payload ?? "Lỗi";
       });
   },
 });

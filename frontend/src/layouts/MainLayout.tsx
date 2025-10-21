@@ -87,42 +87,60 @@ const MainLayout: React.FC = () => {
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/home") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/")}
+              onClick={() => {
+                navigate("/");
+                setIsDropDownOpen(false);
+              }}
             />
             <MessageCircle
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/conversations") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/conversations")}
+              onClick={() => {
+                navigate("/conversations");
+                setIsDropDownOpen(false);
+              }}
             />
             <Contact
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/friends") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/friends")}
+              onClick={() => {
+                navigate("/friends");
+                setIsDropDownOpen(false);
+              }}
             />
             <Bookmark
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/categories") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/categories")}
+              onClick={() => {
+                navigate("/categories");
+                setIsDropDownOpen(false);
+              }}
             />
             <BarChart3
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/statistics") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/statistics")}
+              onClick={() => {
+                navigate("/statistics");
+                setIsDropDownOpen(false);
+              }}
             />
             <History
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
                 isActive("/activities") ? "text-blue-600" : "text-gray-800"
               }`}
-              onClick={() => navigate("/activities")}
+              onClick={() => {
+                navigate("/activities");
+                setIsDropDownOpen(false);
+              }}
             />
           </div>
         </div>
