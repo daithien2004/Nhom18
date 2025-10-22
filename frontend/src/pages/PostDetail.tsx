@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   fetchPostDetail,
   clearPostDetail,
   toggleLike,
   addComment,
   clearCommentError,
-} from "../store/slices/postSlice";
-import { toast } from "react-toastify";
+} from '../store/slices/postSlice';
+import { toast } from 'react-toastify';
 import {
   X,
   Heart,
@@ -17,8 +17,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-} from "lucide-react";
-import SharePostModal from "../components/SharePostModal";
+} from 'lucide-react';
+import SharePostModal from '../components/SharePostModal';
+import PostMenu from '../components/PostMenu';
 
 const PostDetailPage = () => {
   const { postId } = useParams<{ postId: string }>();
@@ -34,7 +35,7 @@ const PostDetailPage = () => {
     likes,
   } = useAppSelector((state) => state.posts);
 
-  const [commentText, setCommentText] = useState("");
+  const [commentText, setCommentText] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -57,7 +58,7 @@ const PostDetailPage = () => {
     await dispatch(
       addComment({ postId, content: commentText.trim() })
     ).unwrap();
-    setCommentText("");
+    setCommentText('');
   };
 
   const sharedFrom = postDetail?.sharedFrom ?? null;
@@ -92,8 +93,8 @@ const PostDetailPage = () => {
     <div className="fixed inset-0 bg-black/90 flex z-50">
       {/* Nút đóng (nổi bật) */}
       <button
-        onClick={() => navigate("/")}
-        className="absolute top-4 right-4 z-[9999] w-10 h-10 flex items-center justify-center 
+        onClick={() => navigate('/')}
+        className="absolute top-4 right-4 z-[60] w-10 h-10 flex items-center justify-center 
              rounded-full bg-black/70 text-white shadow-[0_0_10px_rgba(0,0,0,0.8)] hover:bg-black/90 transition"
         title="Đóng"
       >
@@ -133,7 +134,7 @@ const PostDetailPage = () => {
                       key={i}
                       onClick={() => setCurrentImageIndex(i)}
                       className={`w-2.5 h-2.5 rounded-full transition ${
-                        i === currentImageIndex ? "bg-white" : "bg-white/40"
+                        i === currentImageIndex ? 'bg-white' : 'bg-white/40'
                       }`}
                     />
                   ))}
@@ -148,15 +149,15 @@ const PostDetailPage = () => {
       <div className="w-[480px] bg-white flex flex-col h-screen overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           {/* Header */}
-          <div className="flex items-center px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div className="flex items-center px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-50">
             <img
-              src={postDetail.author?.avatar || "/default-avatar.png"}
+              src={postDetail.author?.avatar || '/default-avatar.png'}
               alt="avatar"
               className="w-10 h-10 rounded-full"
             />
             <div className="ml-3">
               <p className="font-semibold text-gray-900">
-                {postDetail.author?.username || "Ẩn danh"}
+                {postDetail.author?.username || 'Ẩn danh'}
               </p>
               <p className="text-xs text-gray-500">
                 {new Date(postDetail.createdAt).toLocaleString()}
@@ -181,13 +182,13 @@ const PostDetailPage = () => {
             <div className="px-4 py-3 border border-gray-200 bg-gray-50 mx-4 my-3 rounded-lg">
               <div className="flex items-center gap-3 mb-2">
                 <img
-                  src={sharedFrom.author?.avatar || "/default-avatar.png"}
+                  src={sharedFrom.author?.avatar || '/default-avatar.png'}
                   alt="avatar"
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
                   <p className="font-semibold text-gray-900">
-                    {sharedFrom.author?.username || "Ẩn danh"}
+                    {sharedFrom.author?.username || 'Ẩn danh'}
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(sharedFrom.createdAt).toLocaleString()}
@@ -214,7 +215,7 @@ const PostDetailPage = () => {
               postDetail.comments.map((c) => (
                 <div key={c.id} className="flex gap-3">
                   <img
-                    src={c.author?.avatar || "/default-avatar.png"}
+                    src={c.author?.avatar || '/default-avatar.png'}
                     alt="avatar"
                     className="w-8 h-8 rounded-full"
                   />
@@ -223,6 +224,16 @@ const PostDetailPage = () => {
                       {c.author?.username}
                     </p>
                     <p className="text-sm text-gray-800">{c.content}</p>
+                  </div>
+                  <div className="ml-auto">
+                    <PostMenu
+                      reportTarget={{
+                        type: 'comment',
+                        id: c.id,
+                        name: c.author?.username,
+                      }}
+                      showSave={false}
+                    />
                   </div>
                 </div>
               ))
@@ -241,12 +252,12 @@ const PostDetailPage = () => {
                 size={18}
                 className={
                   likes[postDetail.id]?.isLiked
-                    ? "fill-red-500 text-red-500"
-                    : ""
+                    ? 'fill-red-500 text-red-500'
+                    : ''
                 }
               />
               <span>
-                {likes[postDetail.id]?.isLiked ? "Bỏ thích" : "Thích"}
+                {likes[postDetail.id]?.isLiked ? 'Bỏ thích' : 'Thích'}
               </span>
             </button>
             <button className="flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-gray-100 transition">
@@ -265,7 +276,7 @@ const PostDetailPage = () => {
           {/* Nhập bình luận */}
           <div className="flex items-center gap-3 px-4 py-2">
             <img
-              src={postDetail.author.avatar || "/default-avatar.png"}
+              src={postDetail.author.avatar || '/default-avatar.png'}
               alt="avatar"
               className="w-8 h-8 rounded-full"
             />
@@ -277,7 +288,7 @@ const PostDetailPage = () => {
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => {
                   if (
-                    e.key === "Enter" &&
+                    e.key === 'Enter' &&
                     !isCommenting &&
                     commentText.trim()
                   ) {

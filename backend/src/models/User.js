@@ -39,6 +39,9 @@ const userSchema = new Schema(
     isOnline: { type: Boolean, default: false },
     lastActive: { type: Date, default: Date.now },
     lastSeen: { type: Date },
+
+    isAdmin: { type: Boolean, default: false },
+    isBanned: { type: Boolean, default: false },
   },
   {
     timestamps: true,

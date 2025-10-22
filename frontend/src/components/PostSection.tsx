@@ -2,11 +2,13 @@ import React, { useEffect, useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import PostMenu from "./PostMenu";
+// removed: inline ReportButton usage; reporting moved into PostMenu
 import SavePostModal from "./SavePostModal";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import type { Post, Tab } from "../types/post";
 import SharePostModal from "./SharePostModal";
 import ImageGallery from "./ImageGallery";
+// no direct report service usage here
 import {
   addNewPost,
   fetchPostsThunk,
@@ -131,6 +133,7 @@ const PostSection: React.FC<PostSectionProps> = ({
                   setSelectedPostId(post.id);
                   setShowSaveModal(true);
                 }}
+                reportTarget={{ type: 'post', id: post.id, name: post.author.username }}
               />
             </div>
           </div>

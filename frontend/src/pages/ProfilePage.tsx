@@ -16,6 +16,8 @@ import {
 import instance from "../api/axiosInstant";
 import type { Post } from "../types/post";
 import { toast } from "react-toastify";
+import ReportButton from "../components/ReportButton";
+import { reportService } from "../services/reportService";
 
 const ProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -170,6 +172,22 @@ const ProfilePage: React.FC = () => {
         {/* Header */}
         <div className="mt-20 flex justify-between items-center">
           <h1 className="text-2xl font-bold">{user?.username}</h1>
+          <div className="flex items-center gap-3">
+            {user?.id && (
+              <ReportButton
+                reportType="user"
+                targetId={user.id}
+                targetName={user.username}
+                onReport={async (data) => {
+                  try {
+                    await reportService.createReport(data);
+                    toast.success("Đã gửi báo cáo người dùng");
+                  } catch {
+                    toast.error("Gửi báo cáo thất bại");
+                  }
+                }}
+              />
+            )}
           <button
             onClick={() => setIsEditing(!isEditing)}
             className="flex items-center gap-2 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-50"
@@ -177,6 +195,7 @@ const ProfilePage: React.FC = () => {
             <Edit size={16} />
             {isEditing ? "Hủy" : "Chỉnh sửa"}
           </button>
+          </div>
         </div>
 
         {/* Layout 2 cột */}

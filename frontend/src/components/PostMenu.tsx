@@ -1,13 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Ellipsis, Bookmark } from 'lucide-react';
+import { Ellipsis, Bookmark, Flag } from 'lucide-react';
+import ReportModal from './ReportModal';
+import type { ReportType, CreateReportRequest } from '../types/report';
+import { reportService } from '../services/reportService';
+import { toast } from 'react-toastify';
 
 interface PostMenuProps {
   onSave?: () => void;
+  reportTarget?: { type: ReportType; id: string; name?: string };
+  showSave?: boolean;
 }
 
-const PostMenu: React.FC<PostMenuProps> = ({ onSave }) => {
+const PostMenu: React.FC<PostMenuProps> = ({ onSave, reportTarget, showSave = true }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [openReport, setOpenReport] = useState(false);
 
   // click ngoài thì đóng menu
   useEffect(() => {
@@ -35,19 +42,52 @@ const PostMenu: React.FC<PostMenuProps> = ({ onSave }) => {
       {open && (
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
           <ul className="p-2 text-sm text-gray-700">
-            <li
-              onClick={(e) => {
-                e.stopPropagation();
-                onSave?.();
-                setOpen(false);
-              }}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
-            >
-              <Bookmark size={18} />
-              <p>Lưu bài viết</p>
-            </li>
+            {showSave && (
+              <li
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSave?.();
+                  setOpen(false);
+                }}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                <Bookmark size={18} />
+                <p>Lưu bài viết</p>
+              </li>
+            )}
+            {reportTarget && (
+              <li
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  setOpenReport(true);
+                }}
+                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 cursor-pointer text-red-600"
+              >
+                <Flag size={18} />
+                <p>Báo cáo</p>
+              </li>
+            )}
           </ul>
         </div>
+      )}
+
+      {openReport && reportTarget && (
+        <ReportModal
+          isOpen={openReport}
+          onClose={() => setOpenReport(false)}
+          reportType={reportTarget.type}
+          targetId={reportTarget.id}
+          targetName={reportTarget.name}
+          onSubmit={async (data: CreateReportRequest) => {
+            try {
+              await reportService.createReport(data);
+              toast.success('Đã gửi báo cáo');
+            } catch (err) {
+              toast.error('Gửi báo cáo thất bại');
+            }
+          }}
+        />
       )}
     </div>
   );
