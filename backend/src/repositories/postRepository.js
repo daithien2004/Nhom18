@@ -19,9 +19,10 @@ export const createPostShare = async ({
   return await Post.create({ author, caption, sharedFrom });
 };
 
-// repo/postRepo.ts
+const publicFilter = { isHidden: false, isDeleted: false };
+
 export const findRecentPosts = async (limit, skip) => {
-  return await Post.find()
+  return await Post.find(publicFilter)
     .populate([
       { path: "author", select: "username avatar" },
       { path: "likes", select: "username avatar" },
@@ -44,6 +45,7 @@ export const findRecentPosts = async (limit, skip) => {
 
 export const findHotPosts = async (limit, skip) => {
   const agg = await Post.aggregate([
+    { $match: publicFilter }, // Chỉ lấy bài công khai
     {
       $addFields: {
         totalInteractions: {
@@ -80,7 +82,7 @@ export const findHotPosts = async (limit, skip) => {
 };
 
 export const findPopularPosts = async (limit, skip) => {
-  return await Post.find()
+  return await Post.find(publicFilter)
     .populate([
       { path: "author", select: "username avatar" },
       { path: "likes", select: "username avatar" },
@@ -147,7 +149,10 @@ export const findPostDetail = async (id, options = {}) => {
 };
 
 export const findPostsByAuthor = async (authorId, limit, skip) => {
-  return await Post.find({ author: authorId })
+  return await Post.find({
+    author: authorId,
+    isDeleted: false, // chỉ bỏ bài đã xóa
+  })
     .populate([
       { path: "author", select: "username avatar" },
       { path: "likes", select: "username avatar" },
