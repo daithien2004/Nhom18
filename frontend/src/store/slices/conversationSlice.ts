@@ -346,6 +346,15 @@ const conversationSlice = createSlice({
           messages[messageIndex].status = status;
           messages[messageIndex].readBy = readBy;
         }
+
+        const conv = state.conversations.find((c) => c.id === conversationId);
+        if (conv?.lastMessage?.id === messageId) {
+          conv.lastMessage = {
+            ...conv.lastMessage,
+            status,
+            readBy,
+          };
+        }
       }
     },
     clearSearchConversations: (state) => {

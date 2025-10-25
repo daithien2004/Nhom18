@@ -1,4 +1,4 @@
-import { Otp } from '../models/index.js';
+import Otp from '../models/Otp.js';
 
 // Tạo OTP mới
 export const generateOtp = () => {
@@ -23,15 +23,15 @@ export const findOtp = async (email, otp) => {
 // Kiểm tra OTP có hợp lệ và chưa hết hạn
 export const validateOtp = async (email, otp) => {
   const otpRecord = await findOtp(email, otp);
-  
+
   if (!otpRecord) {
     return { isValid: false, message: 'OTP không hợp lệ' };
   }
-  
+
   if (otpRecord.expiresAt < new Date()) {
     return { isValid: false, message: 'OTP đã hết hạn' };
   }
-  
+
   return { isValid: true, otpRecord };
 };
 

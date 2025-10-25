@@ -6,6 +6,10 @@ const commentSchema = new Schema(
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+
+    // Thêm 2 trường mới
+    isHidden: { type: Boolean, default: false }, // mặc định không ẩn
+    isDeleted: { type: Boolean, default: false }, // mặc định chưa xóa
   },
   {
     timestamps: true,

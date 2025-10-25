@@ -1,3 +1,5 @@
+import User from '../models/User.js';
+
 export function registerChatHandlers(io, socket) {
   try {
     console.log(`User ${socket.user.id} connected to chat`);
@@ -29,9 +31,14 @@ export function registerChatHandlers(io, socket) {
       console.error(`Socket error for user ${socket.user.id}:`, err);
     });
 
-    // Disconnect
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       console.log(`User ${socket.user.id} disconnected from chat`);
+
+      // Chỉ update DB
+      await User.findByIdAndUpdate(socket.user.id, {
+        isOnline: false,
+        lastSeen: new Date(),
+      });
     });
   } catch (err) {
     console.error(

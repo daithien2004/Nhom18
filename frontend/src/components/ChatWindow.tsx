@@ -4,19 +4,15 @@ import { fetchOutgoingRequests } from '../store/slices/friendSlice';
 import {
   fetchMessages,
   selectConversation,
-  addMessage,
   fetchConversationSettings,
   updateConversationSettings,
   addMessageReaction,
-  type ConversationSettings,
-  updateSettings,
   updateMessageStatus,
 } from '../store/slices/conversationSlice';
 import { useChatSocket } from '../sockets/ChatSocketContext';
-import { toast } from 'react-toastify';
 import { Loader2 } from 'lucide-react';
 import { type EmojiClickData } from 'emoji-picker-react';
-import type { Conversation, Message } from '../types/message';
+import type { Conversation } from '../types/message';
 import MessageItem from './MessageItem';
 import ChatHeader from './ChatHeader';
 import InputBox from './InputBox';
@@ -31,17 +27,20 @@ interface ChatWindowProps {
 export default function ChatWindow({ conversation }: ChatWindowProps) {
   const dispatch = useAppDispatch();
   const socket = useChatSocket();
-  const { hasMore, isLoadingMore, messages, initialLoading, error } =
-    useAppSelector((state) => state.conversations);
+  const { hasMore, isLoadingMore, messages, initialLoading } = useAppSelector(
+    (state) => state.conversations
+  );
   const currentUser = useAppSelector((state) => state.auth.user);
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showReactionMenu, setShowReactionMenu] = useState<string | null>(null);
   const [isChoosingCustomEmoji, setIsChoosingCustomEmoji] = useState(false);
+  const [page, setPage] = useState(1);
+
   const reactionMenuRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(1);
   const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const settings = useAppSelector(
@@ -77,6 +76,8 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
         )?.isOnline,
         isGroup: false,
       };
+
+  // ==================== HANDLERS ====================
 
   // Xử lý chọn emoji tùy chỉnh
   const handleCustomEmojiClick = (emojiData: EmojiClickData) => {
@@ -149,6 +150,8 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     window.open(attachment, '_blank');
   };
 
+  // ==================== EFFECTS ====================
+
   // Đóng menu cảm xúc khi nhấp ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -170,7 +173,7 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     dispatch(fetchOutgoingRequests());
   }, [dispatch]);
 
-  // Fetch messages when conversation changes
+  // Fetch messages khi conversation thay đổi
   useEffect(() => {
     if (conversation.id) {
       dispatch(selectConversation(conversation.id));
@@ -182,13 +185,7 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     }
   }, [conversation.id, dispatch]);
 
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
+  // Intersection Observer cho "seen" status
   useEffect(() => {
     if (!currentUser || !conversation.id) return;
 
@@ -232,115 +229,9 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [
-    messages[conversation.id],
-    currentUser,
-    conversation.id,
-    dispatch,
-    socket,
-  ]);
+  }, [messages[conversation.id], currentUser, conversation.id, dispatch]);
 
-  // Setup WebSocket
-  useEffect(() => {
-    if (!socket || !conversation.id) return;
-
-    socket.emit('joinConversation', conversation.id);
-
-    const handleSendMessage = (message: Message) => {
-      if (settings.notificationsEnabled) {
-        dispatch(addMessage({ conversationId: conversation.id, message }));
-        if (message.sender.id !== currentUser?.id) {
-          toast.info(`Tin nhắn mới từ ${user.username}: ${message.text}`);
-          if (currentUser && message.status === 'sent') {
-            dispatch(
-              updateMessageStatus({
-                conversationId: conversation.id,
-                messageId: message.id,
-                status: 'delivered',
-              })
-            );
-          }
-        }
-      }
-    };
-    const handleMessageStatusUpdated = (data: {
-      conversationId: string;
-      messageId: string;
-      status: string;
-      readBy: string[];
-    }) => {
-      dispatch({
-        type: updateMessageStatus.fulfilled.type,
-        payload: data,
-      });
-    };
-    const handleSettingsUpdated = (data: {
-      conversationId: string;
-      settings: ConversationSettings;
-    }) => {
-      dispatch(
-        updateSettings({
-          conversationId: data.conversationId,
-          settings: data.settings,
-        })
-      );
-    };
-
-    const handleReactionAdded = (data: {
-      conversationId: string;
-      messageId: string;
-      reaction: { [userId: string]: string };
-    }) => {
-      dispatch({
-        type: addMessageReaction.fulfilled.type,
-        payload: {
-          conversationId: data.conversationId,
-          messageId: data.messageId,
-          reaction: data.reaction,
-        },
-      });
-    };
-
-    const handleReactionRemoved = (data: {
-      conversationId: string;
-      messageId: string;
-      reaction: { [userId: string]: string };
-      remove: boolean;
-    }) => {
-      dispatch({
-        type: addMessageReaction.fulfilled.type,
-        payload: {
-          conversationId: data.conversationId,
-          messageId: data.messageId,
-          reaction: data.reaction,
-          remove: data.remove,
-        },
-      });
-    };
-
-    socket.on('reactionAdded', handleReactionAdded);
-    socket.on('reactionRemoved', handleReactionRemoved);
-    socket.on('messageStatusUpdated', handleMessageStatusUpdated);
-    socket.on('sendMessage', handleSendMessage);
-    socket.on('settingsUpdated', handleSettingsUpdated);
-
-    return () => {
-      socket.off('sendMessage', handleSendMessage);
-      socket.off('messageStatusUpdated', handleMessageStatusUpdated);
-      socket.off('settingsUpdated', handleSettingsUpdated);
-      socket.off('reactionAdded', handleReactionAdded);
-      socket.off('reactionRemoved', handleReactionRemoved);
-    };
-  }, [
-    socket,
-    conversation.id,
-    dispatch,
-    settings.notificationsEnabled,
-    user.username,
-    currentUser,
-  ]);
-
-  // Cập nhật useEffect cho Intersection Observer:
+  // Intersection Observer cho load more messages
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -373,7 +264,7 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     };
   }, [hasMore, isLoadingMore, initialLoading]);
 
-  // Cập nhật useEffect xử lý fetch:
+  // Fetch messages khi page thay đổi
   useEffect(() => {
     if (conversation.id && page > 1) {
       const container = messagesContainerRef.current;
@@ -396,7 +287,7 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     }
   }, [page, conversation.id, dispatch]);
 
-  // Scroll xuống cuối khi load lần đầu hoặc có tin nhắn mới:
+  // Scroll xuống cuối khi load lần đầu hoặc có tin nhắn mới
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -407,6 +298,8 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
       });
     }
   }, [messages[conversation.id], page, initialLoading, isLoadingMore]);
+
+  // ==================== RENDER ====================
 
   return (
     <div className="flex flex-col w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md max-h-[calc(100vh-80px)] overflow-hidden">
@@ -487,6 +380,7 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
                 Không có tin nhắn nào trong cuộc trò chuyện này.
               </div>
             )}
+
             {!conversation.isGroup && conversation.status === 'pending' && (
               <div className="text-center text-sm text-gray-500 mt-5 italic">
                 Tin nhắn này đang chờ cho đến khi {user.username} chấp nhận kết

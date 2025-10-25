@@ -83,8 +83,9 @@ export const updateUserSchema = z
       .string()
       .min(3, { message: 'Tên người dùng phải có ít nhất 3 ký tự' })
       .max(50, { message: 'Tên người dùng không được quá 50 ký tự' })
-      .regex(/^[a-zA-Z0-9_]+$/, {
-        message: 'Tên người dùng chỉ được chứa chữ cái, số và dấu gạch dưới',
+      .regex(/^[a-zA-Z0-9_ ]+$/, {
+        message:
+          'Tên người dùng chỉ được chứa chữ cái, số, dấu cách và dấu gạch dưới',
       })
       .optional(),
     phone: z

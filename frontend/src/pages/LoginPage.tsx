@@ -19,7 +19,7 @@ const LoginPage = () => {
     formState: { errors, isValid },
   } = useForm<FormLogin>({
     resolver: zodResolver(FormLoginSchema),
-    defaultValues: { email: 'alice@example.com', password: '123456' },
+    defaultValues: { email: 'john.doe@example.com', password: 'User@123' },
     mode: 'onChange',
   });
 

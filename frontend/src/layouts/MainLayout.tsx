@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useAppDispatch } from "../store/hooks";
-import { logout } from "../store/slices/authSlice";
+import React, { useState, useMemo } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 import {
   UserCircle,
   MessageCircle,
@@ -10,19 +10,36 @@ import {
   Bookmark,
   BarChart3,
   History,
-} from "lucide-react";
-import { persistor } from "../store/store";
+} from 'lucide-react';
+import { persistor } from '../store/store';
 
 const MainLayout: React.FC = () => {
   const [isDropdownOpen, setIsDropDownOpen] = useState(false);
+  const { user } = useAppSelector((state) => state.auth);
+  const { conversations } = useAppSelector((state) => state.conversations);
+
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
 
+  // Check if there are any unread messages
+  const hasUnreadMessages = useMemo(() => {
+    if (!user || !conversations || conversations.length === 0) return false;
+
+    return conversations.some((conv) => {
+      if (!conv.lastMessage) return false;
+
+      const isRead = conv.lastMessage.readBy?.includes(user.id);
+      const isOwnMessage = conv.lastMessage.sender.id === user.id;
+
+      return !isOwnMessage && !isRead;
+    });
+  }, [conversations, user]);
+
   const handleLogout = async () => {
     dispatch(logout());
     await persistor.purge();
-    navigate("/login");
+    navigate('/login');
   };
 
   const toggleDropdown = () => {
@@ -38,20 +55,31 @@ const MainLayout: React.FC = () => {
         <div className="flex flex-col items-center gap-6">
           {/* Avatar + Dropdown */}
           <div className="relative">
-            <UserCircle
-              size={48}
-              className="text-gray-800 cursor-pointer hover:scale-110 transition-transform"
+            <div
               onClick={toggleDropdown}
-            />
+              className="w-12 h-12 rounded-full border-4 border-white shadow overflow-hidden"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="flex items-center justify-center w-full h-full text-4xl bg-gray-100 text-gray-600">
+                  {user?.username?.charAt(0)?.toUpperCase()}
+                </span>
+              )}
+            </div>
 
             {/* Dropdown menu hiển thị bên phải avatar */}
             {isDropdownOpen && (
-              <div className="absolute top-0 left-full ml-3 w-48 bg-white shadow-md border border-gray-200 rounded-lg z-50">
+              <div className="fixed mt-2 ml-2 w-48 bg-white shadow-md border border-gray-200 rounded-lg z-50">
                 <ul>
                   <li
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                     onClick={() => {
-                      navigate("/profile");
+                      navigate('/profile');
                       setIsDropDownOpen(false);
                     }}
                   >
@@ -60,7 +88,7 @@ const MainLayout: React.FC = () => {
                   <li
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                     onClick={() => {
-                      navigate("/setting");
+                      navigate('/setting');
                       setIsDropDownOpen(false);
                     }}
                   >
@@ -85,60 +113,68 @@ const MainLayout: React.FC = () => {
             <Home
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/home") ? "text-blue-600" : "text-gray-800"
+                isActive('/home') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => {
-                navigate("/");
+                navigate('/');
                 setIsDropDownOpen(false);
               }}
             />
-            <MessageCircle
-              size={32}
-              className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/conversations") ? "text-blue-600" : "text-gray-800"
-              }`}
-              onClick={() => {
-                navigate("/conversations");
-                setIsDropDownOpen(false);
-              }}
-            />
+
+            {/* Message icon with unread badge */}
+            <div className="relative">
+              <MessageCircle
+                size={32}
+                className={`cursor-pointer transition-transform hover:scale-110 ${
+                  isActive('/conversations') ? 'text-blue-600' : 'text-gray-800'
+                }`}
+                onClick={() => {
+                  navigate('/conversations');
+                  setIsDropDownOpen(false);
+                }}
+              />
+              {hasUnreadMessages && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+              )}
+            </div>
+
             <Contact
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/friends") ? "text-blue-600" : "text-gray-800"
+                isActive('/friends') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => {
-                navigate("/friends");
+                navigate('/friends');
                 setIsDropDownOpen(false);
               }}
             />
             <Bookmark
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/categories") ? "text-blue-600" : "text-gray-800"
+                isActive('/categories') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => {
-                navigate("/categories");
+                navigate('/categories');
                 setIsDropDownOpen(false);
               }}
             />
             <BarChart3
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/statistics") ? "text-blue-600" : "text-gray-800"
+                isActive('/statistics') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => {
-                navigate("/statistics");
+                navigate('/statistics');
                 setIsDropDownOpen(false);
               }}
             />
             <History
               size={32}
               className={`cursor-pointer transition-transform hover:scale-110 ${
-                isActive("/activities") ? "text-blue-600" : "text-gray-800"
+                isActive('/activities') ? 'text-blue-600' : 'text-gray-800'
               }`}
               onClick={() => {
-                navigate("/activities");
+                navigate('/activities');
                 setIsDropDownOpen(false);
               }}
             />

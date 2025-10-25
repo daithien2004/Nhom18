@@ -15,7 +15,7 @@ export interface Message {
     username?: string | undefined;
     avatar?: string | undefined;
   };
-  conversationId: string | null;
+  conversationId: string;
   text?: string;
   attachments?: string[];
   reactions: { [userId: string]: string };
