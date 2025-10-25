@@ -345,7 +345,6 @@ async function seedNotifications(users, posts) {
   const notificationTypes = [
     { type: 'like', message: 'đã thích bài viết của bạn' },
     { type: 'comment', message: 'đã bình luận về bài viết của bạn' },
-    { type: 'follow', message: 'đã bắt đầu theo dõi bạn' },
     { type: 'friend_request', message: 'đã gửi lời mời kết bạn' },
   ];
 

@@ -2,9 +2,9 @@ import {
   createSlice,
   createAsyncThunk,
   type PayloadAction,
-} from "@reduxjs/toolkit";
-import instance from "../../api/axiosInstant";
-import type { Comment, Post, PostDetail, Tab } from "../../types/post";
+} from '@reduxjs/toolkit';
+import instance from '../../api/axiosInstant';
+import type { Comment, Post, PostDetail, Tab } from '../../types/post';
 
 // Định nghĩa interface cho Likes
 interface Like {
@@ -49,72 +49,73 @@ const initialState: PostState = {
 
 // Thunk để tạo bài viết
 export const createPost = createAsyncThunk(
-  "posts/createPost",
+  'posts/createPost',
   async (
     postData: { content: string; images: string[] },
     { rejectWithValue }
   ) => {
     try {
-      const res = await instance.post("/posts", postData);
+      const res = await instance.post('/posts', postData);
       return res.data as Post;
     } catch (err) {
-      return rejectWithValue("Không thể tạo bài viết");
+      return rejectWithValue('Không thể tạo bài viết');
     }
   }
 );
 
 // Thunk để lấy danh sách bài viết
 export const fetchPostsThunk = createAsyncThunk(
-  "posts/fetchPosts",
+  'posts/fetchPosts',
   async (
     {
       tab,
       page,
       limit = 20,
       replace,
-      isMyPosts = false,
+      userId,
     }: {
       tab?: Tab;
       page: number;
       limit?: number;
       replace: boolean;
-      isMyPosts?: boolean;
+      userId: string | undefined;
     },
     { rejectWithValue }
   ) => {
     try {
       let url = `/posts`;
-      if (isMyPosts) {
-        url += `/me?limit=${limit}&page=${page}`;
+      if (userId) {
+        url += `/user/${userId}?limit=${limit}&page=${page}`;
       } else if (tab) {
         url += `?type=${tab}&limit=${limit}&page=${page}`;
       } else {
-        return rejectWithValue("Thiếu tham số tab hoặc isMyPosts");
+        return rejectWithValue('Thiếu tham số tab hoặc isMyPosts');
       }
       const res = await instance.get(url);
       return { posts: res.data as Post[], replace };
     } catch (err) {
-      return rejectWithValue("Lỗi khi tải bài viết");
+      return rejectWithValue('Lỗi khi tải bài viết');
     }
   }
 );
 
 // Thunk để lấy chi tiết bài viết
 export const fetchPostDetail = createAsyncThunk(
-  "posts/getPostDetail",
+  'posts/getPostDetail',
   async (postId: string, { rejectWithValue }) => {
     try {
       const res = await instance.get(`/posts/${postId}`);
+      console.log(res);
       return res.data as PostDetail;
     } catch (err) {
-      return rejectWithValue("Lỗi khi tải chi tiết bài viết");
+      return rejectWithValue('Lỗi khi tải chi tiết bài viết');
     }
   }
 );
 
 // Thunk chung để thích bài viết
 export const toggleLike = createAsyncThunk(
-  "posts/toggleLike",
+  'posts/toggleLike',
   async ({ postId }: { postId: string }, { rejectWithValue }) => {
     try {
       const res = await instance.post(`/posts/${postId}/like`);
@@ -125,14 +126,14 @@ export const toggleLike = createAsyncThunk(
         likes: res.data.likes, // Mảng likes chứa userId, username, avatar
       };
     } catch (err) {
-      return rejectWithValue("Lỗi khi thích bài viết");
+      return rejectWithValue('Lỗi khi thích bài viết');
     }
   }
 );
 
 // Thunk để thêm bình luận
 export const addComment = createAsyncThunk(
-  "posts/addComment",
+  'posts/addComment',
   async (
     { postId, content }: { postId: string; content: string },
     { rejectWithValue }
@@ -144,14 +145,14 @@ export const addComment = createAsyncThunk(
         postId,
       };
     } catch (err) {
-      return rejectWithValue("Lỗi khi thêm bình luận");
+      return rejectWithValue('Lỗi khi thêm bình luận');
     }
   }
 );
 
 // Thêm createAsyncThunk cho share post
 export const sharePost = createAsyncThunk(
-  "posts/sharePost",
+  'posts/sharePost',
   async (
     { postId, caption }: { postId: string; caption: string },
     { rejectWithValue }
@@ -161,13 +162,13 @@ export const sharePost = createAsyncThunk(
       // Giả sử API trả về post mới (shared post)
       return res.data as Post;
     } catch (err) {
-      return rejectWithValue("Lỗi khi chia sẻ bài viết");
+      return rejectWithValue('Lỗi khi chia sẻ bài viết');
     }
   }
 );
 
 const postSlice = createSlice({
-  name: "posts",
+  name: 'posts',
   initialState,
   reducers: {
     resetPosts: (state) => {
@@ -319,9 +320,9 @@ const postSlice = createSlice({
             id: `temp-${Date.now()}`,
             content: action.meta.arg.content,
             author: {
-              id: "temp-user",
-              username: "Đang tải...",
-              avatar: "/default-avatar.png",
+              id: 'temp-user',
+              username: 'Đang tải...',
+              avatar: '/default-avatar.png',
             },
             createdAt: new Date().toISOString(),
           };
@@ -337,7 +338,7 @@ const postSlice = createSlice({
         if (state.postDetail && state.postDetail.id === action.payload.postId) {
           // Thay bình luận tạm thời bằng bình luận thật
           state.postDetail.comments = state.postDetail.comments.map((c) =>
-            c.id.startsWith("temp-") ? action.payload.comment : c
+            c.id.startsWith('temp-') ? action.payload.comment : c
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }
@@ -347,7 +348,7 @@ const postSlice = createSlice({
         state.commentError = action.payload as string;
         if (state.postDetail) {
           state.postDetail.comments = state.postDetail.comments.filter(
-            (c) => !c.id.startsWith("temp-")
+            (c) => !c.id.startsWith('temp-')
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }

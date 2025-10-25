@@ -18,6 +18,7 @@ import 'react-toastify/dist/ReactToastify.css'; // nhớ import css
 import { SocketProviders } from './sockets/SocketProviders';
 import { useAppSelector } from './store/hooks';
 import PrivateRoute from './components/PrivateRoute';
+import UserProfilePage from './pages/UserProfilePage';
 
 function App() {
   const isAuthenticated = useAppSelector((state) => !!state.auth.token);
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="/profile/:userId" element={<UserProfilePage />} />
             <Route path="posts/:postId" element={<PostDetail />} />
             <Route path="conversations" element={<ConversationsPage />} />
             <Route path="friends" element={<FriendsPage />} />

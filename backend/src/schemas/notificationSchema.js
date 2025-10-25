@@ -3,7 +3,9 @@ import { z } from 'zod';
 // Schema tạo thông báo
 export const createNotificationSchema = z.object({
   message: z.string().min(1, 'message không được để trống'),
-  type: z.enum(['like', 'comment', 'follow', 'system']).default('system'),
+  type: z
+    .enum(['like', 'comment', 'friend_request', 'friend_accept', 'system'])
+    .default('system'),
   metadata: z.record(z.any()).optional(),
 });
 

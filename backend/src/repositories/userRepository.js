@@ -4,6 +4,10 @@ export const findByEmail = async (email) => {
   return await User.findOne({ email });
 };
 
+export const findByUsername = async (username) => {
+  return await User.findOne({ username });
+};
+
 export const findById = async (id) => {
   return await User.findById(id);
 };

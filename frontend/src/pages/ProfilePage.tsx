@@ -27,10 +27,12 @@ import type { Post } from '../types/post';
 import { toast } from 'react-toastify';
 import ReportButton from '../components/ReportButton';
 import { reportService } from '../services/reportService';
+import { useNavigate } from 'react-router-dom';
 
 type TabType = 'posts' | 'about' | 'friends' | 'photos';
 
 const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state) => state.auth);
   const {
@@ -61,7 +63,12 @@ const ProfilePage: React.FC = () => {
     if (user) setFormData(user);
     dispatch(resetPosts());
     dispatch(
-      fetchPostsThunk({ page: 1, limit: 20, replace: true, isMyPosts: true })
+      fetchPostsThunk({
+        page: 1,
+        limit: 20,
+        replace: true,
+        userId: user?.id,
+      })
     );
   }, [user, dispatch]);
 
@@ -110,7 +117,12 @@ const ProfilePage: React.FC = () => {
       toast.success('Đăng bài thành công!');
       dispatch(resetPosts());
       dispatch(
-        fetchPostsThunk({ page: 1, limit: 20, replace: true, isMyPosts: true })
+        fetchPostsThunk({
+          page: 1,
+          limit: 20,
+          replace: true,
+          userId: user?.id,
+        })
       );
     } catch {
       toast.error('Đăng bài thất bại!');
@@ -516,7 +528,11 @@ const ProfilePage: React.FC = () => {
               </div>
 
               {/* Posts */}
-              <PostSection isMyPosts newPost={newPost} showTabs={false} />
+              <PostSection
+                userId={user?.id}
+                newPost={newPost}
+                showTabs={false}
+              />
             </div>
           </div>
         )}
@@ -750,7 +766,12 @@ const ProfilePage: React.FC = () => {
                         <p className="font-semibold text-gray-900 truncate">
                           {friend.username}
                         </p>
-                        <button className="w-full mt-2 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-all">
+                        <button
+                          onClick={() => {
+                            navigate(`/profile/${friend.id}`);
+                          }}
+                          className="w-full mt-2 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-all"
+                        >
                           Xem trang cá nhân
                         </button>
                       </div>

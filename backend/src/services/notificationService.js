@@ -63,28 +63,10 @@ const generateMessage = (type, metadata, senderName) => {
       return `${senderName} đã chia sẻ bài viết của bạn${
         metadata.postTitle ? `: "${metadata.postTitle}"` : ''
       }`;
-    case 'tag':
-      return `${senderName} đã tag bạn trong bài viết${
-        metadata.postTitle ? `: "${metadata.postTitle}"` : ''
-      }`;
-    case 'mention':
-      return `${senderName} đã mention bạn trong bình luận${
-        metadata.comment ? `: "${metadata.comment.slice(0, 50)}..."` : ''
-      }`;
-    case 'reaction':
-      return `${senderName} đã phản ứng với bài viết của bạn bằng ${
-        metadata.reactionEmoji
-      }${metadata.postTitle ? `: "${metadata.postTitle}"` : ''}`;
     case 'friend_request':
       return `${senderName} đã gửi yêu cầu kết bạn cho bạn`;
     case 'friend_accept':
       return `${senderName} đã chấp nhận yêu cầu kết bạn của bạn`;
-    case 'security':
-      return `Cảnh báo bảo mật: ${
-        metadata.securityType === 'suspicious_login'
-          ? 'Có đăng nhập đáng ngờ từ thiết bị mới'
-          : 'Thay đổi mật khẩu gần đây'
-      }`;
     case 'system':
     default:
       return metadata.message || 'Bạn có thông báo mới';

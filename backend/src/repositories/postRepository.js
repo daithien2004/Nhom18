@@ -1,12 +1,12 @@
-import Post from "../models/Post.js";
+import Post from '../models/Post.js';
 
 // Tạo post (hỗ trợ sharedFrom và images mặc định)
 export const createPost = async ({ author, content, images = [] }) => {
   const post = await Post.create({ author, content, images });
   // Populate thông tin author và likes
   return await Post.populate(post, [
-    { path: "author", select: "username avatar" },
-    { path: "likes", select: "username avatar" },
+    { path: 'author', select: 'username avatar' },
+    { path: 'likes', select: 'username avatar' },
   ]);
 };
 
@@ -24,17 +24,17 @@ const publicFilter = { isHidden: false, isDeleted: false };
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find(publicFilter)
     .populate([
-      { path: "author", select: "username avatar" },
-      { path: "likes", select: "username avatar" },
+      { path: 'author', select: '_id username avatar' },
+      { path: 'likes', select: 'username avatar' },
       {
-        path: "comments",
-        populate: { path: "author", select: "username avatar" },
+        path: 'comments',
+        populate: { path: 'author', select: '_id username avatar' },
       },
       {
-        path: "sharedFrom",
+        path: 'sharedFrom',
         populate: [
-          { path: "author", select: "username avatar" },
-          { path: "likes", select: "username avatar" },
+          { path: 'author', select: '_id username avatar' },
+          { path: 'likes', select: 'username avatar' },
         ],
       },
     ])
@@ -50,8 +50,8 @@ export const findHotPosts = async (limit, skip) => {
       $addFields: {
         totalInteractions: {
           $add: [
-            { $size: { $ifNull: ["$likes", []] } },
-            { $size: { $ifNull: ["$comments", []] } },
+            { $size: { $ifNull: ['$likes', []] } },
+            { $size: { $ifNull: ['$comments', []] } },
           ],
         },
       },
@@ -62,17 +62,17 @@ export const findHotPosts = async (limit, skip) => {
   ]);
 
   const populatedPosts = await Post.populate(agg, [
-    { path: "author", select: "username avatar" },
-    { path: "likes", select: "username avatar" },
+    { path: 'author', select: '_id username avatar' },
+    { path: 'likes', select: 'username avatar' },
     {
-      path: "comments",
-      populate: { path: "author", select: "username avatar" },
+      path: 'comments',
+      populate: { path: 'author', select: '_id username avatar' },
     },
     {
-      path: "sharedFrom",
+      path: 'sharedFrom',
       populate: [
-        { path: "author", select: "username avatar" },
-        { path: "likes", select: "username avatar" },
+        { path: 'author', select: '_id username avatar' },
+        { path: 'likes', select: 'username avatar' },
       ],
     },
   ]);
@@ -84,17 +84,17 @@ export const findHotPosts = async (limit, skip) => {
 export const findPopularPosts = async (limit, skip) => {
   return await Post.find(publicFilter)
     .populate([
-      { path: "author", select: "username avatar" },
-      { path: "likes", select: "username avatar" },
+      { path: 'author', select: '_id username avatar' },
+      { path: 'likes', select: 'username avatar' },
       {
-        path: "comments",
-        populate: { path: "author", select: "username avatar" },
+        path: 'comments',
+        populate: { path: 'author', select: '_id username avatar' },
       },
       {
-        path: "sharedFrom",
+        path: 'sharedFrom',
         populate: [
-          { path: "author", select: "username avatar" },
-          { path: "likes", select: "username avatar" },
+          { path: 'author', select: '_id username avatar' },
+          { path: 'likes', select: 'username avatar' },
         ],
       },
     ])
@@ -114,25 +114,26 @@ export const findPostAndIncreaseView = async (postId) => {
     { $inc: { views: 1 } },
     { new: true }
   )
-    .populate("author", "username avatar isOnline")
-    .populate("likes", "username avatar") // populate likes của post
+    .populate('author', '_id username avatar isOnline')
+    .populate('likes', 'username avatar') // populate likes của post
     .populate({
-      path: "sharedFrom",
+      path: 'sharedFrom',
       populate: [
-        { path: "author", select: "username avatar isOnline" },
-        { path: "likes", select: "username avatar" },
+        { path: 'author', select: '_id username avatar isOnline' },
+        { path: 'likes', select: 'username avatar' },
       ],
     })
     .populate({
-      path: "comments",
-      populate: { path: "author", select: "username avatar" },
+      path: 'comments',
+      match: { isHidden: false, isDeleted: false },
+      populate: { path: 'author', select: '_id username avatar' },
     });
 };
 
 export const findPost = async (postId) => {
   return await Post.findByIdAndUpdate(postId).populate(
-    "author",
-    "username avatar isOnline"
+    'author',
+    '_id username avatar isOnline'
   );
 };
 
@@ -151,20 +152,21 @@ export const findPostDetail = async (id, options = {}) => {
 export const findPostsByAuthor = async (authorId, limit, skip) => {
   return await Post.find({
     author: authorId,
-    isDeleted: false, // chỉ bỏ bài đã xóa
+    isDeleted: false,
+    isHidden: false,
   })
     .populate([
-      { path: "author", select: "username avatar" },
-      { path: "likes", select: "username avatar" },
+      { path: 'author', select: '_id username avatar' },
+      { path: 'likes', select: 'username avatar' },
       {
-        path: "comments",
-        populate: { path: "author", select: "username avatar" },
+        path: 'comments',
+        populate: { path: 'author', select: '_id username avatar' },
       },
       {
-        path: "sharedFrom",
+        path: 'sharedFrom',
         populate: [
-          { path: "author", select: "username avatar" },
-          { path: "likes", select: "username avatar" },
+          { path: 'author', select: '_id username avatar' },
+          { path: 'likes', select: 'username avatar' },
         ],
       },
     ])

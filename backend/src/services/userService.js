@@ -12,6 +12,14 @@ export const login = async (email, password) => {
   const user = await userRepo.findByEmail(email);
   if (!user) throw new ApiError(401, 'Email hoặc password không đúng');
 
+  if (user.isBanned) {
+    throw new ApiError(403, 'Tài khoản của bạn đã bị cấm');
+  }
+
+  if (!user.isVerified) {
+    throw new ApiError(403, 'Tài khoản chưa được xác thực');
+  }
+
   const isMatchPassword = await passwordService.comparePassword(
     password,
     user.password

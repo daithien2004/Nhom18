@@ -13,15 +13,10 @@ export interface Notification {
   type:
     | 'like'
     | 'comment'
-    | 'follow'
     | 'share'
-    | 'system'
-    | 'tag'
-    | 'mention'
-    | 'reaction'
     | 'friend_request'
     | 'friend_accept'
-    | 'security';
+    | 'system';
   metadata: {
     postId?: string;
     postTitle?: string;

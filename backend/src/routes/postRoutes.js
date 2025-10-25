@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   createPost,
   getPosts,
@@ -7,14 +7,14 @@ import {
   createComment,
   sharePost,
   getUserPosts,
-} from "../controllers/postController.js";
-import auth from "../middlewares/auth.js";
-import optionalAuth from "../middlewares/optionalAuth.js";
+} from '../controllers/postController.js';
+import auth from '../middlewares/auth.js';
+import optionalAuth from '../middlewares/optionalAuth.js';
 import {
   validateBody,
   validateQuery,
   validateParams,
-} from "../middlewares/validation.js";
+} from '../middlewares/validation.js';
 import {
   createPostSchema,
   createCommentSchema,
@@ -22,25 +22,30 @@ import {
   postIdSchema,
   sharePostSchema,
   myPostQuerySchema,
-} from "../schemas/postSchemas.js";
+} from '../schemas/postSchemas.js';
 
 const router = Router();
 
 // Lấy danh sách bài viết (feed)
-router.get("/", optionalAuth, validateQuery(postQuerySchema), getPosts);
+router.get('/', optionalAuth, validateQuery(postQuerySchema), getPosts);
 
 // Lấy danh sách bài viết của người dùng, bao gồm cả post tạo lẫn share
-router.get("/me", validateQuery(myPostQuerySchema), auth, getUserPosts);
+router.get(
+  '/user/:userId',
+  validateQuery(myPostQuerySchema),
+  auth,
+  getUserPosts
+);
 
 // Lấy chi tiết 1 bài viết
-router.get("/:postId", validateParams(postIdSchema), auth, getPostDetail);
+router.get('/:postId', validateParams(postIdSchema), auth, getPostDetail);
 
 // Tạo bài viết (cần đăng nhập)
-router.post("/", validateBody(createPostSchema), auth, createPost);
+router.post('/', validateBody(createPostSchema), auth, createPost);
 
 // Like/Unlike bài viết
 router.post(
-  "/:postId/like",
+  '/:postId/like',
   auth,
   validateParams(postIdSchema),
   toggleLikePost
@@ -48,7 +53,7 @@ router.post(
 
 // Tạo bình luận cho bài viết
 router.post(
-  "/:postId/comments",
+  '/:postId/comments',
   auth,
   validateParams(postIdSchema),
   validateBody(createCommentSchema),
@@ -56,7 +61,7 @@ router.post(
 );
 
 router.post(
-  "/:postId/share",
+  '/:postId/share',
   auth,
   validateParams(postIdSchema),
   validateBody(sharePostSchema),

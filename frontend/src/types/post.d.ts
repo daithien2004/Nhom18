@@ -40,6 +40,7 @@ export interface Post {
   commentCount: number;
   images: string[];
   author: {
+    id: string;
     username: string;
     avatar: string;
   };

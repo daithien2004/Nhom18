@@ -1,9 +1,10 @@
-import ApiError from "../utils/apiError.js";
-import { StatusCodes } from "http-status-codes";
-import * as postRepo from "../repositories/postRepository.js";
-import * as commentRepo from "../repositories/commentRepository.js";
-import Post from "../models/Post.js";
-import * as activityRepo from "../repositories/activityRepository.js";
+import ApiError from '../utils/apiError.js';
+import { StatusCodes } from 'http-status-codes';
+import * as postRepo from '../repositories/postRepository.js';
+import * as userRepo from '../repositories/userRepository.js';
+import * as commentRepo from '../repositories/commentRepository.js';
+import Post from '../models/Post.js';
+import * as activityRepo from '../repositories/activityRepository.js';
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
@@ -18,13 +19,13 @@ export const getPosts = async ({ type, limit, page = 1, userId }) => {
   try {
     let posts;
     switch (type) {
-      case "recent":
+      case 'recent':
         posts = await postRepo.findRecentPosts(l, skip);
         break;
-      case "hot":
+      case 'hot':
         posts = await postRepo.findHotPosts(l, skip);
         break;
-      case "popular":
+      case 'popular':
         posts = await postRepo.findPopularPosts(l, skip);
         break;
       default:
@@ -78,10 +79,10 @@ export const getPosts = async ({ type, limit, page = 1, userId }) => {
       return postData;
     });
   } catch (err) {
-    console.error("Error in getPosts:", err);
+    console.error('Error in getPosts:', err);
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      "Lỗi khi lấy danh sách bài viết"
+      'Lỗi khi lấy danh sách bài viết'
     );
   }
 };
@@ -92,8 +93,9 @@ export const getPost = async (postId) => {
 
 export const getPostDetail = async (postId, userId) => {
   const post = await postRepo.findPostAndIncreaseView(postId);
+
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
   // Trực tiếp dùng dữ liệu đã populate
@@ -139,7 +141,7 @@ export const getPostDetail = async (postId, userId) => {
 export const toggleLikePost = async (postId, userId) => {
   const post = await Post.findById(postId);
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
   const isLiked = post.likes.some((id) => id.toString() === userId);
@@ -150,7 +152,7 @@ export const toggleLikePost = async (postId, userId) => {
     const existing = await activityRepo.findExistingActivity({
       actor: userId,
       post: postId,
-      type: "like",
+      type: 'like',
     });
     if (existing) {
       await activityRepo.deleteActivity(existing.id);
@@ -161,14 +163,14 @@ export const toggleLikePost = async (postId, userId) => {
       actor: userId,
       post: postId,
       postOwner: post.author,
-      type: "like",
+      type: 'like',
     });
   }
 
   await post.save();
 
   // Populate ngay sau khi save
-  await post.populate({ path: "likes", select: "username avatar" });
+  await post.populate({ path: 'likes', select: 'username avatar' });
 
   return {
     postId: post.id.toString(),
@@ -185,7 +187,7 @@ export const toggleLikePost = async (postId, userId) => {
 export const createComment = async ({ postId, userId, content }) => {
   const post = await postRepo.findPostById(postId);
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
   const comment = await commentRepo.createComment({
@@ -201,7 +203,7 @@ export const createComment = async ({ postId, userId, content }) => {
     actor: userId,
     post: postId,
     postOwner: post.author,
-    type: "comment",
+    type: 'comment',
     comment: comment.id,
   });
 
@@ -211,7 +213,7 @@ export const createComment = async ({ postId, userId, content }) => {
 export const sharePost = async ({ userId, postId, caption }) => {
   let original = await postRepo.findPostById(postId);
   if (!original) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
   // nếu post hiện tại là bài share thì truy ngược về bài gốc
   // original.sharedFrom khác null là bài share
@@ -222,7 +224,7 @@ export const sharePost = async ({ userId, postId, caption }) => {
   // tạo post share
   const shared = await postRepo.createPostShare({
     author: userId,
-    caption: caption || "",
+    caption: caption || '',
     sharedFrom: original.id,
   });
 
@@ -234,10 +236,10 @@ export const sharePost = async ({ userId, postId, caption }) => {
 
   return await postRepo.findPostDetail(shared.id, {
     populate: [
-      { path: "author", select: "username avatar" },
+      { path: 'author', select: 'username avatar' },
       {
-        path: "sharedFrom",
-        populate: { path: "author", select: "username avatar" },
+        path: 'sharedFrom',
+        populate: { path: 'author', select: 'username avatar' },
       },
     ],
   });
@@ -245,11 +247,11 @@ export const sharePost = async ({ userId, postId, caption }) => {
 
 export const checkIfLiked = async (postId, userId) => {
   const post = await Post.findById(postId).populate({
-    path: "likes",
-    select: "username avatar",
+    path: 'likes',
+    select: 'username avatar',
   });
   if (!post) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy bài Post");
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài Post');
   }
 
   const isLiked = post.likes.some((u) => u.id.toString() === userId);
@@ -318,10 +320,10 @@ export const getUserPosts = async ({
       return postData;
     });
   } catch (err) {
-    console.error("Error in getUserPosts:", err);
+    console.error('Error in getUserPosts:', err);
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      "Lỗi khi lấy danh sách bài viết của người dùng"
+      'Lỗi khi lấy danh sách bài viết của người dùng'
     );
   }
 };
