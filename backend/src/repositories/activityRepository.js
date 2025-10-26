@@ -1,6 +1,6 @@
 // repo/activityRepository.js
-import Activity from "../models/Activity.js";
-import Post from "../models/Post.js";
+import Activity from '../models/Activity.js';
+import Post from '../models/Post.js';
 
 /**
  * Tạo activity mới (like hoặc comment)
@@ -20,12 +20,12 @@ export const createActivity = async ({
     comment,
   });
   return await Activity.populate(activity, [
-    { path: "actor", select: "username avatar" },
-    { path: "post", select: "content images" },
-    { path: "postOwner", select: "username avatar" },
+    { path: 'actor', select: 'username avatar' },
+    { path: 'post', select: 'content images' },
+    { path: 'postOwner', select: 'username avatar' },
     {
-      path: "comment",
-      populate: { path: "author", select: "username avatar" },
+      path: 'comment',
+      populate: { path: 'author', select: 'username avatar' },
     },
   ]);
 };
@@ -37,24 +37,24 @@ export const findActivitiesByActor = async (actorId, limit = 20, skip = 0) => {
   return await Activity.find({ actor: actorId })
     .populate([
       {
-        path: "post",
-        select: "content images caption sharedFrom author",
+        path: 'post',
+        select: 'content images caption sharedFrom author',
         populate: [
           {
-            path: "sharedFrom",
-            select: "content images author",
-            populate: { path: "author", select: "username avatar" },
+            path: 'sharedFrom',
+            select: 'content images author',
+            populate: { path: 'author', select: 'username avatar' },
           },
           {
-            path: "author",
-            select: "username avatar",
+            path: 'author',
+            select: 'username avatar',
           },
         ],
       },
-      { path: "postOwner", select: "username avatar" },
+      { path: 'postOwner', select: 'username avatar' },
       {
-        path: "comment",
-        populate: { path: "author", select: "username avatar" },
+        path: 'comment',
+        populate: { path: 'author', select: 'username avatar' },
       },
     ])
     .sort({ createdAt: -1 })
@@ -74,4 +74,13 @@ export const deleteActivity = async (activityId) => {
  */
 export const findExistingActivity = async ({ actor, post, type }) => {
   return await Activity.findOne({ actor, post, type });
+};
+
+// Xóa tất cả activities liên quan đến một bài viết
+export const deleteActivitiesByPost = async (postId) => {
+  return await Activity.deleteMany({ post: postId });
+};
+
+export const deleteActivitiesByComment = async (commentId) => {
+  return await Activity.deleteMany({ comment: commentId });
 };

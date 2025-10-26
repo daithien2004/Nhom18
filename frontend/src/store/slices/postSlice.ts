@@ -26,8 +26,12 @@ interface PostState {
   createError: string | null;
   isCommenting: boolean;
   commentError: string | null;
+  isDeleting: boolean;
+  deleteError: string | null;
+  isUpdating: boolean;
+  updateError: string | null;
   error: string | null;
-  likes: { [postId: string]: Like }; // State riêng cho likes
+  likes: { [postId: string]: Like };
 }
 
 const initialState: PostState = {
@@ -43,8 +47,12 @@ const initialState: PostState = {
   createError: null,
   isCommenting: false,
   commentError: null,
+  isDeleting: false,
+  deleteError: null,
+  isUpdating: false,
+  updateError: null,
   error: null,
-  likes: {}, // Khởi tạo likes rỗng
+  likes: {},
 };
 
 // Thunk để tạo bài viết
@@ -113,6 +121,43 @@ export const fetchPostDetail = createAsyncThunk(
   }
 );
 
+// Thunk để xóa bài viết
+export const deletePost = createAsyncThunk(
+  'posts/deletePost',
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      await instance.delete(`/posts/${postId}`);
+      return postId;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Không thể xóa bài viết'
+      );
+    }
+  }
+);
+
+// Thunk để cập nhật bài viết
+export const updatePost = createAsyncThunk(
+  'posts/updatePost',
+  async (
+    {
+      postId,
+      content,
+      images,
+    }: { postId: string; content: string; images: string[] },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await instance.put(`/posts/${postId}`, { content, images });
+      return res.data as Post;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Không thể cập nhật bài viết'
+      );
+    }
+  }
+);
+
 // Thunk chung để thích bài viết
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
@@ -123,7 +168,7 @@ export const toggleLike = createAsyncThunk(
         postId,
         likeCount: res.data.likeCount,
         isLiked: res.data.isLiked,
-        likes: res.data.likes, // Mảng likes chứa userId, username, avatar
+        likes: res.data.likes,
       };
     } catch (err) {
       return rejectWithValue('Lỗi khi thích bài viết');
@@ -141,7 +186,7 @@ export const addComment = createAsyncThunk(
     try {
       const res = await instance.post(`/posts/${postId}/comments`, { content });
       return {
-        comment: res.data as Comment, // API trả về comment mới
+        comment: res.data as Comment,
         postId,
       };
     } catch (err) {
@@ -150,7 +195,7 @@ export const addComment = createAsyncThunk(
   }
 );
 
-// Thêm createAsyncThunk cho share post
+// Thunk cho share post
 export const sharePost = createAsyncThunk(
   'posts/sharePost',
   async (
@@ -159,10 +204,26 @@ export const sharePost = createAsyncThunk(
   ) => {
     try {
       const res = await instance.post(`/posts/${postId}/share`, { caption });
-      // Giả sử API trả về post mới (shared post)
       return res.data as Post;
     } catch (err) {
       return rejectWithValue('Lỗi khi chia sẻ bài viết');
+    }
+  }
+);
+
+export const deleteComment = createAsyncThunk(
+  'posts/deleteComment',
+  async (
+    { postId, commentId }: { postId: string; commentId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      await instance.delete(`/posts/${postId}/comments/${commentId}`);
+      return { postId, commentId };
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'Không thể xóa bình luận'
+      );
     }
   }
 );
@@ -176,11 +237,10 @@ const postSlice = createSlice({
       state.page = 1;
       state.hasMore = true;
       state.error = null;
-      state.likes = {}; // Reset likes khi reset posts
+      state.likes = {};
     },
     addNewPost: (state, action: PayloadAction<Post>) => {
       state.posts = [action.payload, ...state.posts];
-      // Khởi tạo trạng thái like cho post mới
       state.likes[action.payload.id] = {
         isLiked: action.payload.isLikedByCurrentUser || false,
         likeCount: action.payload.likeCount || 0,
@@ -197,6 +257,12 @@ const postSlice = createSlice({
     },
     clearCommentError: (state) => {
       state.commentError = null;
+    },
+    clearDeleteError: (state) => {
+      state.deleteError = null;
+    },
+    clearUpdateError: (state) => {
+      state.updateError = null;
     },
   },
   extraReducers: (builder) => {
@@ -215,7 +281,6 @@ const postSlice = createSlice({
           : [...state.posts, ...action.payload.posts];
         state.hasMore = action.payload.posts.length === action.meta.arg.limit;
         state.page = action.meta.arg.page;
-        // Cập nhật state.likes từ dữ liệu posts
         action.payload.posts.forEach((post) => {
           state.likes[post.id] = {
             isLiked: post.isLikedByCurrentUser || false,
@@ -241,7 +306,6 @@ const postSlice = createSlice({
         (state, action: PayloadAction<PostDetail>) => {
           state.isLoadingDetail = false;
           state.postDetail = action.payload;
-          // Cập nhật state.likes cho postDetail
           state.likes[action.payload.id] = {
             isLiked: action.payload.isLikedByCurrentUser || false,
             likeCount: action.payload.likeCount || 0,
@@ -255,6 +319,70 @@ const postSlice = createSlice({
         state.postDetail = null;
       });
 
+    // Delete post
+    builder
+      .addCase(deletePost.pending, (state) => {
+        state.isDeleting = true;
+        state.deleteError = null;
+      })
+      .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
+        state.isDeleting = false;
+        const deletedPostId = action.payload;
+
+        // Xóa khỏi danh sách posts
+        state.posts = state.posts.filter((post) => post.id !== deletedPostId);
+
+        // Xóa khỏi likes
+        delete state.likes[deletedPostId];
+
+        // Nếu đang xem detail của post này thì clear
+        if (state.postDetail?.id === deletedPostId) {
+          state.postDetail = null;
+        }
+      })
+      .addCase(deletePost.rejected, (state, action) => {
+        state.isDeleting = false;
+        state.deleteError = action.payload as string;
+      });
+
+    // Update post
+    builder
+      .addCase(updatePost.pending, (state) => {
+        state.isUpdating = true;
+        state.updateError = null;
+      })
+      .addCase(updatePost.fulfilled, (state, action: PayloadAction<Post>) => {
+        state.isUpdating = false;
+        const updatedPost = action.payload;
+
+        // Cập nhật trong danh sách posts
+        const index = state.posts.findIndex((p) => p.id === updatedPost.id);
+        if (index !== -1) {
+          state.posts[index] = updatedPost;
+        }
+
+        // Cập nhật postDetail nếu đang xem
+        if (state.postDetail?.id === updatedPost.id) {
+          state.postDetail = {
+            ...state.postDetail,
+            content: updatedPost.content,
+            images: updatedPost.images,
+            updatedAt: updatedPost.updatedAt!,
+          };
+        }
+
+        // Cập nhật likes
+        state.likes[updatedPost.id] = {
+          isLiked: updatedPost.isLikedByCurrentUser || false,
+          likeCount: updatedPost.likeCount || 0,
+          likes: updatedPost.likes || [],
+        };
+      })
+      .addCase(updatePost.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.updateError = action.payload as string;
+      });
+
     // Toggle like
     builder
       .addCase(toggleLike.pending, (state, action) => {
@@ -264,7 +392,6 @@ const postSlice = createSlice({
           likeCount: 0,
           likes: [],
         };
-        // Optimistic update
         state.likes[postId] = {
           ...currentLike,
           isLiked: !currentLike.isLiked,
@@ -275,13 +402,11 @@ const postSlice = createSlice({
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
         const { postId, isLiked, likeCount, likes } = action.payload;
-        // Cập nhật state.likes
         state.likes[postId] = { isLiked, likeCount, likes };
       })
       .addCase(toggleLike.rejected, (state, action) => {
         const postId = action.meta.arg.postId;
         const currentLike = state.likes[postId];
-        // Rollback nếu lỗi
         state.likes[postId] = {
           ...currentLike,
           isLiked: !currentLike.isLiked,
@@ -311,7 +436,6 @@ const postSlice = createSlice({
       .addCase(addComment.pending, (state, action) => {
         state.isCommenting = true;
         state.commentError = null;
-        // Optimistic update
         if (
           state.postDetail &&
           state.postDetail.id === action.meta.arg.postId
@@ -336,7 +460,6 @@ const postSlice = createSlice({
       .addCase(addComment.fulfilled, (state, action) => {
         state.isCommenting = false;
         if (state.postDetail && state.postDetail.id === action.payload.postId) {
-          // Thay bình luận tạm thời bằng bình luận thật
           state.postDetail.comments = state.postDetail.comments.map((c) =>
             c.id.startsWith('temp-') ? action.payload.comment : c
           );
@@ -352,19 +475,48 @@ const postSlice = createSlice({
           );
           state.postDetail.commentCount = state.postDetail.comments.length;
         }
-      })
+      });
+
+    // Share post
+    builder
       .addCase(sharePost.pending, (state) => {
-        // nếu muốn có state.loadingShare riêng thì thêm vào PostState
         state.isCreating = true;
       })
       .addCase(sharePost.fulfilled, (state, action: PayloadAction<Post>) => {
         state.isCreating = false;
-        // Thêm post được share lên đầu danh sách
         state.posts = [action.payload, ...state.posts];
       })
       .addCase(sharePost.rejected, (state, action) => {
         state.isCreating = false;
         state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(deleteComment.pending, (state) => {
+        state.isCommenting = true;
+        state.commentError = null;
+      })
+      .addCase(deleteComment.fulfilled, (state, action) => {
+        state.isCommenting = false;
+        const { postId, commentId } = action.payload;
+
+        // Xóa comment khỏi postDetail
+        if (state.postDetail && state.postDetail.id === postId) {
+          state.postDetail.comments = state.postDetail.comments.filter(
+            (c) => c.id !== commentId
+          );
+          state.postDetail.commentCount = state.postDetail.comments.length;
+        }
+
+        // Xóa comment khỏi danh sách posts
+        const post = state.posts.find((p) => p.id === postId);
+        if (post) {
+          post.commentCount = (post.commentCount || 1) - 1;
+        }
+      })
+      .addCase(deleteComment.rejected, (state, action) => {
+        state.isCommenting = false;
+        state.commentError = action.payload as string;
       });
   },
 });
@@ -375,5 +527,7 @@ export const {
   clearPostDetail,
   clearCreateError,
   clearCommentError,
+  clearDeleteError,
+  clearUpdateError,
 } = postSlice.actions;
 export default postSlice.reducer;

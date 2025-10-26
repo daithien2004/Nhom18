@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import instance from "../api/axiosInstant";
-import { Plus, Share2, Loader2, Trash2, Eye, FolderX } from "lucide-react";
-import { toast } from "react-toastify";
-import SavePostModal from "../components/SavePostModal";
-import SharePostModal from "../components/SharePostModal";
-import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
+import { useEffect, useState } from 'react';
+import instance from '../api/axiosInstant';
+import { Plus, Share2, Loader2, Trash2, Eye, FolderX } from 'lucide-react';
+import { toast } from 'react-toastify';
+import SavePostModal from '../components/SavePostModal';
+import SharePostModal from '../components/SharePostModal';
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 interface Author {
   username: string;
@@ -41,7 +41,7 @@ const PostCategoryPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
@@ -60,15 +60,15 @@ const PostCategoryPage = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await instance.get("/categories/");
+      const { data } = await instance.get('/categories/');
       const list = Array.isArray(data) ? (data as ApiCategory[]) : [];
       setCategories(list);
       if (list.length > 0 && !selectedCategoryId) {
         setSelectedCategoryId(list[0].id);
       }
     } catch (err: any) {
-      setError("Không thể tải danh mục. Vui lòng đăng nhập và thử lại.");
-      toast.error("Không thể tải danh mục!");
+      setError('Không thể tải danh mục. Vui lòng đăng nhập và thử lại.');
+      toast.error('Không thể tải danh mục!');
     } finally {
       setIsLoading(false);
     }
@@ -82,61 +82,61 @@ const PostCategoryPage = () => {
     try {
       await instance.delete(`/categories/${cateId}/posts/${postId}`);
       loadCategories();
-      toast.success("Xóa bài viết khỏi danh mục thành công!");
+      toast.success('Xóa bài viết khỏi danh mục thành công!');
     } catch (error) {
-      toast.error("Không thể xóa bài viết");
+      toast.error('Không thể xóa bài viết');
     }
   };
 
   const removeAllPosts = async (cateId: string | null) => {
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn có chắc muốn xóa tất cả bài viết trong danh mục này?",
-      icon: "warning",
+      title: 'Xác nhận xóa?',
+      text: 'Bạn có chắc muốn xóa tất cả bài viết trong danh mục này?',
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
     });
 
     if (!result.isConfirmed) return;
     try {
       await instance.delete(`/categories/${cateId}/posts`);
-      toast.success("Đã xóa tất cả bài viết!");
+      toast.success('Đã xóa tất cả bài viết!');
       loadCategories();
     } catch {
-      toast.error("Không thể xóa tất cả bài viết!");
+      toast.error('Không thể xóa tất cả bài viết!');
     }
   };
 
   const deleteCategory = async (cateId: string | null) => {
     if (!cateId) return;
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn có chắc muốn xóa bộ sưu tập này không?",
-      icon: "warning",
+      title: 'Xác nhận xóa?',
+      text: 'Bạn có chắc muốn xóa bộ sưu tập này không?',
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonText: 'Xóa',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
     });
 
     if (!result.isConfirmed) return;
 
     try {
       await instance.delete(`/categories/${cateId}`);
-      toast.success("Đã xóa bộ sưu tập!");
+      toast.success('Đã xóa bộ sưu tập!');
       loadCategories();
       setSelectedCategoryId(null);
     } catch {
-      toast.error("Không thể xóa bộ sưu tập!");
+      toast.error('Không thể xóa bộ sưu tập!');
     }
   };
 
   const handleCreateCategory = () => {
-    setNewCategoryName("");
+    setNewCategoryName('');
     setShowCreateModal(true);
   };
 
@@ -144,7 +144,7 @@ const PostCategoryPage = () => {
     if (!newCategoryName.trim()) return;
     setIsCreating(true);
     try {
-      const { data: created } = await instance.post("/categories/", {
+      const { data: created } = await instance.post('/categories/', {
         name: newCategoryName.trim(),
       });
       await loadCategories();
@@ -152,9 +152,9 @@ const PostCategoryPage = () => {
         setSelectedCategoryId(created.id);
       }
       setShowCreateModal(false);
-      toast.success("Tạo bộ sưu tập thành công!");
+      toast.success('Tạo bộ sưu tập thành công!');
     } catch (err) {
-      toast.error("Tạo bộ sưu tập thất bại!");
+      toast.error('Tạo bộ sưu tập thất bại!');
     } finally {
       setIsCreating(false);
     }
@@ -181,18 +181,18 @@ const PostCategoryPage = () => {
               key={cat.id}
               className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 hover:bg-gray-100 ${
                 selectedCategoryId === cat.id
-                  ? "bg-gray-100 text-blue-600"
-                  : "text-gray-800"
+                  ? 'bg-gray-100 text-blue-600'
+                  : 'text-gray-800'
               }`}
               onClick={() => setSelectedCategoryId(cat.id)}
             >
               <img
                 src={
                   cat.posts[0]?.images?.[0] ||
-                  "https://cdn-icons-png.flaticon.com/512/833/833281.png"
+                  'https://cdn-icons-png.flaticon.com/512/833/833281.png'
                 }
                 alt={cat.name}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-12 h-12 rounded-sm object-cover"
               />
               <div>
                 <p className="font-semibold">{cat.name}</p>
@@ -218,7 +218,7 @@ const PostCategoryPage = () => {
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-800">
-              {selectedCategory?.name || "Tất cả"}
+              {selectedCategory?.name || 'Tất cả'}
             </h2>
             {selectedCategory && (
               <div className="flex gap-3 mt-3">
@@ -262,9 +262,9 @@ const PostCategoryPage = () => {
                   src={
                     post.images?.[0] ||
                     post.sharedFrom?.images?.[0] ||
-                    "https://via.placeholder.com/200x150"
+                    'https://cdn-icons-png.flaticon.com/512/833/833281.png'
                   }
-                  alt={post.content?.slice(0, 20) || "post"}
+                  alt={post.content?.slice(0, 20) || 'post'}
                   className="w-32 h-32 object-cover rounded-lg"
                 />
 
@@ -274,12 +274,12 @@ const PostCategoryPage = () => {
                     {post.content || post.caption}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Tác giả: {post.author?.username || "Ẩn danh"}
+                    Tác giả: {post.author?.username || 'Ẩn danh'}
                   </p>
                   <p className="text-xs text-gray-400">
                     {post.createdAt
                       ? new Date(post.createdAt).toLocaleString()
-                      : ""}
+                      : ''}
                   </p>
 
                   {/* Nếu là bài chia sẻ */}
@@ -291,7 +291,7 @@ const PostCategoryPage = () => {
                       <p className="text-sm text-gray-700 line-clamp-2">
                         {post.sharedFrom.content ||
                           post.sharedFrom.caption ||
-                          "Không có nội dung"}
+                          'Không có nội dung'}
                       </p>
                     </div>
                   )}
@@ -305,21 +305,6 @@ const PostCategoryPage = () => {
                       className="px-4 py-2 text-sm font-medium bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-300"
                     >
                       Thêm vào bộ sưu tập
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSharePostId(post.id);
-                        setShowShareModal(true);
-                        setShareUser({
-                          username: post.author.username,
-                          avatar: post.author.avatar || "/default-avatar.png",
-                        });
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-300"
-                      title="Chia sẻ"
-                    >
-                      <Share2 size={16} className="text-gray-600" />
                     </button>
                     <button
                       className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-300"
@@ -404,7 +389,7 @@ const PostCategoryPage = () => {
                   className="inline-flex items-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCreating && <Loader2 className="animate-spin w-4 h-4" />}
-                  {isCreating ? "Đang tạo..." : "Tạo"}
+                  {isCreating ? 'Đang tạo...' : 'Tạo'}
                 </button>
               </div>
             </div>

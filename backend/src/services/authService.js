@@ -87,36 +87,44 @@ export const requestPasswordResetOtp = async (email) => {
   return { message: 'OTP đã được gửi về email' };
 };
 
-// Reset mật khẩu với OTP
-export const resetPasswordWithOtp = async (email, otp) => {
-  // Validate OTP
+// Xác thực OTP (không đặt lại mật khẩu)
+export const verifyPasswordResetOtp = async (email, otp) => {
   const otpValidation = await otpService.validateOtp(email, otp);
   if (!otpValidation.isValid) {
     throw new ApiError(400, otpValidation.message);
   }
 
-  // Kiểm tra user có tồn tại
   const user = await userRepo.findByEmail(email);
   if (!user) {
     throw new ApiError(404, 'Người dùng không tồn tại');
   }
 
-  // Tạo password mới và hash
-  const { plainPassword, hashedPassword } =
-    await passwordService.generateAndHashPassword();
+  // Chỉ xác thực OTP, không xóa để dùng cho bước tiếp theo
+  return { message: 'Xác thực OTP thành công' };
+};
+
+// Reset mật khẩu với OTP và mật khẩu mới
+export const resetPasswordWithOtp = async (email, otp, newPassword) => {
+  // Validate OTP lần nữa
+  const otpValidation = await otpService.validateOtp(email, otp);
+  if (!otpValidation.isValid) {
+    throw new ApiError(400, otpValidation.message);
+  }
+
+  const user = await userRepo.findByEmail(email);
+  if (!user) {
+    throw new ApiError(404, 'Người dùng không tồn tại');
+  }
+
+  // Hash mật khẩu mới
+  const hashedPassword = await passwordService.hashPassword(newPassword);
 
   // Cập nhật password
   user.password = hashedPassword;
   await user.save();
 
-  // Gửi password mới qua email
-  await emailService.sendOtpEmail(
-    email,
-    `Mật khẩu mới của bạn là: ${plainPassword}`
-  );
-
   // Xóa OTP đã sử dụng
   await otpService.deleteOtpByEmail(email);
 
-  return { message: 'Mật khẩu mới đã được gửi về email' };
+  return { message: 'Đặt lại mật khẩu thành công' };
 };

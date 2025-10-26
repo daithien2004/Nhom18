@@ -5,21 +5,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import instance from '../api/axiosInstant';
 import OtpInput from '../components/OtpInput';
 import { toast } from 'react-toastify';
-import { Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import {
   FormForgotPasswordRequestOtpSchema,
   FormForgotPasswordResetSchema,
+  FormNewPasswordSchema,
 } from '../schemas/FormForgotPasswordSchema';
 import type {
   FormForgotPasswordRequestOtp,
   FormForgotPasswordReset,
+  FormNewPassword,
 } from '../schemas/FormForgotPasswordSchema';
 
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Form gửi OTP
   const {
@@ -36,8 +41,8 @@ const ForgotPassword: React.FC = () => {
   const {
     register: registerReset,
     handleSubmit: handleSubmitReset,
-    setValue,
-    formState: { errors: errorsReset, isValid: isResetValid },
+    setValue: setValueReset,
+    formState: { errors: errorsReset },
     reset: resetReset,
   } = useForm<FormForgotPasswordReset>({
     resolver: zodResolver(FormForgotPasswordResetSchema),
@@ -45,16 +50,34 @@ const ForgotPassword: React.FC = () => {
     mode: 'onChange',
   });
 
-  // Đồng bộ email giữa 2 bước
+  // Form đặt mật khẩu mới
+  const {
+    register: registerNewPassword,
+    handleSubmit: handleSubmitNewPassword,
+    setValue: setValueNewPassword,
+    formState: { errors: errorsNewPassword, isValid: isNewPasswordValid },
+    reset: resetNewPassword,
+  } = useForm<FormNewPassword>({
+    resolver: zodResolver(FormNewPasswordSchema),
+    defaultValues: { email: '', otp: '', newPassword: '', confirmPassword: '' },
+    mode: 'onChange',
+  });
+
+  // Đồng bộ email và OTP giữa các bước
   useEffect(() => {
     if (step === 1) {
       resetRequest();
       setEmail('');
+      setOtp('');
     }
     if (step === 2 && email) {
-      setValue('email', email);
+      setValueReset('email', email);
     }
-  }, [step, email, setValue, resetRequest]);
+    if (step === 3 && email && otp) {
+      setValueNewPassword('email', email);
+      setValueNewPassword('otp', otp);
+    }
+  }, [step, email, otp, setValueReset, setValueNewPassword, resetRequest]);
 
   const onSubmitRequestOtp = async (data: FormForgotPasswordRequestOtp) => {
     setLoading(true);
@@ -75,18 +98,36 @@ const ForgotPassword: React.FC = () => {
   const onSubmitVerifyOtp = async (data: FormForgotPasswordReset) => {
     setLoading(true);
     try {
-      await instance.post('/auth/forgot-password/reset', {
+      await instance.post('/auth/forgot-password/verify-otp', {
         email: data.email,
         otp: data.otp,
       });
-      toast.success(
-        'Xác thực thành công. Mật khẩu mới đã được gửi về email của bạn.'
-      );
+      toast.success('Xác thực OTP thành công');
+      setOtp(data.otp);
+      setStep(3);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Xác thực OTP thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmitNewPassword = async (data: FormNewPassword) => {
+    setLoading(true);
+    try {
+      await instance.post('/auth/forgot-password/reset', {
+        email: data.email,
+        otp: data.otp,
+        newPassword: data.newPassword,
+      });
+      toast.success('Đặt lại mật khẩu thành công');
+      resetRequest();
       resetReset();
+      resetNewPassword();
       setStep(1);
       navigate('/login');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Xác thực OTP thất bại');
+      toast.error(err.response?.data?.message || 'Đặt lại mật khẩu thất bại');
     } finally {
       setLoading(false);
     }
@@ -103,28 +144,25 @@ const ForgotPassword: React.FC = () => {
           />
         </div>
 
-        {step === 1 ? (
+        {/* Step 1: Nhập Email */}
+        {step === 1 && (
           <form
             onSubmit={handleSubmitRequest(onSubmitRequestOtp)}
             className="flex flex-col gap-4"
           >
-            <h1 className="text-xl font-bold text-gray-800">
-              Forgot your password?
-            </h1>
-
+            <h1 className="text-xl font-bold text-gray-800">Quên mật khẩu?</h1>
             <p className="text-sm text-gray-600">
-              Enter your email address and we'll send you an OTP to reset your
-              password.
+              Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã OTP để đặt lại
+              mật khẩu.
             </p>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Email
               </label>
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Nhập email của bạn"
                 {...registerRequest('email')}
                 className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               />
@@ -135,48 +173,48 @@ const ForgotPassword: React.FC = () => {
               )}
             </div>
 
-            {/* Submit button */}
             <button
               type="submit"
               className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || !isRequestValid}
             >
               {loading && <Loader2 className="animate-spin w-4 h-4" />}
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? 'Đang gửi...' : 'Gửi OTP'}
             </button>
 
             <p className="text-sm text-gray-500 text-center">
-              Remember your password?{' '}
+              Nhớ mật khẩu?{' '}
               <Link
                 to="/login"
                 className="text-blue-600 hover:text-blue-700 transition-all duration-300"
               >
-                Sign in here
+                Đăng nhập tại đây
               </Link>
             </p>
           </form>
-        ) : (
+        )}
+
+        {/* Step 2: Xác thực OTP */}
+        {step === 2 && (
           <form
             onSubmit={handleSubmitReset(onSubmitVerifyOtp)}
             className="flex flex-col gap-4"
           >
-            <h1 className="text-xl font-bold text-gray-800">Verify OTP</h1>
-
+            <h1 className="text-xl font-bold text-gray-800">Xác thực OTP</h1>
             <p className="text-sm text-gray-600">
-              We've sent a verification code to <strong>{email}</strong>. Please
-              enter it below.
+              Chúng tôi đã gửi mã xác thực đến <strong>{email}</strong>. Vui
+              lòng nhập mã bên dưới.
             </p>
 
-            {/* OTP Input */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-3">
-                Enter OTP Code
+                Nhập mã OTP
               </label>
               <div className="flex justify-center">
                 <OtpInput
                   length={6}
                   register={registerReset('otp')}
-                  onChange={(val) => setValue('otp', val)}
+                  onChange={(val) => setValueReset('otp', val)}
                 />
               </div>
               {errorsReset.otp && (
@@ -184,21 +222,15 @@ const ForgotPassword: React.FC = () => {
                   {errorsReset.otp.message}
                 </p>
               )}
-              {errorsReset.email && (
-                <p className="text-sm text-red-500 mt-2 text-center">
-                  {errorsReset.email.message}
-                </p>
-              )}
             </div>
 
-            {/* Submit button */}
             <button
               type="submit"
               className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               disabled={loading}
             >
               {loading && <Loader2 className="animate-spin w-4 h-4" />}
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading ? 'Đang xác thực...' : 'Xác thực OTP'}
             </button>
 
             <button
@@ -206,7 +238,97 @@ const ForgotPassword: React.FC = () => {
               onClick={() => setStep(1)}
               className="text-sm text-blue-600 hover:text-blue-700 transition-all duration-300 text-center"
             >
-              Back to email entry
+              Quay lại nhập email
+            </button>
+          </form>
+        )}
+
+        {/* Step 3: Đặt mật khẩu mới */}
+        {step === 3 && (
+          <form
+            onSubmit={handleSubmitNewPassword(onSubmitNewPassword)}
+            className="flex flex-col gap-4"
+          >
+            <h1 className="text-xl font-bold text-gray-800">
+              Đặt mật khẩu mới
+            </h1>
+            <p className="text-sm text-gray-600">
+              Vui lòng nhập mật khẩu mới cho tài khoản của bạn.
+            </p>
+
+            {/* Mật khẩu mới */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Mật khẩu mới
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Nhập mật khẩu mới"
+                  {...registerNewPassword('newPassword')}
+                  className="w-full p-3 pr-10 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              {errorsNewPassword.newPassword && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errorsNewPassword.newPassword.message}
+                </p>
+              )}
+            </div>
+
+            {/* Xác nhận mật khẩu */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Xác nhận mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Nhập lại mật khẩu mới"
+                  {...registerNewPassword('confirmPassword')}
+                  className="w-full p-3 pr-10 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
+                </button>
+              </div>
+              {errorsNewPassword.confirmPassword && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errorsNewPassword.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !isNewPasswordValid}
+            >
+              {loading && <Loader2 className="animate-spin w-4 h-4" />}
+              {loading ? 'Đang cập nhật...' : 'Đặt lại mật khẩu'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="text-sm text-blue-600 hover:text-blue-700 transition-all duration-300 text-center"
+            >
+              Quay lại xác thực OTP
             </button>
           </form>
         )}

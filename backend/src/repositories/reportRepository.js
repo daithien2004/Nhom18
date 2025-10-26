@@ -58,3 +58,14 @@ export const checkExistingReport = async (reporterId, reportType, targetId) => {
   return await Report.findOne(query);
 };
 
+// Xóa tất cả activities liên quan đến một bài viết
+export const deleteReportsByPost = async (postId) => {
+  return await Report.deleteMany({ post: postId });
+};
+
+export const deleteReportsByComment = async (commentId) => {
+  return await Report.deleteMany({
+    reportType: 'comment',
+    reportedComment: commentId,
+  });
+};

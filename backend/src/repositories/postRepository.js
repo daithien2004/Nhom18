@@ -20,6 +20,7 @@ export const createPostShare = async ({
 };
 
 const publicFilter = { isHidden: false, isDeleted: false };
+const commentFilter = { isHidden: false, isDeleted: false };
 
 export const findRecentPosts = async (limit, skip) => {
   return await Post.find(publicFilter)
@@ -28,6 +29,7 @@ export const findRecentPosts = async (limit, skip) => {
       { path: 'likes', select: 'username avatar' },
       {
         path: 'comments',
+        match: commentFilter,
         populate: { path: 'author', select: '_id username avatar' },
       },
       {
@@ -66,6 +68,7 @@ export const findHotPosts = async (limit, skip) => {
     { path: 'likes', select: 'username avatar' },
     {
       path: 'comments',
+      match: commentFilter,
       populate: { path: 'author', select: '_id username avatar' },
     },
     {
@@ -88,6 +91,7 @@ export const findPopularPosts = async (limit, skip) => {
       { path: 'likes', select: 'username avatar' },
       {
         path: 'comments',
+        match: commentFilter,
         populate: { path: 'author', select: '_id username avatar' },
       },
       {
@@ -160,6 +164,7 @@ export const findPostsByAuthor = async (authorId, limit, skip) => {
       { path: 'likes', select: 'username avatar' },
       {
         path: 'comments',
+        match: commentFilter,
         populate: { path: 'author', select: '_id username avatar' },
       },
       {

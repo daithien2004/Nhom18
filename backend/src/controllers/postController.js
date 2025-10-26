@@ -181,3 +181,65 @@ export const getUserPosts = asyncHandler(async (req, res) => {
   });
   return sendSuccess(res, posts, 'Lấy danh sách bài viết thành công');
 });
+
+export const updatePost = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+  const userId = req.user.id;
+  const { content, images } = req.body;
+
+  // Kiểm tra quyền sở hữu
+  const post = await postService.getPost(postId);
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài viết');
+  }
+
+  if (post.author.id.toString() !== userId) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Bạn không có quyền chỉnh sửa bài viết này'
+    );
+  }
+
+  // Cập nhật bài viết
+  const updatedPost = await postService.updatePost({
+    postId,
+    content,
+    images,
+    userId,
+  });
+
+  return sendSuccess(res, updatedPost, 'Cập nhật bài viết thành công');
+});
+
+export const deleteComment = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+  const commentId = req.params.commentId;
+
+  // Xóa comment
+  await postService.deleteComment({ postId, commentId });
+
+  return sendSuccess(res, null, 'Xóa bình luận thành công');
+});
+
+export const deletePost = asyncHandler(async (req, res) => {
+  const postId = req.params.postId;
+  const userId = req.user.id;
+
+  // Kiểm tra quyền sở hữu
+  const post = await postService.getPost(postId);
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài viết');
+  }
+
+  if (post.author.id.toString() !== userId) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      'Bạn không có quyền xóa bài viết này'
+    );
+  }
+
+  // Xóa bài viết
+  await postService.deletePost(postId);
+
+  return sendSuccess(res, null, 'Xóa bài viết thành công');
+});

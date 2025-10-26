@@ -7,6 +7,8 @@ import {
   toggleLike,
   addComment,
   clearCommentError,
+  deletePost,
+  deleteComment,
 } from '../store/slices/postSlice';
 import { toast } from 'react-toastify';
 import {
@@ -19,6 +21,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import SharePostModal from '../components/SharePostModal';
+import EditPostModal from '../components/EditPostModal';
 import PostMenu from '../components/PostMenu';
 
 const PostDetailPage = () => {
@@ -40,6 +43,7 @@ const PostDetailPage = () => {
   const [commentText, setCommentText] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (postId) dispatch(fetchPostDetail(postId));
@@ -61,6 +65,27 @@ const PostDetailPage = () => {
       addComment({ postId, content: commentText.trim() })
     ).unwrap();
     setCommentText('');
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!postId) return;
+    try {
+      await dispatch(deleteComment({ postId, commentId })).unwrap();
+      toast.success('Đã xóa bình luận');
+    } catch (err: any) {
+      toast.error(err || 'Xóa bình luận thất bại');
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!postId) return;
+    try {
+      await dispatch(deletePost(postId)).unwrap();
+      toast.success('Đã xóa bài viết');
+      navigate(-1); // Quay lại trang trước
+    } catch (err: any) {
+      toast.error(err || 'Xóa bài viết thất bại');
+    }
   };
 
   const sharedFrom = postDetail?.sharedFrom ?? null;
@@ -91,12 +116,14 @@ const PostDetailPage = () => {
   if (isErrorDetail) return <p>Lỗi khi tải bài viết.</p>;
   if (!postDetail) return <p>Không tìm thấy bài viết.</p>;
 
+  const isOwner = user?.id === postDetail.author?.id;
+
   return (
     <div className="fixed inset-0 bg-black/90 flex z-50">
       {/* Nút đóng (nổi bật) */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-4 right-4 z-[60] w-10 h-10 flex items-center justify-center 
+        className="absolute top-4 right-16 z-[60] w-10 h-10 flex items-center justify-center 
              rounded-full bg-black/70 text-white shadow-[0_0_10px_rgba(0,0,0,0.8)] hover:bg-black/90 transition"
         title="Đóng"
       >
@@ -165,6 +192,21 @@ const PostDetailPage = () => {
                 {new Date(postDetail.createdAt).toLocaleString()}
               </p>
             </div>
+            <div className="ml-auto">
+              <PostMenu
+                onEdit={() => setShowEditModal(true)}
+                onDelete={handleDeletePost}
+                reportTarget={{
+                  type: 'post',
+                  id: postDetail.id,
+                  name: postDetail.author?.username,
+                }}
+                isOwner={isOwner}
+                showSave={false}
+                showEdit={true}
+                showDelete={true}
+              />
+            </div>
           </div>
 
           {/* Nội dung */}
@@ -214,31 +256,38 @@ const PostDetailPage = () => {
             {postDetail.comments.length === 0 ? (
               <p className="text-gray-500 text-sm">Chưa có bình luận nào.</p>
             ) : (
-              postDetail.comments.map((c) => (
-                <div key={c.id} className="flex gap-3">
-                  <img
-                    src={c.author?.avatar || '/default-avatar.png'}
-                    alt="avatar"
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="bg-gray-100 px-3 py-2 rounded-2xl">
-                    <p className="text-sm font-semibold">
-                      {c.author?.username}
-                    </p>
-                    <p className="text-sm text-gray-800">{c.content}</p>
-                  </div>
-                  <div className="ml-auto">
-                    <PostMenu
-                      reportTarget={{
-                        type: 'comment',
-                        id: c.id,
-                        name: c.author?.username,
-                      }}
-                      showSave={false}
+              postDetail.comments.map((c) => {
+                const isCommentOwner = user?.id === c.author?.id;
+
+                return (
+                  <div key={c.id} className="flex gap-3">
+                    <img
+                      src={c.author?.avatar || '/default-avatar.png'}
+                      alt="avatar"
+                      className="w-8 h-8 rounded-full"
                     />
+                    <div className="bg-gray-100 px-3 py-2 rounded-2xl">
+                      <p className="text-sm font-semibold">
+                        {c.author?.username}
+                      </p>
+                      <p className="text-sm text-gray-800">{c.content}</p>
+                    </div>
+                    <div className="ml-auto">
+                      <PostMenu
+                        onDelete={() => handleDeleteComment(c.id)}
+                        reportTarget={{
+                          type: 'comment',
+                          id: c.id,
+                          name: c.author?.username,
+                        }}
+                        isOwner={isCommentOwner}
+                        showSave={false}
+                        showDelete={true}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -311,6 +360,15 @@ const PostDetailPage = () => {
           <SharePostModal
             postId={postId}
             onClose={() => setShowShareModal(false)}
+          />
+        )}
+
+        {showEditModal && (
+          <EditPostModal
+            postId={postDetail.id}
+            initialContent={postDetail.content || ''}
+            initialImages={postDetail.images || []}
+            onClose={() => setShowEditModal(false)}
           />
         )}
       </div>

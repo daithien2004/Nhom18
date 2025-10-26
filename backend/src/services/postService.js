@@ -1,10 +1,10 @@
 import ApiError from '../utils/apiError.js';
 import { StatusCodes } from 'http-status-codes';
 import * as postRepo from '../repositories/postRepository.js';
-import * as userRepo from '../repositories/userRepository.js';
 import * as commentRepo from '../repositories/commentRepository.js';
 import Post from '../models/Post.js';
 import * as activityRepo from '../repositories/activityRepository.js';
+import * as reportRepo from '../repositories/reportRepository.js';
 
 export const createPost = async ({ authorId, content, images }) => {
   return await postRepo.createPost({ author: authorId, content, images });
@@ -85,6 +85,33 @@ export const getPosts = async ({ type, limit, page = 1, userId }) => {
       'Lỗi khi lấy danh sách bài viết'
     );
   }
+};
+
+export const deleteComment = async ({ postId, commentId }) => {
+  const post = await postRepo.findPostById(postId);
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài viết');
+  }
+
+  const comment = await commentRepo.findCommentById(commentId);
+  if (!comment) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bình luận');
+  }
+
+  // Xóa comment khỏi post
+  post.comments = post.comments.filter((id) => id.toString() !== commentId);
+  await post.save();
+
+  // Xóa activities liên quan
+  await activityRepo.deleteActivitiesByComment(commentId);
+
+  // Xóa reports liên quan đến comment này
+  await reportRepo.deleteReportsByComment(commentId);
+
+  // Xóa comment
+  await commentRepo.deleteComment(commentId);
+
+  return { success: true };
 };
 
 export const getPost = async (postId) => {
@@ -326,4 +353,92 @@ export const getUserPosts = async ({
       'Lỗi khi lấy danh sách bài viết của người dùng'
     );
   }
+};
+
+// Cập nhật bài viết
+export const updatePost = async ({ postId, content, images, userId }) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài viết');
+  }
+
+  // Không cho phép sửa bài share
+  if (post.sharedFrom) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      'Không thể chỉnh sửa bài viết được chia sẻ'
+    );
+  }
+
+  // Cập nhật nội dung
+  post.content = content;
+  post.images = images || [];
+  post.updatedAt = new Date();
+
+  await post.save();
+
+  // Populate để trả về đầy đủ thông tin
+  await post.populate([
+    { path: 'author', select: '_id username avatar' },
+    { path: 'likes', select: 'username avatar' },
+    { path: 'comments' },
+    { path: 'shares' },
+  ]);
+
+  return {
+    ...post.toJSON(),
+    likeCount: post.likes.length,
+    commentCount: post.comments.length,
+    shareCount: post.shares.length,
+    isLikedByCurrentUser: post.likes.some(
+      (user) => user.id.toString() === userId
+    ),
+    likes: post.likes.map((user) => ({
+      userId: user.id.toString(),
+      username: user.username,
+      avatar: user.avatar,
+    })),
+  };
+};
+
+// Xóa bài viết
+export const deletePost = async (postId) => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy bài viết');
+  }
+
+  // Nếu đây là bài gốc được share
+  if (post.shares && post.shares.length > 0) {
+    // Xóa tất cả bài share liên quan
+    await Post.deleteMany({ sharedFrom: postId });
+  }
+
+  // Nếu đây là bài share, xóa khỏi danh sách shares của bài gốc
+  if (post.sharedFrom) {
+    const originalPost = await Post.findById(post.sharedFrom);
+    if (originalPost) {
+      originalPost.shares = originalPost.shares.filter(
+        (id) => id.toString() !== postId
+      );
+      await originalPost.save();
+    }
+  }
+
+  // Xóa tất cả comments của bài viết
+  if (post.comments && post.comments.length > 0) {
+    await commentRepo.deleteCommentsByPostId(postId);
+  }
+
+  // Xóa tất cả activities liên quan
+  await activityRepo.deleteActivitiesByPost(postId);
+
+  await reportRepo.deleteReportsByPost(postId);
+
+  // Xóa bài viết
+  await Post.findByIdAndDelete(postId);
+
+  return { success: true };
 };

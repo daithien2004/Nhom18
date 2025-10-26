@@ -132,6 +132,7 @@ const ProfilePage: React.FC = () => {
   const handleSaveProfile = async () => {
     setIsUpdatingProfile(true);
     try {
+      console.log(formData);
       const updatedUser = await dispatch(updateProfileThunk(formData)).unwrap();
       setFormData(updatedUser); // Sync local formData with server response
       setIsEditing(false);
@@ -228,21 +229,6 @@ const ProfilePage: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 mb-4">
-                {user?.id && (
-                  <ReportButton
-                    reportType="user"
-                    targetId={user.id}
-                    targetName={user.username}
-                    onReport={async (data) => {
-                      try {
-                        await reportService.createReport(data);
-                        toast.success('Đã gửi báo cáo người dùng');
-                      } catch {
-                        toast.error('Gửi báo cáo thất bại');
-                      }
-                    }}
-                  />
-                )}
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
@@ -385,7 +371,13 @@ const ProfilePage: React.FC = () => {
                       <input
                         type="date"
                         name="birthday"
-                        value={formData.birthday || ''}
+                        value={
+                          formData.birthday
+                            ? new Date(formData.birthday)
+                                .toISOString()
+                                .split('T')[0]
+                            : ''
+                        }
                         onChange={handleChange}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />

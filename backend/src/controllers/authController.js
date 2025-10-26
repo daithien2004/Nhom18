@@ -27,10 +27,22 @@ export const forgotPasswordRequestOtp = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'OTP đã được gửi đến email của bạn');
 });
 
-export const forgotPasswordReset = asyncHandler(async (req, res) => {
+// Thêm endpoint mới để verify OTP
+export const forgotPasswordVerifyOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-  const result = await authService.resetPasswordWithOtp(email, otp);
-  return sendSuccess(res, result, 'Mật khẩu đã được đặt lại thành công');
+  const result = await authService.verifyPasswordResetOtp(email, otp);
+  return sendSuccess(res, result, 'Xác thực OTP thành công');
+});
+
+// Cập nhật endpoint reset password
+export const forgotPasswordReset = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const result = await authService.resetPasswordWithOtp(
+    email,
+    otp,
+    newPassword
+  );
+  return sendSuccess(res, result, 'Đặt lại mật khẩu thành công');
 });
 
 export const login = asyncHandler(async (req, res) => {

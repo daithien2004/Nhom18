@@ -7,6 +7,9 @@ import {
   createComment,
   sharePost,
   getUserPosts,
+  deletePost,
+  updatePost,
+  deleteComment,
 } from '../controllers/postController.js';
 import auth from '../middlewares/auth.js';
 import optionalAuth from '../middlewares/optionalAuth.js';
@@ -60,6 +63,13 @@ router.post(
   createComment
 );
 
+router.delete(
+  '/:postId/comments/:commentId',
+  auth,
+  validateParams(postIdSchema), // Có thể cần schema riêng cho commentId
+  deleteComment
+);
+
 router.post(
   '/:postId/share',
   auth,
@@ -67,5 +77,17 @@ router.post(
   validateBody(sharePostSchema),
   sharePost
 );
+
+// Cập nhật bài viết
+router.put(
+  '/:postId',
+  auth,
+  validateParams(postIdSchema),
+  validateBody(createPostSchema),
+  updatePost
+);
+
+// Xóa bài viết
+router.delete('/:postId', auth, validateParams(postIdSchema), deletePost);
 
 export default router;

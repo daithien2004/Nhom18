@@ -14,6 +14,7 @@ export type PostDetail = {
     id: string;
     content: string;
     author: {
+      id: string;
       username: string;
       avatar: string;
     };
