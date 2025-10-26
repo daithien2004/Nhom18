@@ -12,7 +12,6 @@ import {
   Loader2,
   ImageIcon,
   X,
-  UserPlus,
   Users,
 } from 'lucide-react';
 import PostSection from '../components/PostSection';

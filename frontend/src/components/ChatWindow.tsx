@@ -9,7 +9,6 @@ import {
   addMessageReaction,
   updateMessageStatus,
 } from '../store/slices/conversationSlice';
-import { useChatSocket } from '../sockets/ChatSocketContext';
 import { Loader2 } from 'lucide-react';
 import { type EmojiClickData } from 'emoji-picker-react';
 import type { Conversation } from '../types/message';
@@ -26,7 +25,6 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ conversation }: ChatWindowProps) {
   const dispatch = useAppDispatch();
-  const socket = useChatSocket();
   const { hasMore, isLoadingMore, messages, initialLoading } = useAppSelector(
     (state) => state.conversations
   );

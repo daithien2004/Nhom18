@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import instance from "../api/axiosInstant";
-import { Heart, MessageCircle, Users, FileText } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import instance from '../api/axiosInstant';
+import { Heart, MessageCircle, Users, FileText } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,7 +13,7 @@ import {
   Pie,
   Cell,
   Legend,
-} from "recharts";
+} from 'recharts';
 
 interface StatisticsData {
   totalLikes: number;
@@ -23,7 +23,7 @@ interface StatisticsData {
   likesByPost: { postId: string; content: string; likesCount: number }[];
 }
 
-const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#8b5cf6"];
+const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#8b5cf6'];
 
 const StatisticsPage: React.FC = () => {
   const [stats, setStats] = useState<StatisticsData | null>(null);
@@ -34,10 +34,10 @@ const StatisticsPage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await instance.get("/statistics");
+        const response = await instance.get('/statistics');
         setStats(response.data); // chú ý lấy response.data.data
       } catch (err: any) {
-        setError(err.response?.data?.message || err.message || "Có lỗi xảy ra");
+        setError(err.response?.data?.message || err.message || 'Có lỗi xảy ra');
       } finally {
         setLoading(false);
       }
@@ -72,10 +72,10 @@ const StatisticsPage: React.FC = () => {
 
   // Dữ liệu biểu đồ tròn
   const pieData = [
-    { name: "Likes", value: stats.totalLikes },
-    { name: "Views", value: stats.totalViews },
-    { name: "Friends", value: stats.totalFriends },
-    { name: "Posts", value: stats.totalPosts },
+    { name: 'Likes', value: stats.totalLikes },
+    { name: 'Views', value: stats.totalViews },
+    { name: 'Friends', value: stats.totalFriends },
+    { name: 'Posts', value: stats.totalPosts },
   ];
 
   return (
@@ -140,9 +140,9 @@ const StatisticsPage: React.FC = () => {
               data={stats.likesByPost.map((post, index) => ({
                 // Rút gọn content
                 name:
-                  post.content && post.content.trim() !== ""
+                  post.content && post.content.trim() !== ''
                     ? post.content.slice(0, 15) +
-                      (post.content.length > 15 ? "..." : "")
+                      (post.content.length > 15 ? '...' : '')
                     : `Bài viết ${index + 1}`,
                 fullName: post.content || `Bài viết ${index + 1}`, // giữ để hiển thị tooltip
                 likes: post.likesCount,
@@ -158,8 +158,8 @@ const StatisticsPage: React.FC = () => {
               />
               <YAxis allowDecimals={false} />
               <Tooltip
-                formatter={(value: any) => [`${value} lượt thích`, ""]}
-                labelFormatter={(label: any, payload: any) =>
+                formatter={(value: any) => [`${value} lượt thích`, '']}
+                labelFormatter={(payload: any) =>
                   `Bài viết: ${payload[0]?.payload.fullName}`
                 }
               />
@@ -180,7 +180,7 @@ const StatisticsPage: React.FC = () => {
                 outerRadius={100}
                 label
               >
-                {pieData.map((entry, index) => (
+                {pieData.map((index: any) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}

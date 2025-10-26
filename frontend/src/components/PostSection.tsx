@@ -34,7 +34,6 @@ const PostSection: React.FC<PostSectionProps> = ({
   tab,
   newPost,
   userId = undefined,
-  showTabs = true,
 }) => {
   const dispatch = useAppDispatch();
   const { posts, page, hasMore, initialLoading, loadingMore, error, likes } =
@@ -105,7 +104,7 @@ const PostSection: React.FC<PostSectionProps> = ({
 
   return (
     <div className="space-y-6">
-      {posts.map((post, idx) => (
+      {posts.map((post: any, idx: any) => (
         <div
           key={post.id}
           ref={idx === posts.length - 1 ? lastPostRef : null}

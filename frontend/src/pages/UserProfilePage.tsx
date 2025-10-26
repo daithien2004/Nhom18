@@ -18,7 +18,6 @@ import {
 } from '../store/slices/friendSlice';
 import instance from '../api/axiosInstant';
 import type { UserProfile } from '../types/user';
-import type { Post } from '../types/post';
 import { toast } from 'react-toastify';
 import ReportButton from '../components/ReportButton';
 import { reportService } from '../services/reportService';
@@ -32,8 +31,9 @@ const UserProfilePage: React.FC = () => {
   const { posts, initialLoading: isLoadingPosts } = useAppSelector(
     (state) => state.posts
   );
-  const { friends, incomingRequests, outgoingRequests, isLoadingFriends } =
-    useAppSelector((state) => state.friends);
+  const { friends, incomingRequests, outgoingRequests } = useAppSelector(
+    (state) => state.friends
+  );
   const currentUser = useAppSelector((state) => state.auth.user);
 
   const [activeTab, setActiveTab] = useState<TabType>('posts');
