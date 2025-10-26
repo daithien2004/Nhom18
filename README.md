@@ -79,6 +79,6 @@ Mở trình duyệt và truy cập `http://localhost:5173`
 
 - Thành viên: [Quảng Đại Thiện]
 - Thành viên: [Nguyễn Tuấn Thành]
-- Thành viên: [Huỳnh Thái TOàn]
+- Thành viên: [Huỳnh Thái Toàn]
 
 ---
