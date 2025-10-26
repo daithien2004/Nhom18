@@ -88,15 +88,6 @@ const MainLayout: React.FC = () => {
                   <li
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
                     onClick={() => {
-                      navigate('/setting');
-                      setIsDropDownOpen(false);
-                    }}
-                  >
-                    Cài đặt
-                  </li>
-                  <li
-                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-800"
-                    onClick={() => {
                       handleLogout();
                       setIsDropDownOpen(false);
                     }}

@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import FormInput from '../components/FormInput';
-import Button from '../components/Button';
-import OtpInput from '../components/OtpInput';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearError } from '../store/slices/authSlice';
 import { requestOtpThunk, verifyOtpThunk } from '../store/thunks/authThunks';
@@ -15,6 +12,8 @@ import {
   type FormRegisterVerifyOtp,
 } from '../schemas/FormRegisterSchema';
 import { toast } from 'react-toastify';
+import { Loader2 } from 'lucide-react';
+import OtpInput from '../components/OtpInput';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +26,7 @@ const Register: React.FC = () => {
   const {
     register: registerForm,
     handleSubmit: handleSubmitForm,
-    formState: { errors: formErrors },
+    formState: { errors: formErrors, isValid: isFormValid },
     getValues: getFormValues,
     reset: resetForm,
   } = useForm<FormRegisterRequestOtp>({
@@ -38,6 +37,7 @@ const Register: React.FC = () => {
       password: '',
       phone: '',
     },
+    mode: 'onChange',
   });
 
   // Form for step 2 (OTP verification)
@@ -52,6 +52,7 @@ const Register: React.FC = () => {
     defaultValues: {
       otp: '',
     },
+    mode: 'onChange',
   });
 
   // Clear error when component mounts or step changes
@@ -71,6 +72,15 @@ const Register: React.FC = () => {
     if (requestOtpThunk.fulfilled.match(resultAction)) {
       toast.success('OTP đã gửi tới email');
       setStep(2);
+    } else {
+      const payload = resultAction.payload;
+      if (payload && typeof payload === 'object') {
+        if ('message' in payload && typeof payload.message === 'string') {
+          toast.error(payload.message);
+        }
+      } else {
+        toast.error('Gửi OTP thất bại!');
+      }
     }
   };
 
@@ -91,6 +101,15 @@ const Register: React.FC = () => {
       resetForm();
       resetOtp();
       navigate('/login');
+    } else {
+      const payload = resultAction.payload;
+      if (payload && typeof payload === 'object') {
+        if ('message' in payload && typeof payload.message === 'string') {
+          toast.error(payload.message);
+        }
+      } else {
+        toast.error('Xác thực OTP thất bại!');
+      }
     }
   };
 
@@ -99,58 +118,136 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-6 border rounded-2xl shadow-lg bg-white">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-100">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="hidden md:flex justify-center items-center">
+          <img
+            src="./img/logo.png"
+            alt="Logo"
+            className="max-w-full max-h-40 object-contain"
+          />
+        </div>
+
         {step === 1 ? (
-          <>
-            <h2 className="text-2xl font-bold text-center mb-6">Đăng Ký</h2>
-            <form onSubmit={handleSubmitForm(handleRequestOtp)}>
-              <FormInput
-                label="Username"
-                name="username"
-                register={registerForm('username')}
-                error={formErrors.username?.message}
+          <form
+            onSubmit={handleSubmitForm(handleRequestOtp)}
+            className="flex flex-col gap-4"
+          >
+            <h1 className="text-xl font-bold text-gray-800">
+              Create your account
+            </h1>
+
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Username
+              </label>
+              <input
+                placeholder="Enter your username"
+                {...registerForm('username')}
+                className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               />
-              <FormInput
-                label="Email"
-                name="email"
+              {formErrors.username && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors.username.message}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Email
+              </label>
+              <input
                 type="email"
-                register={registerForm('email')}
-                error={formErrors.email?.message}
+                placeholder="Enter your email"
+                {...registerForm('email')}
+                className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               />
-              <FormInput
-                label="Password"
-                name="password"
+              {formErrors.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Password
+              </label>
+              <input
                 type="password"
-                register={registerForm('password')}
-                error={formErrors.password?.message}
+                placeholder="Enter your password"
+                {...registerForm('password')}
+                className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               />
-              <FormInput
-                label="Phone"
-                name="phone"
+              {formErrors.password && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors.password.message}
+                </p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Phone
+              </label>
+              <input
                 type="tel"
-                register={registerForm('phone')}
-                error={formErrors.phone?.message}
+                placeholder="Enter your phone number"
+                {...registerForm('phone')}
+                className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               />
-              <Button
-                type="submit"
-                className="w-full mt-4"
-                disabled={loading.requestOtp}
+              {formErrors.phone && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors.phone.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading.requestOtp || !isFormValid}
+            >
+              {loading.requestOtp && (
+                <Loader2 className="animate-spin w-4 h-4" />
+              )}
+              {loading.requestOtp ? 'Sending OTP...' : 'Send OTP'}
+            </button>
+
+            <p className="text-sm text-gray-500 text-center">
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="text-blue-600 hover:text-blue-700 transition-all duration-300"
               >
-                {loading.requestOtp ? 'Đang gửi...' : 'Gửi OTP'}
-              </Button>
-            </form>
-            {error && (
-              <p className="text-red-500 mt-2 text-center">{error.message}</p>
-            )}
-          </>
+                Sign in here
+              </Link>
+            </p>
+          </form>
         ) : (
-          <>
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Xác Thực OTP
-            </h2>
-            <form onSubmit={handleSubmitOtp(handleVerifyOtp)}>
-              <div className="flex justify-center mb-6">
+          <form
+            onSubmit={handleSubmitOtp(handleVerifyOtp)}
+            className="flex flex-col gap-4"
+          >
+            <h1 className="text-xl font-bold text-gray-800">Verify OTP</h1>
+
+            <p className="text-sm text-gray-600">
+              We've sent a verification code to your email. Please enter it
+              below.
+            </p>
+
+            {/* OTP Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-3">
+                Enter OTP Code
+              </label>
+              <div className="flex justify-center">
                 <OtpInput
                   length={6}
                   onChange={handleOtpChange}
@@ -158,22 +255,32 @@ const Register: React.FC = () => {
                 />
               </div>
               {otpErrors.otp && (
-                <p className="text-red-500 text-center mb-4">
+                <p className="text-sm text-red-500 mt-2 text-center">
                   {otpErrors.otp.message}
                 </p>
               )}
-              <Button
-                type="submit"
-                className="w-full mt-2"
-                disabled={loading.verifyOtp}
-              >
-                {loading.verifyOtp ? 'Đang xác thực...' : 'Xác Thực & Đăng Ký'}
-              </Button>
-            </form>
-            {error && (
-              <p className="text-red-500 mt-2 text-center">{error.message}</p>
-            )}
-          </>
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              disabled={loading.verifyOtp}
+            >
+              {loading.verifyOtp && (
+                <Loader2 className="animate-spin w-4 h-4" />
+              )}
+              {loading.verifyOtp ? 'Verifying...' : 'Verify & Register'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="text-sm text-blue-600 hover:text-blue-700 transition-all duration-300 text-center"
+            >
+              Back to registration
+            </button>
+          </form>
         )}
       </div>
     </div>

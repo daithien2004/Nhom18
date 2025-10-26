@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useNavigate } from 'react-router-dom';
 import instance from '../api/axiosInstant';
-import FormInput from '../components/FormInput';
 import OtpInput from '../components/OtpInput';
-import Button from '../components/Button';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Loader2 } from 'lucide-react';
 import {
   FormForgotPasswordRequestOtpSchema,
   FormForgotPasswordResetSchema,
@@ -26,10 +25,11 @@ const ForgotPassword: React.FC = () => {
   const {
     register: registerRequest,
     handleSubmit: handleSubmitRequest,
-    formState: { errors: errorsRequest },
+    formState: { errors: errorsRequest, isValid: isRequestValid },
     reset: resetRequest,
   } = useForm<FormForgotPasswordRequestOtp>({
     resolver: zodResolver(FormForgotPasswordRequestOtpSchema),
+    mode: 'onChange',
   });
 
   // Form xác thực OTP
@@ -37,11 +37,12 @@ const ForgotPassword: React.FC = () => {
     register: registerReset,
     handleSubmit: handleSubmitReset,
     setValue,
-    formState: { errors: errorsReset },
+    formState: { errors: errorsReset, isValid: isResetValid },
     reset: resetReset,
   } = useForm<FormForgotPasswordReset>({
     resolver: zodResolver(FormForgotPasswordResetSchema),
     defaultValues: { email: '', otp: '' },
+    mode: 'onChange',
   });
 
   // Đồng bộ email giữa 2 bước
@@ -92,58 +93,121 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-6 border rounded-2xl shadow-lg bg-white">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-100">
+      <div className="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="hidden md:flex justify-center items-center">
+          <img
+            src="./img/logo.png"
+            alt="Logo"
+            className="max-w-full max-h-40 object-contain"
+          />
+        </div>
+
         {step === 1 ? (
           <form
             onSubmit={handleSubmitRequest(onSubmitRequestOtp)}
-            className="space-y-4"
+            className="flex flex-col gap-4"
           >
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Quên Mật Khẩu
-            </h2>
+            <h1 className="text-xl font-bold text-gray-800">
+              Forgot your password?
+            </h1>
 
-            <FormInput
-              label="Email"
-              name="email"
-              type="email"
-              placeholder="Nhập email của bạn"
-              register={registerRequest('email')}
-              error={errorsRequest.email?.message}
-            />
+            <p className="text-sm text-gray-600">
+              Enter your email address and we'll send you an OTP to reset your
+              password.
+            </p>
 
-            <Button type="submit" className="w-full mt-4" disabled={loading}>
-              {loading ? 'Đang gửi...' : 'Gửi OTP'}
-            </Button>
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                {...registerRequest('email')}
+                className="w-full p-3 bg-gray-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-300"
+              />
+              {errorsRequest.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {errorsRequest.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !isRequestValid}
+            >
+              {loading && <Loader2 className="animate-spin w-4 h-4" />}
+              {loading ? 'Sending...' : 'Send OTP'}
+            </button>
+
+            <p className="text-sm text-gray-500 text-center">
+              Remember your password?{' '}
+              <Link
+                to="/login"
+                className="text-blue-600 hover:text-blue-700 transition-all duration-300"
+              >
+                Sign in here
+              </Link>
+            </p>
           </form>
         ) : (
           <form
             onSubmit={handleSubmitReset(onSubmitVerifyOtp)}
-            className="space-y-4"
+            className="flex flex-col gap-4"
           >
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Xác Thực OTP
-            </h2>
+            <h1 className="text-xl font-bold text-gray-800">Verify OTP</h1>
 
-            <OtpInput
-              length={6}
-              register={registerReset('otp')}
-              onChange={(val) => setValue('otp', val)}
-            />
-            {errorsReset.otp && (
-              <p className="text-red-500 text-xs mt-1">
-                {errorsReset.otp.message}
-              </p>
-            )}
-            {errorsReset.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errorsReset.email.message}
-              </p>
-            )}
+            <p className="text-sm text-gray-600">
+              We've sent a verification code to <strong>{email}</strong>. Please
+              enter it below.
+            </p>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Đang xác thực...' : 'Xác Thực OTP'}
-            </Button>
+            {/* OTP Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-3">
+                Enter OTP Code
+              </label>
+              <div className="flex justify-center">
+                <OtpInput
+                  length={6}
+                  register={registerReset('otp')}
+                  onChange={(val) => setValue('otp', val)}
+                />
+              </div>
+              {errorsReset.otp && (
+                <p className="text-sm text-red-500 mt-2 text-center">
+                  {errorsReset.otp.message}
+                </p>
+              )}
+              {errorsReset.email && (
+                <p className="text-sm text-red-500 mt-2 text-center">
+                  {errorsReset.email.message}
+                </p>
+              )}
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              disabled={loading}
+            >
+              {loading && <Loader2 className="animate-spin w-4 h-4" />}
+              {loading ? 'Verifying...' : 'Verify OTP'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="text-sm text-blue-600 hover:text-blue-700 transition-all duration-300 text-center"
+            >
+              Back to email entry
+            </button>
           </form>
         )}
       </div>

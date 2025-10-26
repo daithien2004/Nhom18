@@ -19,7 +19,7 @@ const LoginPage = () => {
     formState: { errors, isValid },
   } = useForm<FormLogin>({
     resolver: zodResolver(FormLoginSchema),
-    defaultValues: { email: 'john.doe@example.com', password: 'User@123' },
+    defaultValues: { email: 'user1@example.com', password: 'password123' },
     mode: 'onChange',
   });
 
@@ -93,34 +93,14 @@ const LoginPage = () => {
             )}
           </div>
 
-          {/* Remember + Links */}
+          {/* Links */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 text-sm">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                name="rememberMe"
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-600 cursor-pointer"
-              />
-              <label
-                htmlFor="rememberMe"
-                className="text-gray-600 cursor-pointer"
-              >
-                Remember me
-              </label>
-            </div>
             <div className="flex flex-col md:flex-row gap-2">
               <Link
                 to="/forgot-password"
                 className="text-blue-600 hover:text-blue-700 transition-all duration-300"
               >
                 Forgot Password?
-              </Link>
-              <Link
-                to="/register"
-                className="text-blue-600 hover:text-blue-700 transition-all duration-300"
-              >
-                Register
               </Link>
             </div>
           </div>

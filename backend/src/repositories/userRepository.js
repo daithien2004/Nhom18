@@ -28,8 +28,14 @@ export const updateByIdSelect = async (id, updates, selectFields) => {
   ).select(selectFields);
 };
 
-export const createUser = async ({ username, email, password, phone }) => {
-  return await User.create({ username, email, password, phone });
+export const createUser = async ({
+  username,
+  email,
+  password,
+  phone,
+  isVerified,
+}) => {
+  return await User.create({ username, email, password, phone, isVerified });
 };
 
 export const getStatusById = async (id) => {

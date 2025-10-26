@@ -3,8 +3,8 @@ import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
-import Category from '../models/Category.js';
 import Activity from '../models/Activity.js';
+import Category from '../models/Category.js';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import Notification from '../models/Notification.js';
@@ -14,103 +14,79 @@ const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://localhost:27017/zaloute';
 
 // Dữ liệu mẫu
-const sampleUsers = [
-  {
-    email: 'admin@example.com',
-    password: 'Admin@123',
-    phone: '0901234567',
-    username: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    coverPhoto: 'https://picsum.photos/1200/400?random=1',
-    bio: 'System Administrator',
-    gender: 'male',
-    birthday: new Date('1990-01-01'),
-    isVerified: true,
-    isAdmin: true,
-  },
-  {
-    email: 'john.doe@example.com',
-    password: 'User@123',
-    phone: '0901234568',
-    username: 'John Doe',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    coverPhoto: 'https://picsum.photos/1200/400?random=2',
-    bio: 'Software Developer | Tech Enthusiast',
-    gender: 'male',
-    birthday: new Date('1995-05-15'),
-    isVerified: true,
-  },
-  {
-    email: 'jane.smith@example.com',
-    password: 'User@123',
-    phone: '0901234569',
-    username: 'Jane Smith',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    coverPhoto: 'https://picsum.photos/1200/400?random=3',
-    bio: 'Designer | Creative Mind',
-    gender: 'female',
-    birthday: new Date('1998-08-20'),
-    isVerified: true,
-  },
-  {
-    email: 'mike.wilson@example.com',
-    password: 'User@123',
-    phone: '0901234570',
-    username: 'Mike Wilson',
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    coverPhoto: 'https://picsum.photos/1200/400?random=4',
-    bio: 'Photographer | Travel Lover',
-    gender: 'male',
-    birthday: new Date('1992-03-10'),
-    isVerified: false,
-  },
-  {
-    email: 'sarah.johnson@example.com',
-    password: 'User@123',
-    phone: '0901234571',
-    username: 'Sarah Johnson',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    coverPhoto: 'https://picsum.photos/1200/400?random=5',
-    bio: 'Marketing Manager | Coffee Addict',
-    gender: 'female',
-    birthday: new Date('1994-11-25'),
-    isVerified: true,
-  },
+const sampleBios = [
+  'Passionate about technology and innovation 🚀',
+  'Coffee lover ☕ | Book enthusiast 📚 | Travel addict ✈️',
+  'Creating memories, one photo at a time 📸',
+  'Living life to the fullest 🌟',
+  'Foodie | Gamer | Developer 💻',
+  'Spreading positivity everywhere I go ✨',
+  'Music is life 🎵 | Dog lover 🐕',
+  'Adventure seeker | Nature lover 🌲',
+  'Fitness enthusiast 💪 | Health advocate',
+  'Artist at heart 🎨 | Creative soul',
 ];
 
-const samplePosts = [
-  {
-    content: 'Hello everyone! Excited to join this amazing community! 🎉',
-    images: ['https://picsum.photos/800/600?random=10'],
-  },
-  {
-    content: 'Just finished my new project. Check it out!',
-    images: [
-      'https://picsum.photos/800/600?random=11',
-      'https://picsum.photos/800/600?random=12',
-    ],
-  },
-  {
-    content: 'Beautiful sunset today 🌅',
-    images: ['https://picsum.photos/800/600?random=13'],
-  },
-  {
-    content: 'Working on something exciting. Stay tuned! 💻',
-    images: [],
-  },
-  {
-    content: 'Coffee and code - the perfect combination ☕️',
-    images: ['https://picsum.photos/800/600?random=14'],
-  },
+const samplePostContents = [
+  'Just finished an amazing workout session! Feeling energized 💪 #fitness #motivation',
+  'Beautiful sunset today 🌅 What a perfect evening!',
+  'Coffee and coding - my favorite combo ☕💻 #developerlife',
+  'Excited to share my latest project with you all! What do you think?',
+  'Weekend vibes! Time to relax and recharge 😊',
+  'Grateful for all the amazing people in my life ❤️',
+  'New recipe turned out great! Cooking is therapeutic 🍳',
+  "Just booked my next adventure! Can't wait to explore ✈️",
+  'Monday motivation: Start each day with a grateful heart 💫',
+  'Game night with friends was epic! 🎮',
+  "Reading this book and can't put it down 📖",
+  'Productivity tip: Take breaks and stay hydrated! 💧',
+  'The weather is perfect for a long walk 🚶‍♂️',
+  'Learning something new every day keeps life interesting 🧠',
+  'Home workout complete! No excuses 🏋️',
+  'Fresh flowers always brighten up the day 🌸',
+  "Throwback to last summer's beach trip 🏖️",
+  'Movie night recommendation: just watched an amazing film! 🎬',
+  'Sunday brunch hits different 🥞',
+  'Celebrating small wins today! 🎉',
+];
+
+const sampleComments = [
+  'This is amazing! 🔥',
+  'Love this so much! ❤️',
+  'Great post! Thanks for sharing',
+  'Totally agree with you on this!',
+  'Inspiring! Keep it up 💪',
+  'Beautiful! 😍',
+  'This made my day!',
+  'Awesome work!',
+  "Can't wait to see more!",
+  'So cool! 🎉',
+  'Interesting perspective!',
+  'Thanks for the motivation!',
+  'Amazing content as always!',
+  'This is exactly what I needed today',
+  "You're the best! 🌟",
+];
+
+const sampleMessages = [
+  'Hey! How are you doing?',
+  'Did you see the latest update?',
+  "That's awesome! Congrats!",
+  "Let's catch up soon!",
+  'Thanks for your help earlier',
+  'Have you tried the new feature?',
+  'I completely agree with that',
+  'What are you up to today?',
+  'Looking forward to it!',
+  'That sounds great!',
 ];
 
 async function clearDatabase() {
-  console.log('🗑️  Clearing database...');
   await User.deleteMany({});
   await Post.deleteMany({});
   await Comment.deleteMany({});
-  await Category.deleteMany({});
   await Activity.deleteMany({});
+  await Category.deleteMany({});
   await Conversation.deleteMany({});
   await Message.deleteMany({});
   await Notification.deleteMany({});
@@ -118,325 +94,634 @@ async function clearDatabase() {
   console.log('✅ Database cleared');
 }
 
-async function seedUsers() {
-  console.log('👥 Seeding users...');
+async function createUsers() {
+  const hashedPassword = await bcrypt.hash('password123', 10);
   const users = [];
 
-  for (const userData of sampleUsers) {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const user = await User.create({
-      ...userData,
-      password: hashedPassword,
-      isOnline: Math.random() > 0.5,
-      lastActive: new Date(),
-    });
-    users.push(user);
-  }
-
-  console.log(`✅ Created ${users.length} users`);
-  return users;
-}
-
-async function seedFriendships(users) {
-  console.log('🤝 Seeding friendships...');
-
-  // User 0 (admin) là bạn với tất cả
-  for (let i = 1; i < users.length; i++) {
-    users[0].friends.push(users[i]._id);
-    users[i].friends.push(users[0]._id);
-  }
-
-  // User 1 và User 2 là bạn
-  users[1].friends.push(users[2]._id);
-  users[2].friends.push(users[1]._id);
-
-  // User 3 gửi friend request cho User 4
-  users[4].friendRequests.push({
-    from: users[3]._id,
-    status: 'pending',
+  // Tạo 1 admin
+  users.push({
+    email: 'admin@example.com',
+    password: hashedPassword,
+    username: 'Admin',
+    phone: '+84900000000',
+    avatar: `https://i.pravatar.cc/150?img=0`,
+    bio: 'System Administrator',
+    gender: 'other',
+    birthday: new Date('1990-01-01'),
+    isVerified: true,
+    isAdmin: true,
+    isOnline: true,
+    friends: [],
+    friendRequests: [],
   });
 
-  // Save all users
-  for (const user of users) {
-    await user.save();
+  // Tạo 50 users thường
+  for (let i = 1; i <= 50; i++) {
+    users.push({
+      email: `user${i}@example.com`,
+      password: hashedPassword,
+      username: `User ${i}`,
+      phone: `+8490000${String(i).padStart(4, '0')}`,
+      avatar: `https://i.pravatar.cc/150?img=${i}`,
+      bio: sampleBios[i % sampleBios.length],
+      gender: ['male', 'female', 'other'][i % 3],
+      birthday: new Date(1990 + (i % 20), i % 12, (i % 28) + 1),
+      isVerified: i % 3 === 0,
+      isOnline: i % 5 === 0,
+      lastActive: new Date(
+        Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+      ),
+      friends: [],
+      friendRequests: [],
+    });
   }
 
-  console.log('✅ Friendships created');
+  const createdUsers = await User.insertMany(users);
+  console.log(`✅ Created ${createdUsers.length} users`);
+  return createdUsers;
 }
 
-async function seedPosts(users) {
-  console.log('📝 Seeding posts...');
+async function createFriendships(users) {
+  // Tạo quan hệ bạn bè ngẫu nhiên
+  for (let i = 0; i < users.length; i++) {
+    const friendCount = Math.floor(Math.random() * 15) + 5; // 5-20 bạn
+    const friendIds = [];
+
+    for (let j = 0; j < friendCount; j++) {
+      let randomIndex = Math.floor(Math.random() * users.length);
+      while (randomIndex === i || friendIds.includes(users[randomIndex]._id)) {
+        randomIndex = Math.floor(Math.random() * users.length);
+      }
+      friendIds.push(users[randomIndex]._id);
+    }
+
+    users[i].friends = friendIds;
+    await users[i].save();
+  }
+
+  // Tạo friend requests
+  for (let i = 0; i < 30; i++) {
+    const fromUser = users[Math.floor(Math.random() * users.length)];
+    const toUser = users[Math.floor(Math.random() * users.length)];
+
+    if (
+      fromUser._id.toString() !== toUser._id.toString() &&
+      !toUser.friends.includes(fromUser._id)
+    ) {
+      toUser.friendRequests.push({
+        from: fromUser._id,
+        status: ['pending', 'accepted', 'rejected'][
+          Math.floor(Math.random() * 3)
+        ],
+      });
+      await toUser.save();
+    }
+  }
+
+  console.log('✅ Created friendships and friend requests');
+}
+
+async function createPosts(users) {
   const posts = [];
 
-  for (let i = 0; i < samplePosts.length; i++) {
-    const post = await Post.create({
-      author: users[i % users.length]._id,
-      ...samplePosts[i],
-      likes: [
-        users[(i + 1) % users.length]._id,
-        users[(i + 2) % users.length]._id,
-      ],
-      views: Math.floor(Math.random() * 100) + 10,
+  // Tạo 150 bài post
+  for (let i = 0; i < 150; i++) {
+    const author = users[Math.floor(Math.random() * users.length)];
+    const imageCount = Math.floor(Math.random() * 4); // 0-3 ảnh
+    const images = [];
+
+    for (let j = 0; j < imageCount; j++) {
+      images.push(`https://picsum.photos/800/600?random=${i * 10 + j}`);
+    }
+
+    posts.push({
+      author: author._id,
+      content: samplePostContents[i % samplePostContents.length],
+      images,
+      likes: [],
+      comments: [],
+      views: Math.floor(Math.random() * 500),
+      shares: [],
+      isHidden: Math.random() > 0.95,
+      isDeleted: Math.random() > 0.98,
+      createdAt: new Date(
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+      ),
     });
-    posts.push(post);
   }
 
-  // Tạo shared post
-  const sharedPost = await Post.create({
-    author: users[2]._id,
-    caption: 'Check out this amazing post!',
-    sharedFrom: posts[0]._id,
-  });
-  posts.push(sharedPost);
-
-  console.log(`✅ Created ${posts.length} posts`);
-  return posts;
+  const createdPosts = await Post.insertMany(posts);
+  console.log(`✅ Created ${createdPosts.length} posts`);
+  return createdPosts;
 }
 
-async function seedComments(users, posts) {
-  console.log('💬 Seeding comments...');
+async function createSharePosts(users, posts) {
+  const sharePosts = [];
+
+  // Tạo 30 bài share
+  for (let i = 0; i < 30; i++) {
+    const author = users[Math.floor(Math.random() * users.length)];
+    const originalPost = posts[Math.floor(Math.random() * posts.length)];
+
+    sharePosts.push({
+      author: author._id,
+      caption: `Check this out! 👀`,
+      sharedFrom: originalPost._id,
+      likes: [],
+      comments: [],
+      views: Math.floor(Math.random() * 200),
+      createdAt: new Date(
+        Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000
+      ),
+    });
+  }
+
+  const createdSharePosts = await Post.insertMany(sharePosts);
+
+  // Cập nhật shares cho bài gốc
+  for (const sharePost of createdSharePosts) {
+    await Post.findByIdAndUpdate(sharePost.sharedFrom, {
+      $push: { shares: sharePost._id },
+    });
+  }
+
+  console.log(`✅ Created ${createdSharePosts.length} shared posts`);
+  return createdSharePosts;
+}
+
+async function createCommentsAndLikes(users, posts) {
   const comments = [];
-
-  const sampleComments = [
-    'Great post!',
-    'Love this! 😍',
-    'Amazing work!',
-    'Thanks for sharing!',
-    'This is awesome!',
-    'Keep it up! 👍',
-  ];
-
-  for (const post of posts.slice(0, 3)) {
-    for (let i = 0; i < 2; i++) {
-      const comment = await Comment.create({
-        postId: post._id,
-        author: users[(i + 1) % users.length]._id,
-        content:
-          sampleComments[Math.floor(Math.random() * sampleComments.length)],
-        likes: [users[(i + 2) % users.length]._id],
-      });
-      comments.push(comment);
-      post.comments.push(comment._id);
-    }
-    await post.save();
-  }
-
-  console.log(`✅ Created ${comments.length} comments`);
-  return comments;
-}
-
-async function seedCategories(users, posts) {
-  console.log('📂 Seeding categories...');
-  const categories = [];
-
-  const categoryNames = ['Để xem sau', 'Công việc', 'Học tập', 'Yêu thích'];
-
-  for (let i = 0; i < users.length; i++) {
-    for (let j = 0; j < 2; j++) {
-      const category = await Category.create({
-        owner: users[i]._id,
-        name: categoryNames[j],
-        posts: [posts[j % posts.length]._id],
-        isDefault: j === 0,
-      });
-      categories.push(category);
-    }
-  }
-
-  console.log(`✅ Created ${categories.length} categories`);
-  return categories;
-}
-
-async function seedActivities(users, posts, comments) {
-  console.log('🎯 Seeding activities...');
   const activities = [];
 
-  // Like activities
-  for (let i = 0; i < 3; i++) {
-    const post = posts[i];
-    const activity = await Activity.create({
-      actor: users[(i + 1) % users.length]._id,
-      post: post._id,
-      postOwner: post.author,
-      type: 'like',
-    });
-    activities.push(activity);
+  for (const post of posts) {
+    // Thêm likes
+    const likeCount = Math.floor(Math.random() * 30) + 5;
+    const likers = [];
+
+    for (let i = 0; i < likeCount; i++) {
+      const liker = users[Math.floor(Math.random() * users.length)];
+      if (!likers.includes(liker._id)) {
+        likers.push(liker._id);
+
+        // Tạo activity cho like
+        activities.push({
+          actor: liker._id,
+          post: post._id,
+          postOwner: post.author,
+          type: 'like',
+          createdAt: new Date(
+            Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000
+          ),
+        });
+      }
+    }
+
+    post.likes = likers;
+    await post.save();
+
+    // Thêm comments
+    const commentCount = Math.floor(Math.random() * 15) + 2;
+
+    for (let i = 0; i < commentCount; i++) {
+      const commenter = users[Math.floor(Math.random() * users.length)];
+
+      const comment = {
+        postId: post._id,
+        author: commenter._id,
+        content:
+          sampleComments[Math.floor(Math.random() * sampleComments.length)],
+        likes: [],
+        isHidden: Math.random() > 0.97,
+        isDeleted: Math.random() > 0.99,
+        createdAt: new Date(
+          Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000
+        ),
+      };
+
+      comments.push(comment);
+    }
   }
 
-  // Comment activities
-  for (let i = 0; i < Math.min(3, comments.length); i++) {
-    const comment = comments[i];
-    const post = posts.find((p) => p._id.equals(comment.postId));
-    const activity = await Activity.create({
+  const createdComments = await Comment.insertMany(comments);
+
+  // Cập nhật comments vào posts và tạo activities
+  for (const comment of createdComments) {
+    await Post.findByIdAndUpdate(comment.postId, {
+      $push: { comments: comment._id },
+    });
+
+    activities.push({
       actor: comment.author,
       post: comment.postId,
-      postOwner: post.author,
+      postOwner: (await Post.findById(comment.postId)).author,
       type: 'comment',
       comment: comment._id,
+      createdAt: comment.createdAt,
     });
-    activities.push(activity);
+
+    // Thêm likes cho comments
+    const commentLikeCount = Math.floor(Math.random() * 10);
+    const commentLikers = [];
+
+    for (let i = 0; i < commentLikeCount; i++) {
+      const liker = users[Math.floor(Math.random() * users.length)];
+      if (!commentLikers.includes(liker._id)) {
+        commentLikers.push(liker._id);
+      }
+    }
+
+    comment.likes = commentLikers;
+    await comment.save();
   }
 
-  console.log(`✅ Created ${activities.length} activities`);
-  return activities;
+  await Activity.insertMany(activities);
+  console.log(
+    `✅ Created ${createdComments.length} comments and ${activities.length} activities`
+  );
 }
 
-async function seedConversations(users) {
-  console.log('💬 Seeding conversations...');
+async function createCategories(users, posts) {
+  const categories = [];
+
+  for (const user of users.slice(0, 30)) {
+    // Mỗi user có 2-4 categories
+    const categoryCount = Math.floor(Math.random() * 3) + 2;
+    const categoryNames = [
+      'Để xem sau',
+      'Yêu thích',
+      'Công việc',
+      'Học tập',
+      'Du lịch',
+      'Ẩm thực',
+    ];
+
+    for (let i = 0; i < categoryCount; i++) {
+      const savedPosts = [];
+      const postCount = Math.floor(Math.random() * 8) + 3;
+
+      for (let j = 0; j < postCount; j++) {
+        const randomPost = posts[Math.floor(Math.random() * posts.length)];
+        if (!savedPosts.includes(randomPost._id)) {
+          savedPosts.push(randomPost._id);
+        }
+      }
+
+      categories.push({
+        owner: user._id,
+        name: categoryNames[i % categoryNames.length],
+        posts: savedPosts,
+        isDefault: i === 0,
+        createdAt: new Date(
+          Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000
+        ),
+      });
+    }
+  }
+
+  const createdCategories = await Category.insertMany(categories);
+  console.log(`✅ Created ${createdCategories.length} categories`);
+}
+
+async function createConversationsAndMessages(users) {
   const conversations = [];
-
-  // 1-on-1 conversation
-  const conv1 = await Conversation.create({
-    participants: [users[0]._id, users[1]._id],
-    isGroup: false,
-    status: 'active',
-  });
-  conversations.push(conv1);
-
-  // Group conversation
-  const conv2 = await Conversation.create({
-    participants: [users[0]._id, users[1]._id, users[2]._id],
-    isGroup: true,
-    groupName: 'Team Chat',
-    groupAvatar: 'https://i.pravatar.cc/150?img=99',
-    status: 'active',
-  });
-  conversations.push(conv2);
-
-  console.log(`✅ Created ${conversations.length} conversations`);
-  return conversations;
-}
-
-async function seedMessages(users, conversations) {
-  console.log('✉️  Seeding messages...');
   const messages = [];
 
-  const sampleMessages = [
-    'Hey! How are you?',
-    "I'm good, thanks! How about you?",
-    'Working on a new project',
-    'That sounds exciting!',
-    'Let me know if you need any help',
-  ];
+  // Tạo conversations từ quan hệ bạn bè
+  const processedPairs = new Set();
 
-  for (const conversation of conversations) {
-    for (let i = 0; i < 3; i++) {
-      const message = await Message.create({
-        conversationId: conversation._id,
-        sender: conversation.participants[i % conversation.participants.length],
-        text: sampleMessages[i],
-        status: 'seen',
-        readBy: conversation.participants,
-      });
-      messages.push(message);
-      conversation.lastMessage = message._id;
+  // 1. Tạo conversations cho những người đã là bạn (active) - TẤT CẢ ĐỀU ACTIVE
+  for (const user of users) {
+    // Lấy tất cả bạn bè để tạo conversation
+    for (const friendId of user.friends) {
+      const pairKey = [user._id.toString(), friendId.toString()]
+        .sort()
+        .join('-');
+
+      if (!processedPairs.has(pairKey)) {
+        processedPairs.add(pairKey);
+
+        conversations.push({
+          participants: [user._id, friendId],
+          isGroup: false,
+          status: 'active', // Đã là bạn => TẤT CẢ ĐỀU ACTIVE
+          createdAt: new Date(
+            Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000
+          ),
+        });
+      }
     }
+  }
+
+  // 2. Tạo conversations pending cho những người chưa là bạn
+  for (let i = 0; i < 15; i++) {
+    const user1 = users[Math.floor(Math.random() * users.length)];
+    let user2 = users[Math.floor(Math.random() * users.length)];
+
+    while (
+      user1._id.toString() === user2._id.toString() ||
+      user1.friends.some((f) => f.toString() === user2._id.toString())
+    ) {
+      user2 = users[Math.floor(Math.random() * users.length)];
+    }
+
+    const pairKey = [user1._id.toString(), user2._id.toString()]
+      .sort()
+      .join('-');
+
+    if (!processedPairs.has(pairKey)) {
+      processedPairs.add(pairKey);
+
+      conversations.push({
+        participants: [user1._id, user2._id],
+        isGroup: false,
+        status: 'pending', // Chưa là bạn => pending
+        createdAt: new Date(
+          Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        ),
+      });
+    }
+  }
+
+  // 3. Tạo group conversations (active - vì trong group đều là bạn bè)
+  for (let i = 0; i < 10; i++) {
+    const groupOwner = users[Math.floor(Math.random() * users.length)];
+    const groupSize = Math.floor(Math.random() * 4) + 3; // 3-6 người
+
+    // Lấy bạn bè của owner để tạo group
+    const groupMembers = [groupOwner._id];
+    const availableFriends = [...groupOwner.friends];
+
+    for (let j = 1; j < groupSize && availableFriends.length > 0; j++) {
+      const randomIndex = Math.floor(Math.random() * availableFriends.length);
+      groupMembers.push(availableFriends[randomIndex]);
+      availableFriends.splice(randomIndex, 1);
+    }
+
+    if (groupMembers.length >= 3) {
+      conversations.push({
+        participants: groupMembers,
+        isGroup: true,
+        groupName: `Group ${i + 1}`,
+        groupAvatar: `https://i.pravatar.cc/150?img=${i + 100}`,
+        status: 'active',
+        createdAt: new Date(
+          Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000
+        ),
+      });
+    }
+  }
+
+  const createdConversations = await Conversation.insertMany(conversations);
+
+  // Tạo messages cho mỗi conversation
+  for (const conversation of createdConversations) {
+    const messageCount = Math.floor(Math.random() * 25) + 10; // 10-35 messages
+    const conversationMessages = [];
+
+    for (let i = 0; i < messageCount; i++) {
+      const sender =
+        conversation.participants[
+          Math.floor(Math.random() * conversation.participants.length)
+        ];
+      const hasAttachment = Math.random() > 0.8;
+      const attachments = hasAttachment
+        ? [`https://picsum.photos/400/300?random=${Math.random()}`]
+        : [];
+
+      conversationMessages.push({
+        conversationId: conversation._id,
+        sender,
+        text: sampleMessages[Math.floor(Math.random() * sampleMessages.length)],
+        attachments,
+        status: ['sent', 'delivered', 'seen'][Math.floor(Math.random() * 3)],
+        readBy: Math.random() > 0.5 ? [sender] : [],
+        createdAt: new Date(
+          conversation.createdAt.getTime() + i * 60 * 60 * 1000
+        ),
+      });
+    }
+
+    const createdMessages = await Message.insertMany(conversationMessages);
+    messages.push(...createdMessages);
+
+    // Cập nhật lastMessage
+    const lastMessage = createdMessages[createdMessages.length - 1];
+    conversation.lastMessage = lastMessage._id;
     await conversation.save();
   }
 
-  console.log(`✅ Created ${messages.length} messages`);
-  return messages;
+  console.log(
+    `✅ Created ${createdConversations.length} conversations and ${messages.length} messages`
+  );
 }
 
-async function seedNotifications(users, posts) {
-  console.log('🔔 Seeding notifications...');
+async function createNotifications(users, posts, comments, activities) {
   const notifications = [];
 
-  const notificationTypes = [
-    { type: 'like', message: 'đã thích bài viết của bạn' },
-    { type: 'comment', message: 'đã bình luận về bài viết của bạn' },
-    { type: 'friend_request', message: 'đã gửi lời mời kết bạn' },
-  ];
+  // 1. Tạo notifications từ activities (like, comment)
+  for (const activity of activities) {
+    // Chỉ tạo notification nếu actor khác postOwner
+    if (activity.actor.toString() !== activity.postOwner.toString()) {
+      const sender = await User.findById(activity.actor);
+      const post = await Post.findById(activity.post);
 
-  for (let i = 0; i < 5; i++) {
-    const notifType = notificationTypes[i % notificationTypes.length];
-    const notification = await Notification.create({
-      senderId: users[(i + 1) % users.length]._id,
-      receiverId: users[i % users.length]._id,
-      message: notifType.message,
-      type: notifType.type,
-      isRead: Math.random() > 0.5,
-      metadata: {
-        postId: posts[i % posts.length]._id,
-      },
-    });
-    notifications.push(notification);
+      if (sender && post) {
+        let message = '';
+        let metadata = { postId: activity.post };
+
+        if (activity.type === 'like') {
+          message = `${sender.username} liked your post`;
+        } else if (activity.type === 'comment') {
+          message = `${sender.username} commented on your post`;
+          metadata.commentId = activity.comment;
+        }
+
+        notifications.push({
+          senderId: activity.actor,
+          receiverId: activity.postOwner,
+          message,
+          type: activity.type,
+          metadata,
+          isRead: Math.random() > 0.6, // 40% đã đọc
+          createdAt: activity.createdAt,
+        });
+      }
+    }
   }
 
-  console.log(`✅ Created ${notifications.length} notifications`);
-  return notifications;
+  // 2. Tạo notifications cho friend requests
+  for (const user of users) {
+    for (const request of user.friendRequests) {
+      const sender = await User.findById(request.from);
+      if (sender) {
+        if (request.status === 'pending') {
+          // Notification cho lời mời kết bạn
+          notifications.push({
+            senderId: request.from,
+            receiverId: user._id,
+            message: `${sender.username} sent you a friend request`,
+            type: 'friend_request',
+            metadata: {},
+            isRead: Math.random() > 0.7,
+            createdAt: new Date(
+              Date.now() - Math.random() * 20 * 24 * 60 * 60 * 1000
+            ),
+          });
+        } else if (request.status === 'accepted') {
+          // Notification cho việc chấp nhận kết bạn (người gửi lời mời nhận thông báo)
+          notifications.push({
+            senderId: user._id,
+            receiverId: request.from,
+            message: `${user.username} accepted your friend request`,
+            type: 'friend_accept',
+            metadata: {},
+            isRead: Math.random() > 0.5,
+            createdAt: new Date(
+              Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000
+            ),
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Tạo notifications cho shares
+  const sharedPosts = await Post.find({ sharedFrom: { $ne: null } }).populate(
+    'author sharedFrom'
+  );
+  for (const sharePost of sharedPosts) {
+    const originalPost = sharePost.sharedFrom;
+    if (
+      originalPost &&
+      sharePost.author._id.toString() !== originalPost.author.toString()
+    ) {
+      const sharer = sharePost.author;
+
+      notifications.push({
+        senderId: sharer._id,
+        receiverId: originalPost.author,
+        message: `${sharer.username} shared your post`,
+        type: 'share',
+        metadata: {
+          postId: originalPost._id,
+          sharedPostId: sharePost._id,
+        },
+        isRead: Math.random() > 0.6,
+        createdAt: sharePost.createdAt,
+      });
+    }
+  }
+
+  const createdNotifications = await Notification.insertMany(notifications);
+  console.log(
+    `✅ Created ${createdNotifications.length} notifications (synchronized with activities)`
+  );
 }
 
-async function seedReports(users, posts, comments) {
-  console.log('🚨 Seeding reports...');
+async function createReports(users, posts, comments) {
   const reports = [];
+  const reasons = [
+    'spam',
+    'inappropriate_content',
+    'harassment',
+    'fake_information',
+    'violence',
+    'hate_speech',
+    'other',
+  ];
+  const statuses = ['pending', 'reviewing', 'resolved', 'dismissed'];
 
-  // Report on post
-  const report1 = await Report.create({
-    reporter: users[1]._id,
-    reportedPost: posts[2]._id,
-    reportType: 'post',
-    reason: 'spam',
-    description: 'This post contains spam content',
-    status: 'pending',
-  });
-  reports.push(report1);
+  // Tạo 50 reports
+  for (let i = 0; i < 50; i++) {
+    const reporter = users[Math.floor(Math.random() * users.length)];
+    const reportTypes = ['user', 'post', 'comment'];
+    const reportType =
+      reportTypes[Math.floor(Math.random() * reportTypes.length)];
 
-  // Report on user
-  const report2 = await Report.create({
-    reporter: users[2]._id,
-    reportedUser: users[3]._id,
-    reportType: 'user',
-    reason: 'harassment',
-    description: 'Inappropriate behavior',
-    status: 'reviewing',
-  });
-  reports.push(report2);
+    const report = {
+      reporter: reporter._id,
+      reportType,
+      reason: reasons[Math.floor(Math.random() * reasons.length)],
+      description: 'This content violates community guidelines.',
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      createdAt: new Date(
+        Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000
+      ),
+    };
 
-  console.log(`✅ Created ${reports.length} reports`);
-  return reports;
+    switch (reportType) {
+      case 'user':
+        report.reportedUser =
+          users[Math.floor(Math.random() * users.length)]._id;
+        break;
+      case 'post':
+        report.reportedPost =
+          posts[Math.floor(Math.random() * posts.length)]._id;
+        break;
+      case 'comment':
+        report.reportedComment =
+          comments[Math.floor(Math.random() * comments.length)]._id;
+        break;
+    }
+
+    if (report.status === 'resolved') {
+      report.resolvedBy = users.find((u) => u.isAdmin)?._id;
+      report.resolvedAt = new Date(
+        report.createdAt.getTime() + Math.random() * 10 * 24 * 60 * 60 * 1000
+      );
+      report.adminNotes =
+        'Issue has been reviewed and appropriate action taken.';
+    }
+
+    reports.push(report);
+  }
+
+  const createdReports = await Report.insertMany(reports);
+  console.log(`✅ Created ${createdReports.length} reports`);
 }
 
-async function seed() {
+async function seedDatabase() {
   try {
-    // Connect to database
-    console.log('🔌 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('🔗 Connected to MongoDB');
 
-    // Clear existing data
     await clearDatabase();
 
-    // Seed data
-    const users = await seedUsers();
-    await seedFriendships(users);
-    const posts = await seedPosts(users);
-    const comments = await seedComments(users, posts);
-    await seedCategories(users, posts);
-    await seedActivities(users, posts, comments);
-    const conversations = await seedConversations(users);
-    await seedMessages(users, conversations);
-    await seedNotifications(users, posts);
-    await seedReports(users, posts, comments);
+    const users = await createUsers();
+    await createFriendships(users);
 
-    console.log('\n🎉 Seeding completed successfully!');
+    const posts = await createPosts(users);
+    await createSharePosts(users, posts);
+    await createCommentsAndLikes(users, posts);
+
+    await createCategories(users, posts);
+    await createConversationsAndMessages(users);
+
+    const activities = await Activity.find();
+    const comments = await Comment.find();
+    await createNotifications(users, posts, comments, activities);
+
+    await createReports(users, posts, comments);
+
+    console.log('\n🎉 Database seeded successfully!');
     console.log('\n📊 Summary:');
-    console.log(`   Users: ${users.length}`);
-    console.log(`   Posts: ${posts.length}`);
-    console.log(`   Comments: ${comments.length}`);
-    console.log(`   Conversations: ${conversations.length}`);
-    console.log('\n🔑 Login credentials:');
-    console.log('   Admin: admin@example.com / Admin@123');
-    console.log('   User: john.doe@example.com / User@123');
+    console.log(`- Users: ${await User.countDocuments()}`);
+    console.log(`- Posts: ${await Post.countDocuments()}`);
+    console.log(`- Comments: ${await Comment.countDocuments()}`);
+    console.log(`- Activities: ${await Activity.countDocuments()}`);
+    console.log(`- Categories: ${await Category.countDocuments()}`);
+    console.log(`- Conversations: ${await Conversation.countDocuments()}`);
+    console.log(`- Messages: ${await Message.countDocuments()}`);
+    console.log(`- Notifications: ${await Notification.countDocuments()}`);
+    console.log(`- Reports: ${await Report.countDocuments()}`);
+
+    await mongoose.disconnect();
+    console.log('\n✅ Disconnected from MongoDB');
   } catch (error) {
     console.error('❌ Error seeding database:', error);
+    await mongoose.disconnect();
     process.exit(1);
-  } finally {
-    await mongoose.connection.close();
-    console.log('\n👋 Database connection closed');
-    process.exit(0);
   }
 }
 
-// Run seed
-seed();
+seedDatabase();

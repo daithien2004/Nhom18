@@ -85,7 +85,7 @@ const HomePage: React.FC = () => {
       <div className="bg-white p-4 rounded-2xl shadow-md cursor-pointer">
         <div className="flex space-x-3">
           <img
-            src={user?.avatar || 'https://via.placeholder.com/48'}
+            src={user?.avatar || '/default-avatar.png'}
             alt="User avatar"
             className="w-12 h-12 rounded-full object-cover cursor-pointer hover:scale-110 transition-transform"
           />

@@ -54,6 +54,7 @@ export const verifyRegistrationOtp = async (
     email,
     password: hashedPassword,
     phone,
+    isVerified: true,
   });
 
   // Xóa OTP đã sử dụng
@@ -101,14 +102,18 @@ export const resetPasswordWithOtp = async (email, otp) => {
   }
 
   // Tạo password mới và hash
-  const { plainPassword, hashedPassword } = await passwordService.generateAndHashPassword();
+  const { plainPassword, hashedPassword } =
+    await passwordService.generateAndHashPassword();
 
   // Cập nhật password
   user.password = hashedPassword;
   await user.save();
 
   // Gửi password mới qua email
-  await emailService.sendOtpEmail(email, `Mật khẩu mới của bạn là: ${plainPassword}`);
+  await emailService.sendOtpEmail(
+    email,
+    `Mật khẩu mới của bạn là: ${plainPassword}`
+  );
 
   // Xóa OTP đã sử dụng
   await otpService.deleteOtpByEmail(email);

@@ -32,8 +32,7 @@ const UserProfilePage: React.FC = () => {
   const { posts, initialLoading: isLoadingPosts } = useAppSelector(
     (state) => state.posts
   );
-  const { friends, incomingRequests, outgoingRequests, isLoadingFriends } =
-    useAppSelector((state) => state.friends);
+  const { friends } = useAppSelector((state) => state.friends);
   const currentUser = useAppSelector((state) => state.auth.user);
 
   const [activeTab, setActiveTab] = useState<TabType>('posts');
@@ -51,18 +50,6 @@ const UserProfilePage: React.FC = () => {
     if (!userId || !friends) return false;
     return friends.some((friend) => friend.id === userId);
   }, [userId, friends]);
-
-  // Check if friend request sent using Redux store
-  const friendRequestSent = useMemo(() => {
-    if (!userId || !outgoingRequests) return false;
-    return outgoingRequests.some((request) => request.id === userId);
-  }, [userId, outgoingRequests]);
-
-  // Check if friend request received using Redux store
-  const friendRequestReceived = useMemo(() => {
-    if (!userId || !incomingRequests) return false;
-    return incomingRequests.some((request) => request.id === userId);
-  }, [userId, incomingRequests]);
 
   // Fetch user profile
   useEffect(() => {
@@ -98,69 +85,6 @@ const UserProfilePage: React.FC = () => {
       );
     }
   }, [userId, dispatch]);
-
-  // Handle friend actions using Redux
-  const handleAddFriend = async () => {
-    if (!userId || isProcessing) return;
-
-    setIsProcessing(true);
-    try {
-      await dispatch(sendFriendRequest(userId)).unwrap();
-      toast.success(`Đã gửi lời mời kết bạn tới ${user?.username}`);
-    } catch (error) {
-      toast.error('Gửi lời mời kết bạn thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleCancelRequest = async () => {
-    if (!userId || isProcessing) return;
-
-    setIsProcessing(true);
-    try {
-      // Gọi API trực tiếp vì slice không có action này
-      await instance.delete(`/friends/request/${userId}`);
-      // Sau đó refresh lại danh sách outgoing requests
-      await dispatch(fetchOutgoingRequests());
-      toast.success('Đã hủy lời mời kết bạn');
-    } catch (error) {
-      toast.error('Hủy lời mời thất bại');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleAcceptRequest = async () => {
-    if (!userId || isProcessing) return;
-
-    setIsProcessing(true);
-    try {
-      await dispatch(acceptFriendRequest(userId)).unwrap();
-      toast.success('Đã chấp nhận lời mời kết bạn');
-    } catch (error) {
-      toast.error('Chấp nhận lời mời thất bại');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleUnfriend = async () => {
-    if (!userId || isProcessing) return;
-
-    const confirmed = window.confirm('Bạn có chắc muốn hủy kết bạn?');
-    if (!confirmed) return;
-
-    setIsProcessing(true);
-    try {
-      await dispatch(unFriend(userId)).unwrap();
-      toast.success('Đã hủy kết bạn');
-    } catch (error) {
-      toast.error('Hủy kết bạn thất bại');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   // Extract all images from posts
   const postImages = posts
@@ -205,54 +129,6 @@ const UserProfilePage: React.FC = () => {
         </button>
       );
     }
-
-    if (isFriend) {
-      return (
-        <>
-          <button
-            onClick={handleUnfriend}
-            className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-          >
-            <UserMinus size={16} />
-            Hủy kết bạn
-          </button>
-        </>
-      );
-    }
-
-    if (friendRequestReceived) {
-      return (
-        <button
-          onClick={handleAcceptRequest}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-        >
-          <UserPlus size={16} />
-          Chấp nhận lời mời
-        </button>
-      );
-    }
-
-    if (friendRequestSent) {
-      return (
-        <button
-          onClick={handleCancelRequest}
-          className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-        >
-          <UserMinus size={16} />
-          Hủy lời mời
-        </button>
-      );
-    }
-
-    return (
-      <button
-        onClick={handleAddFriend}
-        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-      >
-        <UserPlus size={16} />
-        Thêm bạn bè
-      </button>
-    );
   };
 
   return (

@@ -26,6 +26,8 @@ const PostDetailPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
+  const { user } = useAppSelector((state) => state.auth);
+
   const {
     postDetail,
     isLoadingDetail,
@@ -93,7 +95,7 @@ const PostDetailPage = () => {
     <div className="fixed inset-0 bg-black/90 flex z-50">
       {/* Nút đóng (nổi bật) */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate(-1)}
         className="absolute top-4 right-4 z-[60] w-10 h-10 flex items-center justify-center 
              rounded-full bg-black/70 text-white shadow-[0_0_10px_rgba(0,0,0,0.8)] hover:bg-black/90 transition"
         title="Đóng"
@@ -276,7 +278,7 @@ const PostDetailPage = () => {
           {/* Nhập bình luận */}
           <div className="flex items-center gap-3 px-4 py-2">
             <img
-              src={postDetail.author.avatar || '/default-avatar.png'}
+              src={user?.avatar || '/default-avatar.png'}
               alt="avatar"
               className="w-8 h-8 rounded-full"
             />

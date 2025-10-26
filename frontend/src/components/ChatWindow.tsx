@@ -114,17 +114,6 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
     setShowSettingsMenu(false);
   };
 
-  // Xử lý bật/tắt thông báo
-  const handleToggleNotifications = () => {
-    dispatch(
-      updateConversationSettings({
-        conversationId: conversation.id,
-        settings: { notificationsEnabled: !settings.notificationsEnabled },
-      })
-    );
-    setShowSettingsMenu(false);
-  };
-
   // Xử lý chọn phản ứng
   const handleReactionClick = (messageId: string, emoji: string) => {
     if (currentUser) {
@@ -313,7 +302,6 @@ export default function ChatWindow({ conversation }: ChatWindowProps) {
         setShowEmojiPicker={setShowEmojiPicker}
         setIsChoosingCustomEmoji={setIsChoosingCustomEmoji}
         handleChangeTheme={handleChangeTheme}
-        handleToggleNotifications={handleToggleNotifications}
         handleResetEmoji={handleResetEmoji}
       />
 
